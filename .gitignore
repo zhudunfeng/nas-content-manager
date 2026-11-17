@@ -1,0 +1,17 @@
+# 本机依赖和临时工具链不进入版本控制。
+.tools/
+node_modules/
+web/dist/
+bin/
+# 本机配置与运行数据可能包含密码、媒体和数据库。
+.env
+data/
+media/
+.runtime/
+.playwright-mcp/
+*.log
+# 编辑器与操作系统缓存。
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+__pycache__/

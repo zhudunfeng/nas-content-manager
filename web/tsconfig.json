@@ -1,0 +1,41 @@
+{
+  // TypeScript 编译器检查参数。
+  "compilerOptions": {
+    // 编译目标使用现代浏览器支持的 ES2022。
+    "target": "ES2022",
+    // 使用标准的类字段初始化语义。
+    "useDefineForClassFields": true,
+    // 模块语法交由 Vite 打包处理。
+    "module": "ESNext",
+    // 启用浏览器 DOM、可迭代 DOM 和 ES2022 类型。
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // 第三方声明文件不重复做内部类型校验，业务代码仍严格检查。
+    "skipLibCheck": true,
+    // 注入 Vite 资源和构建配置的 Node 类型。
+    "types": ["vite/client", "node"],
+    // 按打包器规则解析模块。
+    "moduleResolution": "Bundler",
+    // 允许源码在需要时显式引用 TypeScript 扩展名。
+    "allowImportingTsExtensions": true,
+    // 允许读取静态 JSON 数据。
+    "resolveJsonModule": true,
+    // 保证每个模块都能独立转换。
+    "isolatedModules": true,
+    // 保留值导入和类型导入的显式区别。
+    "verbatimModuleSyntax": true,
+    // 所有源码都使用模块作用域，避免全局命名污染。
+    "moduleDetection": "force",
+    // 类型检查不生成文件，由 Vite 负责生产产物。
+    "noEmit": true,
+    // 开启完整的严格类型检查。
+    "strict": true,
+    // 禁止遗留未使用的局部变量。
+    "noUnusedLocals": true,
+    // 禁止遗留未使用的方法参数。
+    "noUnusedParameters": true,
+    // 防止 switch 分支意外穿透。
+    "noFallthroughCasesInSwitch": true
+  },
+  // 只检查业务 TypeScript、Vue 组件和 Vite 配置。
+  "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]
+}

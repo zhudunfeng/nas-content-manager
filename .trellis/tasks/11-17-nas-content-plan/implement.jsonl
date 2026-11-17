@@ -1,0 +1,6 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/tasks/11-17-nas-content-plan/info.md", "reason": "Recommended architecture and deployment constraints"}
+{"file": ".trellis/tasks/11-17-nas-content-plan/visual-design.md", "reason": "Four content types and visual interaction guidance"}
+{"file": ".trellis/tasks/11-17-nas-content-plan/large-video.md", "reason": "Large video streaming, seek and bounded resource design"}

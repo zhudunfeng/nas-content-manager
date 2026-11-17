@@ -1,0 +1,18 @@
+# 容器构建仅使用源代码与锁文件，不发送媒体或凭据。
+.git
+.tools
+.runtime
+.playwright-mcp
+.env
+data
+media
+bin
+**/node_modules
+web/dist
+.trellis
+.codegraph
+.agents
+.codex
+.claude
+.cursor
+*.log
