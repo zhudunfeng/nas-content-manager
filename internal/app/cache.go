@@ -68,6 +68,9 @@ func (a *App) cover(w http.ResponseWriter, r *http.Request) {
 		title.WriteString(fmt.Sprintf(`<tspan x="32" y="%d">%s</tspan>`, 320+index*37, html.EscapeString(line)))
 	}
 	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 480"><rect width="360" height="480" fill="%s"/><path d="M32 67h70M32 78h40" stroke="%s" stroke-width="3"/><circle cx="280" cy="136" r="80" fill="%s" opacity=".09"/><path d="M73 219l78-97 82 97z" fill="%s" opacity=".12"/><text x="32" y="272" font-family="sans-serif" font-size="13" letter-spacing="4" fill="%s">%s</text><text font-family="sans-serif" font-size="26" font-weight="600" fill="#f3f4f6">%s</text></svg>`, colors[0], colors[1], colors[1], colors[1], colors[1], strings.ToUpper(item.Type), title.String())
+	if item.Type == "music" {
+		svg = musicPlaceholder(item.Title)
+	}
 	w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
 	w.Header().Set("Cache-Control", "private, max-age=60")
@@ -185,8 +188,8 @@ func (a *App) enrich(ctx context.Context, job Job) (resultErr error) {
 	if err != nil {
 		return fmt.Errorf("内容已移除")
 	}
+	state := "done"
 	defer func() {
-		state := "done"
 		if resultErr != nil {
 			state = "failed"
 		}
@@ -194,6 +197,14 @@ func (a *App) enrich(ctx context.Context, job Job) (resultErr error) {
 	}()
 	if item.Type == "novel" {
 		return nil
+	}
+	if item.Type == "music" {
+		hasCover, musicErr := a.enrichMusic(ctx, item)
+		// 无内嵌封面是正常结果，独立状态避免每次扫描都重新探测。
+		if musicErr == nil && !hasCover {
+			state = "no_cover"
+		}
+		return musicErr
 	}
 	a.cacheMu.Lock()
 	err = a.ensureCacheBudget(2 << 20)

@@ -1,7 +1,12 @@
 import type { ContentType, Item } from './types'
 
 /** 内容类型中文名称。 */
-export const typeLabels: Record<ContentType, string> = { video: '视频', image: '图片', comic: '漫画', novel: '小说' }
+export const typeLabels: Record<ContentType, string> = { video: '视频', image: '图片', comic: '漫画', novel: '小说', music: '音乐' }
+
+/** 判断内容是否使用以秒为单位的音视频播放流程。 */
+export function isTimeMedia(item: Item): boolean {
+  return item.type === 'video' || item.type === 'music'
+}
 
 /** 格式化字节大小，支持大文件。 */
 export function formatSize(bytes: number): string {
@@ -11,7 +16,7 @@ export function formatSize(bytes: number): string {
   return `${(bytes / 1024 ** power).toFixed(power > 1 ? 1 : 0)} ${units[power]}`
 }
 
-/** 格式化视频时长。 */
+/** 格式化音视频时长。 */
 export function formatDuration(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds <= 0) return '时长待探测'
   const rounded: number = Math.floor(seconds)

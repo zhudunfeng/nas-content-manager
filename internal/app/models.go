@@ -10,7 +10,7 @@ type User struct {
 type Library struct {
 	ID            int64  `json:"id"`            // 媒体库编号。
 	Name          string `json:"name"`          // 用户设置的名称。
-	Type          string `json:"type"`          // video/image/comic/novel 内容类型。
+	Type          string `json:"type"`          // video/image/comic/novel/music 内容类型。
 	Path          string `json:"path"`          // 已验证的规范化根目录。
 	Status        string `json:"status"`        // 媒体库扫描状态。
 	ItemCount     int64  `json:"itemCount"`     // 已登记项目数。
@@ -41,7 +41,7 @@ type Item struct {
 	Favorite     bool      `json:"favorite"`     // 当前用户收藏状态。
 	Tags         []string  `json:"tags"`         // 当前用户设置的标签。
 	Progress     *Progress `json:"progress"`     // 当前用户播放或阅读进度。
-	Duration     float64   `json:"duration"`     // 视频秒数。
+	Duration     float64   `json:"duration"`     // 音视频时长，单位秒。
 	Width        int       `json:"width"`        // 图像或视频宽度。
 	Height       int       `json:"height"`       // 图像或视频高度。
 	ModTime      int64     `json:"-"`            // 源文件纳秒修改时间，用于缓存失效。

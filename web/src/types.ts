@@ -1,5 +1,5 @@
-/** 内容的四种分类。 */
-export type ContentType = 'video' | 'image' | 'comic' | 'novel'
+/** 内容的五种分类。 */
+export type ContentType = 'video' | 'image' | 'comic' | 'novel' | 'music'
 /** 应用的导航页面。 */
 export type ViewName = 'home' | ContentType | 'favorites' | 'libraries' | 'jobs' | 'settings'
 /** 当前登录的管理员。 */
@@ -24,7 +24,7 @@ export interface Progress {
   /** EPUB 定位信息或阅读器辅助状态。 */ locator: string
   /** 进度更新时间。 */ updatedAt: string
 }
-/** 四类内容共享的索引模型。 */
+/** 五类内容共享的索引模型。 */
 export interface Item {
   /** 内容编号。 */ id: number
   /** 所属媒体库编号。 */ libraryId: number
@@ -40,7 +40,7 @@ export interface Item {
   /** 是否收藏。 */ favorite: boolean
   /** 用户标签。 */ tags: string[]
   /** 当前用户进度。 */ progress: Progress | null
-  /** 视频时长，单位秒。 */ duration: number
+  /** 视频或音乐时长，单位秒。 */ duration: number
   /** 图像或视频宽度。 */ width: number
   /** 图像或视频高度。 */ height: number
 }
@@ -76,6 +76,7 @@ export interface Stats {
   /** 图片数。 */ image: number
   /** 漫画数。 */ comic: number
   /** 小说数。 */ novel: number
+  /** 音乐数。 */ music: number
   /** 已索引内容的字节总量。 */ totalSize: number
 }
 /** 服务端只读配置。 */

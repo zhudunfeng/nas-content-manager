@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import http.cookiejar
 import json
+import math
 import os
 import secrets
 import shutil
@@ -14,6 +15,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import wave
 import zipfile
 import zlib
 from pathlib import Path
@@ -61,9 +63,30 @@ def make_sparse_video(path: Path) -> int:
     return size
 
 
+def make_music(root: Path, ffmpeg: str | None) -> None:
+    """生成真实音频和内嵌封面样本，验证全部声明格式及无封面回退。"""
+    music = root / 'music'
+    music.mkdir(parents=True, exist_ok=True)
+    source = music / '林间回响.wav'
+    # 使用十二秒低音量正弦信号，供播放、拖动和断点恢复验证。
+    sample_rate: int = 22050
+    with wave.open(str(source), 'wb') as audio:
+        audio.setparams((1, 2, sample_rate, 0, 'NONE', 'not compressed'))
+        audio.writeframes(b''.join(struct.pack('<h', int(1800 * math.sin(2 * math.pi * 440 * index / sample_rate))) for index in range(sample_rate * 12)))
+    (music / '不应入库.txt').write_text('音乐库应忽略非音频文件。', encoding='utf-8')
+    if not ffmpeg:
+        return
+    cover = root.parent / 'music-cover.png'
+    make_png(cover, 4, 400, 400)
+    subprocess.run([ffmpeg, '-hide_banner', '-loglevel', 'error', '-y', '-i', str(source), '-i', str(cover), '-map', '0:a', '-map', '1:v', '-c:a', 'libmp3lame', '-c:v', 'mjpeg', '-id3v2_version', '3', '-disposition:v', 'attached_pic', '-metadata', 'title=夜间电台', str(music / '夜间电台.MP3')], check=True)
+    for name, codec in (('午后慢调.m4a', 'aac'), ('晨间序曲.aac', 'aac'), ('无损片刻.flac', 'flac'), ('远山来信.ogg', 'libvorbis'), ('小径随想.opus', 'libopus'), ('海边散步.aiff', 'pcm_s16be')):
+        subprocess.run([ffmpeg, '-hide_banner', '-loglevel', 'error', '-y', '-i', str(source), '-c:a', codec, str(music / name)], check=True)
+    shutil.copyfile(music / '海边散步.aiff', music / '黄昏序曲.aif')
+
+
 def prepare(root: Path, ffmpeg: str | None, large: bool) -> None:
-    """构造四类隔离媒体，复用已有样本而不修改任何真实源目录。"""
-    for kind in ('video', 'image', 'comic', 'novel'):
+    """构造五类隔离媒体，复用已有样本而不修改任何真实源目录。"""
+    for kind in ('video', 'image', 'comic', 'novel', 'music'):
         (root / kind).mkdir(parents=True, exist_ok=True)
     make_png(root / 'image' / '晨光.png', 1)
     make_png(root / 'image' / '山间来信.png', 3, 900, 600)
@@ -76,6 +99,7 @@ def prepare(root: Path, ffmpeg: str | None, large: bool) -> None:
     (root / 'novel' / '夜航手记.txt').write_text(text, encoding='utf-8')
     (root / 'novel' / '旧日时光.txt').write_bytes(text.encode('gb18030'))
     make_epub(root / 'novel' / '海边的图书馆.epub')
+    make_music(root, ffmpeg)
     if ffmpeg:
         subprocess.run([ffmpeg, '-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc2=size=640x360:rate=24', '-t', '4', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', str(root / 'video' / '色彩实验.mp4')], check=True)
     if large:
@@ -126,6 +150,59 @@ class Client:
         print(f'  ✓ {label}', flush=True)
 
 
+def verify_music(client: Client, anonymous: Client, root: Path) -> None:
+    """验证音乐类型、元数据、封面、流式字节和重复扫描后的个人状态。"""
+    result = client.json('/api/items?type=music&pageSize=96')
+    tracks = result['items']
+    source_names = {path.name for path in (root / 'music').iterdir() if path.suffix.lower() != '.txt'}
+    client.check({track['relativePath'] for track in tracks} == source_names and all(track['type'] == 'music' for track in tracks), '音乐过滤收录全部实际音频且忽略非音乐')
+    client.check(client.json('/api/stats')['music'] == len(tracks), '音乐数量与统计一致')
+    mime_types: dict[str, str] = {'.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.aac': 'audio/aac', '.flac': 'audio/flac', '.ogg': 'audio/ogg', '.opus': 'audio/ogg', '.wav': 'audio/wav', '.aif': 'audio/aiff', '.aiff': 'audio/aiff'}
+    client.check(all(track['mime'] == mime_types[Path(track['relativePath']).suffix.lower()] for track in tracks), '所有音乐格式 MIME 稳定且识别大写扩展名')
+    settings = client.json('/api/settings')
+    if settings['ffprobeAvailable']:
+        client.check(all(10 < track['duration'] < 14 for track in tracks), '真实音频时长完成异步探测')
+    track = next(track for track in tracks if track['relativePath'].endswith('.wav'))
+    path = f'/api/items/{track["id"]}'
+    file_path = path + '/file'
+    source = (root / 'music' / track['relativePath']).read_bytes()
+    code, headers, body = client.request(file_path, 'HEAD')
+    client.check(code == 200 and not body and int(headers['Content-Length']) == len(source) and headers['Content-Type'] == 'audio/wav' and headers['Accept-Ranges'] == 'bytes', '音乐 HEAD 返回精确长度、MIME 与 Range 能力')
+    client.check(anonymous.request(file_path)[0] == 401 and anonymous.request(file_path, 'HEAD')[0] == 401, '音乐 GET 与 HEAD 均要求鉴权')
+    for offset in (0, 44, len(source) - 64):
+        code, headers, body = client.request(file_path, headers={'Range': f'bytes={offset}-{offset + 63}'})
+        client.check(code == 206 and headers['Content-Range'] == f'bytes {offset}-{offset + 63}/{len(source)}' and body == source[offset:offset + 64], f'音乐 Range 在 {offset} 精确返回字节')
+    code, _, body = client.request(file_path, headers={'Range': 'bytes=-64'})
+    client.check(code == 206 and body == source[-64:] and client.request(file_path, headers={'Range': f'bytes={len(source)}-'})[0] == 416, '音乐尾部 Range 与越界 416 正确')
+    code, headers, body = client.request(path + '/cover')
+    client.check(code == 200 and headers['Content-Type'].startswith('image/svg+xml') and b'MUSIC' in body, '无内嵌封面返回音乐专属占位图')
+    embedded = next((value for value in tracks if value['relativePath'].endswith('.MP3')), None)
+    if embedded and settings['ffmpegAvailable'] and settings['ffprobeAvailable']:
+        code, headers, body = client.request(f'/api/items/{embedded["id"]}/cover')
+        client.check(code == 200 and headers['Content-Type'] == 'image/jpeg' and body.startswith(b'\xff\xd8'), '音乐内嵌专辑封面实际生成为 JPEG')
+    client.json(path + '/favorite', 'POST', {'favorite': True})
+    client.json(path + '/tags', 'PUT', {'tags': ['轻音乐', '音乐验证']})
+    client.json(path + '/progress', 'PUT', {'position': 3, 'total': 12, 'locator': ''})
+    client.check(client.json('/api/items?type=music&favorite=true')['total'] >= 1 and client.json('/api/items?type=music&q=' + urllib.parse.quote('音乐验证'))['total'] >= 1, '音乐收藏过滤与中文标签搜索可用')
+    previous_jobs = client.json('/api/jobs')['jobs']
+    client.json(f'/api/libraries/{track["libraryId"]}/scan', 'POST', {})
+    deadline = time.monotonic() + 120
+    while True:
+        jobs = client.json('/api/jobs')['jobs']
+        pending = [job for job in jobs if job['libraryId'] == track['libraryId'] and job['status'] in ('queued', 'running')]
+        if not pending or time.monotonic() >= deadline:
+            break
+        time.sleep(0.2)
+    rescanned = client.json('/api/items?type=music&pageSize=96')['items']
+    updated = client.json(path)['item']
+    client.check(not pending and {value['id'] for value in tracks} == {value['id'] for value in rescanned} and updated['favorite'] and updated['tags'] == ['轻音乐', '音乐验证'] and updated['progress']['position'] == 3, '音乐重复扫描 ID 稳定且保留收藏标签和秒数进度')
+    old_enrich = {job['id'] for job in previous_jobs if job['libraryId'] == track['libraryId'] and job['kind'] == 'enrich'}
+    new_enrich = {job['id'] for job in jobs if job['libraryId'] == track['libraryId'] and job['kind'] == 'enrich'}
+    if settings['ffmpegAvailable'] and settings['ffprobeAvailable']:
+        client.check(old_enrich == new_enrich and all(job['status'] == 'completed' for job in jobs if job['libraryId'] == track['libraryId']), '无封面音频正常完成且重扫不重复探测')
+    client.check((root / 'music' / track['relativePath']).read_bytes() == source, '音乐扫描与播放不改写源文件')
+
+
 def verify(base: str, root: Path, username: str, password: str, large: bool) -> None:
     """执行账户、建库、扫描、阅读、备份及大偏移协议的集成验证。"""
     client = Client(base)
@@ -138,7 +215,9 @@ def verify(base: str, root: Path, username: str, password: str, large: bool) -> 
     client.check(client.request('/api/libraries', 'POST', {}, {'Origin': 'https://foreign.invalid'})[0] == 403, '拒绝跨站写请求')
     client.check(client.request('/api/browse?path=' + urllib.parse.quote(str(root.parent.parent)))[0] in (400, 403), '目录浏览不能越过媒体根')
     existing = client.json('/api/libraries')['libraries']
-    for kind, name in (('video', '验证视频'), ('image', '验证图片'), ('comic', '验证漫画'), ('novel', '验证小说')):
+    initial_stats = client.json('/api/stats')
+    client.check(isinstance(initial_stats.get('music'), int), '统计始终提供音乐数字字段，包括空库')
+    for kind, name in (('video', '验证视频'), ('image', '验证图片'), ('comic', '验证漫画'), ('novel', '验证小说'), ('music', '验证音乐')):
         matching = [library for library in existing if library['name'] == name]
         library = matching[0] if matching else client.json('/api/libraries', 'POST', {'name': name, 'type': kind, 'path': str(root / kind)})['library']
         client.json(f'/api/libraries/{library["id"]}/scan', 'POST', {})
@@ -150,9 +229,9 @@ def verify(base: str, root: Path, username: str, password: str, large: bool) -> 
             break
         time.sleep(0.5)
     failed_scans = [job for job in jobs if job['kind'] == 'scan' and job['status'] == 'failed']
-    client.check(not failed_scans, f'四类扫描完成（失败 {len(failed_scans)}）')
+    client.check(not pending and not failed_scans, f'五类扫描及衍生任务结束（扫描失败 {len(failed_scans)}）')
     items = client.json('/api/items?pageSize=200')['items']
-    for kind in ('video', 'image', 'comic', 'novel'):
+    for kind in ('video', 'image', 'comic', 'novel', 'music'):
         client.check(any(item['type'] == kind for item in items), f'{kind} 类型实际入库')
     item = next(item for item in items if item['type'] == 'novel' and item['title'].find('夜航') >= 0)
     path = f'/api/items/{item["id"]}'
@@ -176,6 +255,7 @@ def verify(base: str, root: Path, username: str, password: str, large: bool) -> 
     client.check(client.request(f'/api/items/{image["id"]}/cover')[0] == 200, '封面可读取')
     epub = next(item for item in items if item['relativePath'].endswith('.epub'))
     client.check(client.request(f'/api/items/{epub["id"]}/file')[2].startswith(b'PK'), 'EPUB 原文可交给本地阅读器')
+    verify_music(client, anonymous, root)
     code, _, backup = client.request('/api/backup')
     client.check(code == 200 and backup.startswith(b'SQLite format 3\x00'), '下载一致性 SQLite 备份')
     (root.parent / 'verified-backup.db').write_bytes(backup)
@@ -183,6 +263,7 @@ def verify(base: str, root: Path, username: str, password: str, large: bool) -> 
     import sqlite3
     with sqlite3.connect(root.parent / 'verified-backup.db') as connection:
         client.check(connection.execute('PRAGMA integrity_check').fetchone()[0] == 'ok', '备份数据库完整性检查通过')
+        client.check(connection.execute('PRAGMA user_version').fetchone()[0] == 1 and connection.execute("SELECT count(*) FROM items WHERE type='music'").fetchone()[0] > 0, '音乐与原四类共存于兼容的 v1 数据库备份')
     if large:
         video = next(item for item in items if '5GiB' in item['title'])
         source = root / 'video' / '仅协议验证-5GiB.mp4'

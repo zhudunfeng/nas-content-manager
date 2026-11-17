@@ -12,6 +12,7 @@ Applies to all changes in `cmd/nas/`, `internal/app/`, Docker environment wiring
 - `(*App).file(w http.ResponseWriter, r *http.Request)` delegates seekable streaming to `http.ServeContent`.
 - HTTP payloads and paths are defined in `docs/api.md`; Go models are in `models.go`.
 - SQLite schema version 1 is `schemaV1` in `store.go`, recorded in `PRAGMA user_version`. Tables: users, sessions, libraries, items, user_items, progress, jobs.
+- Content types are `video/image/comic/novel/music`. Schema v1 type columns have no four-type CHECK; music reuses `duration`, so preserve existing databases without a migration or rebuild.
 
 ## 3. Contracts
 
@@ -24,9 +25,10 @@ Applies to all changes in `cmd/nas/`, `internal/app/`, Docker environment wiring
 - A failed or inaccessible scan cannot mark unseen entries missing. An entirely empty scan conservatively retains old index records because an empty mount can mean disconnected storage.
 - Runtime defaults: `NAS_ADDR=:8090`, `NAS_DATA_DIR=data`, `NAS_MEDIA_ROOTS=media`, `NAS_WEB_DIR=web/dist`, `NAS_SCAN_INTERVAL_MINUTES=60`, `NAS_CACHE_MAX_MB=1024`, `NAS_MIN_FREE_MB=512`, `NAS_WORKERS=1`, `NAS_COOKIE_SECURE=false`. Media roots use the platform path-list separator.
 - No full-media hash or transcode blocks initial registration. FFmpeg/probe work is asynchronous and bounded. Cache is derived data; never rewrite source media.
+- Music extensions/MIME are defined centrally by `audioMIME`; OGG/OPUS use `audio/ogg`, AIF/AIFF use `audio/aiff`. Probe music duration and extract only attached artwork with the existing time/output/pixel budgets. No artwork is a successful `no_cover` enrichment result, not a failed job; unchanged rescans must not repeatedly probe those files. File changes return it to pending.
 - TXT: 16 MiB source, 100,000 paragraphs; CBZ: 2 GiB, 10,000 pages, 32 MiB/page, bounded decompression. Path traversal, symlinks outside roots, encrypted/unsupported archives are rejected. Raster formats only; no active SVG media.
 - TXT iterates `strings.Lines` before collecting non-empty paragraphs; do not `strings.Split` the complete input, since a bounded all-newline file otherwise allocates millions of string descriptors. Cover URLs include source mtime, size, and enrichment state, matching cache invalidation when sync tools preserve mtime.
-- File length/offset fields use `int64`. Do not install compression/buffering middleware or a short global `WriteTimeout` over video responses. A size/mtime ETag is weak, not a byte identity hash.
+- File length/offset fields use `int64`. Do not install compression/buffering middleware or a short global `WriteTimeout` over audio/video responses. A size/mtime ETag is weak, not a byte identity hash.
 
 ## 4. Validation & Error Matrix
 
@@ -47,13 +49,13 @@ Applies to all changes in `cmd/nas/`, `internal/app/`, Docker environment wiring
 ## 5. Good / Base / Bad Cases
 
 - Good: a 5+ GiB sparse protocol fixture returns exact bytes beyond offset 4 GiB; the application does not allocate a file-sized buffer.
-- Base: repeat a scan, keep the same item IDs/count and user state; read four media types through an authenticated session.
+- Base: repeat a scan, keep the same item IDs/count and user state; read all five media types through an authenticated session.
 - Bad: replace a source by a symlink to an outside secret, request `../`, import ZIP traversal entries, or retry a job while another active job owns its unique key. Reject without exposing source contents.
 - Hardware acceptance: a sparse fixture proves offsets only. Decode/seek/throughput/RSS for real large video must be measured separately on the target NAS.
 
 ## 6. Tests Required
 
-`scripts/verify.py` uses isolated generated samples and asserts auth, cross-origin rejection, root boundaries, scans, all four types, Chinese tags/search, favorites/progress, CBZ natural order, UTF-8/GB18030, EPUB delivery, SQLite snapshot integrity, large-file HEAD/Range/suffix/416/304. Lifecycle changes additionally need restart/cancel/retry, mount-unavailable retention, source preservation, and offline restore checks. Record actual execution in `docs/verification.md`.
+`scripts/verify.py` uses isolated generated samples and asserts auth, cross-origin rejection, root boundaries, scans, all five types, Chinese tags/search, favorites/progress, CBZ natural order, UTF-8/GB18030, EPUB delivery, SQLite snapshot integrity, large-file HEAD/Range/suffix/416/304. Music assertions cover actual audio formats/duration, embedded/no-cover behavior, source bytes, Range/auth, personal state, and idempotent rescans. Lifecycle changes additionally need restart/cancel/retry, mount-unavailable retention, source preservation, and offline restore checks. Record actual execution in `docs/verification.md`.
 
 Regression assertions: cancelling an executing job then retrying returns 409 until its executor is gone, after which it queues once; a source-size change with unchanged mtime changes `coverUrl`; a 4 MiB mostly blank TXT parses without allocating a string descriptor for every newline (review sample total allocation was approximately 13.6 MiB).
 

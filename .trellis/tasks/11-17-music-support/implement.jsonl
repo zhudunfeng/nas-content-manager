@@ -1,0 +1,7 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": "docs/api.md", "reason": "共享类型与进度契约"}
+{"file": ".trellis/tasks/11-17-music-support/prd.md", "reason": "音乐功能范围与验收"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "实际后端契约"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "实际前端契约"}

@@ -372,6 +372,8 @@ func matchesType(kind string, path string) bool {
 		return ext == ".cbz"
 	case "novel":
 		return ext == ".txt" || ext == ".epub"
+	case "music":
+		return audioMIME(path) != ""
 	case "video":
 		switch ext {
 		case ".mp4", ".m4v", ".mkv", ".webm", ".mov", ".avi", ".ts", ".m2ts", ".mpg", ".mpeg":
@@ -383,6 +385,9 @@ func matchesType(kind string, path string) bool {
 
 // fileMIME 提供稳定媒体类型；未知封装不会假装浏览器一定支持。
 func fileMIME(path string) string {
+	if audioType := audioMIME(path); audioType != "" {
+		return audioType
+	}
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".mkv":
 		return "video/x-matroska"

@@ -6,6 +6,7 @@ withDefaults(defineProps<Props>(), { size: 20 })
 const paths: Record<string, string> = {
   home: 'M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z',
   video: 'M4 4h16v16H4z M4 9h16 M8 4v5 M16 4v5 M10 12l5 3-5 3z',
+  music: 'M9 18V5l12-2v13 M9 9l12-2 M9 18a3 3 0 1 1-3-3h3 M21 16a3 3 0 1 1-3-3h3',
   image: 'M4 4h16v16H4z M4 16l5-5 4 4 3-3 4 4 M8 8h.01',
   comic: 'M3 4h8v16H3z M14 4h7v16h-7z M6 8h2 M17 8h1 M6 12h2',
   novel: 'M3 4c3-1 6-1 9 1 3-2 6-2 9-1v15c-3-1-6-1-9 1-3-2-6-2-9-1z M12 5v15',
@@ -29,6 +30,7 @@ const paths: Record<string, string> = {
   check: 'm5 12 4 4L19 6',
   clock: 'M12 6v6l4 2 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
   grid: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
+  more: 'M5 12h.01 M12 12h.01 M19 12h.01',
   list: 'M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01',
   trash: 'M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7',
   warning: 'm12 3 10 18H2z M12 9v5 M12 17h.01',

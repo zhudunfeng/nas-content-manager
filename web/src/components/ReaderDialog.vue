@@ -6,7 +6,7 @@ import type { Location } from 'epubjs/types/rendition'
 import type { NavItem } from 'epubjs/types/navigation'
 import { api, errorMessage, isAbort } from '../api'
 import { fetchEpub, sanitizeEpubSection } from '../epub-safety'
-import { extension, formatDuration, formatSize, typeLabels } from '../format'
+import { extension, formatDuration, formatSize, isTimeMedia, typeLabels } from '../format'
 import type { ComicPage, Item, TextBook } from '../types'
 import DialogShell from './DialogShell.vue'
 import Icon from './Icon.vue'
@@ -18,8 +18,12 @@ const emit = defineEmits<{ close: []; updated: []; navigate: [item: Item] }>()
 const busy = ref<boolean>(false)
 const failure = ref<string>('')
 const saveFailure = ref<string>('')
+const closing = ref<boolean>(false)
 const video = ref<HTMLVideoElement | null>(null)
-const videoStatus = ref<string>('正在准备视频…')
+const audio = ref<HTMLAudioElement | null>(null)
+const mediaStatus = ref<string>(`正在准备${props.item.type === 'music' ? '音乐' : '视频'}…`)
+const playbackDuration = ref<number>(props.item.duration)
+const artworkFailed = ref<boolean>(false)
 const pages = ref<ComicPage[]>([])
 const pageIndex = ref<number>(Math.max(0, Math.floor(props.item.progress?.position || 0)))
 const comicMode = ref<'single' | 'double' | 'continuous'>('single')
@@ -45,12 +49,16 @@ let controller: AbortController = new AbortController()
 let observer: IntersectionObserver | null = null
 let savedAt: number = 0
 let closed: boolean = false
-let videoRestored: boolean = false
+let mediaRestored: boolean = false
+let pendingProgress: Promise<void> | null = null
+let queuedProgress: QueuedProgress | null = null
 let readingLoad: number = 0
 let textBase: number = Math.floor(paragraphIndex.value / 80) * 80
 const textStart = ref<number>(textBase)
 const comicStart = ref<number>(Math.floor(pageIndex.value / 12) * 12)
 const isEpub = computed<boolean>((): boolean => extension(props.item.relativePath) === 'EPUB')
+const isPlayback = computed<boolean>((): boolean => isTimeMedia(props.item))
+const media = computed<HTMLMediaElement | null>((): HTMLMediaElement | null => props.item.type === 'music' ? audio.value : video.value)
 const fileUrl = computed<string>((): string => `/api/items/${props.item.id}/file`)
 const displayedPages = computed<ComicPage[]>((): ComicPage[] => comicMode.value === 'continuous' ? pages.value.slice(comicStart.value, comicStart.value + 12) : pages.value.slice(pageIndex.value, pageIndex.value + (comicMode.value === 'double' ? 2 : 1)))
 const displayedParagraphs = computed<string[]>((): string[] => textBook.value?.paragraphs.slice(textStart.value, textStart.value + 80) || [])
@@ -58,35 +66,94 @@ const currentPosition = computed<number>((): number => props.item.type === 'comi
 const totalPosition = computed<number>((): number => props.item.type === 'comic' ? pages.value.length : isEpub.value ? epubTotal.value : textBook.value?.paragraphs.length || 0)
 const imageIndex = computed<number>((): number => props.imageItems?.findIndex((item: Item): boolean => item.id === props.item.id) ?? -1)
 
-/** 合并频繁事件并保存阅读状态，用户关闭时另行强制写入。 */
-async function saveProgress(force: boolean = false): Promise<void> {
-  if (closed || props.item.type === 'image') return
-  if (!force && Date.now() - savedAt < 8000) return
-  const position: number = props.item.type === 'video' ? video.value?.currentTime || 0 : currentPosition.value
-  const total: number = props.item.type === 'video' ? video.value?.duration || props.item.duration : totalPosition.value
-  if (!Number.isFinite(total) || total <= 0) return
-  savedAt = Date.now()
-  try {
-    await api(`/items/${props.item.id}/progress`, 'PUT', { position, total, locator: isEpub.value ? currentLocator : '' })
-    saveFailure.value = ''
-    emit('updated')
-  } catch (error: unknown) { saveFailure.value = `进度暂未同步：${errorMessage(error)}` }
+/** 已完成恢复的播放或阅读进度快照。 */
+interface ProgressSnapshot {
+  /** 当前秒数、页码或段落位置。 */ position: number
+  /** 总时长、页数或段落数。 */ total: number
+  /** 电子书定位信息。 */ locator: string
 }
 
-/** 获取当前页面的进度快照，关闭页面时使用 keepalive 尽力提交。 */
-function flushProgress(): void {
-  const position: number = props.item.type === 'video' ? video.value?.currentTime || 0 : currentPosition.value
-  const total: number = props.item.type === 'video' ? video.value?.duration || props.item.duration : totalPosition.value
-  if (props.item.type !== 'image' && Number.isFinite(total) && total > 0) {
-    void fetch(`/api/items/${props.item.id}/progress`, { method: 'PUT', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ position, total, locator: isEpub.value ? currentLocator : '' }), keepalive: true }).catch((): void => { console.warn('退出时进度同步失败，将保留最近一次已保存进度') })
+/** 合并后的下一次进度提交，最多保留一个待写快照。 */
+interface QueuedProgress {
+  /** 最新有效的播放或阅读位置。 */ snapshot: ProgressSnapshot
+  /** 是否允许在页面退出后继续传输。 */ keepalive: boolean
+}
+
+/** 取得有效位置，媒体尚未恢复或正在跳转时保留服务端旧进度。 */
+function progressSnapshot(): ProgressSnapshot | null {
+  if (props.item.type === 'image') return null
+  const player: HTMLMediaElement | null = media.value
+  if (isPlayback.value && (!player || !mediaRestored || player.readyState < 1 || player.seeking)) return null
+  const position: number = isPlayback.value ? player?.currentTime ?? 0 : currentPosition.value
+  const total: number = isPlayback.value ? player?.duration ?? 0 : totalPosition.value
+  if (!Number.isFinite(position) || position < 0 || !Number.isFinite(total) || total <= 0) return null
+  return { position, total, locator: isEpub.value ? currentLocator : '' }
+}
+
+/** 提交一个快照并限制等待时间，页面退出只做尽力同步。 */
+async function writeProgress(snapshot: ProgressSnapshot, keepalive: boolean): Promise<void> {
+  try {
+    // 保存最多等待四秒，避免网络故障让播放器关闭长期阻塞。
+    if (keepalive) {
+      const response: Response = await fetch(`/api/items/${props.item.id}/progress`, { method: 'PUT', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(snapshot), keepalive: true, signal: AbortSignal.timeout(4000) })
+      if (response.status === 401) window.dispatchEvent(new Event('session-expired'))
+      if (!response.ok) throw new Error('服务器暂时无法保存进度')
+    } else {
+      await api(`/items/${props.item.id}/progress`, 'PUT', snapshot, AbortSignal.timeout(4000))
+    }
+    saveFailure.value = ''
+    emit('updated')
+  } catch (error: unknown) {
+    saveFailure.value = `进度暂未同步：${errorMessage(error)}`
+    console.warn('播放或阅读进度同步失败，将保留最近一次已保存进度')
   }
 }
 
-/** 关闭阅读器，先释放视频网络请求，再恢复原列表。 */
-function closeReader(): void {
-  flushProgress()
+/** 顺序消费最新快照，快速跳转时合并中间位置，保持有界队列。 */
+async function drainProgress(): Promise<void> {
+  try {
+    while (queuedProgress) {
+      const next: QueuedProgress = queuedProgress
+      queuedProgress = null
+      await writeProgress(next.snapshot, next.keepalive)
+    }
+  } finally { pendingProgress = null }
+}
+
+/** 安排最新位置，正常关闭时等待在途写入及最终一次写入完成。 */
+function enqueueProgress(snapshot: ProgressSnapshot, keepalive: boolean = false): Promise<void> {
+  queuedProgress = { snapshot, keepalive }
+  if (!pendingProgress) pendingProgress = drainProgress()
+  return pendingProgress
+}
+
+/** 合并频繁事件并保存阅读状态，用户关闭时另行强制写入。 */
+async function saveProgress(force: boolean = false): Promise<void> {
+  if (closed || (!force && Date.now() - savedAt < 8000)) return
+  const snapshot: ProgressSnapshot | null = progressSnapshot()
+  if (!snapshot) return
+  savedAt = Date.now()
+  await enqueueProgress(snapshot)
+}
+
+/** 关闭页面时使用 keepalive 尽力提交有效的最终位置。 */
+function flushProgress(): void {
+  if (closed) return
+  const snapshot: ProgressSnapshot | null = progressSnapshot()
+  if (!snapshot) return
+  // 卸载时必须立即发起 keepalive，不能等旧请求的 Promise 回调才开始发送。
+  if (pendingProgress) queuedProgress = { snapshot, keepalive: true }
+  void writeProgress(snapshot, true)
+}
+
+/** 关闭阅读器时先释放连接，再同步最终位置并恢复原列表。 */
+async function closeReader(): Promise<void> {
+  if (closed) return
+  const snapshot: ProgressSnapshot | null = progressSnapshot()
   closed = true
+  closing.value = true
   releaseMedia()
+  if (snapshot) await enqueueProgress(snapshot, true)
   emit('close')
 }
 
@@ -95,6 +162,7 @@ function releaseMedia(): void {
   controller.abort()
   observer?.disconnect()
   if (video.value) { video.value.pause(); video.value.removeAttribute('src'); video.value.load() }
+  if (audio.value) { audio.value.pause(); audio.value.removeAttribute('src'); audio.value.load() }
   rendition?.destroy()
   epubBook?.destroy()
   rendition = null
@@ -258,19 +326,33 @@ async function turnPage(delta: number): Promise<void> {
   else await jumpParagraph(textStart.value + delta * 80)
 }
 
-/** 视频元信息到达后只恢复一次进度，避免拖动时重复回跳。 */
-function restoreVideo(): void {
-  if (!video.value || videoRestored) return
-  videoRestored = true
+/** 音视频元信息到达后只恢复一次进度，避免拖动时重复回跳。 */
+function restoreMedia(): void {
+  const player: HTMLMediaElement | null = media.value
+  if (closed || !player || !Number.isFinite(player.duration) || player.duration <= 0) return
+  playbackDuration.value = player.duration
+  if (mediaRestored) return
   const previous: number = props.item.progress?.position || 0
-  if (previous > 0 && previous < video.value.duration - 2) video.value.currentTime = previous
-  videoStatus.value = '原画直放 · 按需读取'
+  if (previous > 0 && previous < player.duration - 0.25) player.currentTime = previous
+  // 跳转完成前 progressSnapshot 会拒绝写入，避免网络较慢时把旧进度覆盖为零。
+  mediaRestored = true
+  mediaStatus.value = props.item.type === 'music' ? '原音直放 · 按需读取' : '原画直放 · 按需读取'
 }
 
 /** 显示真实浏览器播放错误，不承诺不存在的转码能力。 */
-function videoError(): void {
-  failure.value = '当前浏览器无法播放此视频，或文件暂不可读。首版使用原画直放，不含转码。可下载后用兼容播放器打开，或将副本转为 H.264/AAC MP4。'
-  videoStatus.value = '播放失败'
+function mediaError(): void {
+  if (closed) return
+  failure.value = props.item.type === 'music' ? '当前浏览器无法播放此音频，或文件暂不可读。音乐使用原音直放，暂不含转码。可下载后用兼容播放器打开，或将副本转为 MP3 / AAC。' : '当前浏览器无法播放此视频，或文件暂不可读。首版使用原画直放，不含转码。可下载后用兼容播放器打开，或将副本转为 H.264/AAC MP4。'
+  mediaStatus.value = '播放失败'
+}
+
+/** 重新读取音视频源，保留正常的鉴权与浏览器按需请求流程。 */
+function retryMedia(): void {
+  if (closed) return
+  failure.value = ''
+  mediaRestored = false
+  mediaStatus.value = '正在重新连接…'
+  media.value?.load()
 }
 
 /** 同一图片列表内切换，保持原列表上下文。 */
@@ -282,7 +364,7 @@ function adjacentImage(delta: number): void {
 /** 提供翻页键盘操作，输入字段不拦截默认行为。 */
 function onKey(event: KeyboardEvent): void {
   if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLTextAreaElement || event.altKey || event.ctrlKey || event.metaKey) return
-  if (props.item.type === 'video') return
+  if (isPlayback.value) return
   if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
     event.preventDefault()
     const delta: number = event.key === 'ArrowRight' ? 1 : -1
@@ -301,6 +383,7 @@ watch(comicMode, (): void => { void jumpPage(pageIndex.value) })
 onMounted((): void => {
   document.addEventListener('keydown', onKey)
   window.addEventListener('pagehide', flushProgress)
+  if (props.item.type === 'music') console.info('音乐播放器已打开，使用鉴权按需读取')
   if (props.item.type === 'comic' || props.item.type === 'novel') void loadReadingData()
 })
 onBeforeUnmount((): void => {
@@ -315,11 +398,14 @@ onBeforeUnmount((): void => {
 <template>
   <DialogShell :title="`${typeLabels[item.type]}：${item.title}`" fullscreen hide-header @close="closeReader">
     <div class="reader-shell" :class="[{ 'reader-paper': paper && item.type === 'novel' }, `reader-${item.type}`]">
-      <header class="reader-header"><button class="icon-button" aria-label="关闭阅读器，返回内容库" @click="closeReader"><Icon name="back" /></button><div class="reader-title"><span>{{ typeLabels[item.type] }}</span><h2>{{ item.title }}</h2></div><span v-if="item.type === 'video'" class="reader-status">{{ videoStatus }}</span><button class="icon-button" :aria-pressed="showInfo" aria-label="查看文件信息" @click="showInfo = !showInfo"><Icon name="info" /></button><button class="icon-button" aria-label="关闭阅读器" @click="closeReader"><Icon name="close" /></button></header>
+      <header class="reader-header"><button class="icon-button" aria-label="关闭阅读器，返回内容库" @click="closeReader"><Icon name="back" /></button><div class="reader-title"><span>{{ typeLabels[item.type] }}</span><h2>{{ item.title }}</h2></div><span v-if="isPlayback" class="reader-status">{{ mediaStatus }}</span><button class="icon-button" :aria-pressed="showInfo" aria-label="查看文件信息" @click="showInfo = !showInfo"><Icon name="info" /></button><button class="icon-button" aria-label="关闭阅读器" @click="closeReader"><Icon name="close" /></button></header>
       <div v-if="showInfo" class="reader-info"><span>{{ extension(item.relativePath) }} · {{ formatSize(item.size) }}</span><span>{{ item.relativePath }}</span><span v-if="item.type === 'video'">直放使用 HTTP Range，只读取播放需要的区间；编码兼容性和跳转速度取决于原文件与浏览器。</span><a :href="fileUrl" download class="text-button"><Icon name="download" />下载原文件</a></div>
-      <div v-if="failure" class="reader-error error-box" role="alert"><Icon name="warning" /><span>{{ failure }}</span><button v-if="item.type !== 'video'" class="text-button" @click="loadReadingData">重试</button></div>
-      <p v-if="saveFailure" class="reader-save-error" role="status">{{ saveFailure }}</p>
-      <div v-if="item.type === 'video'" class="video-stage"><video ref="video" :src="fileUrl" controls playsinline preload="metadata" :poster="item.coverUrl" @loadedmetadata="restoreVideo" @waiting="videoStatus = '缓冲中…'" @playing="videoStatus = '原画直放 · 按需读取'" @canplay="videoStatus = '原画直放 · 按需读取'" @error="videoError" @timeupdate="saveProgress()" @pause="saveProgress(true)" @seeked="saveProgress(true)" @ended="saveProgress(true)" /><p class="video-help">{{ formatSize(item.size) }}<span>·</span>{{ formatDuration(item.duration) }}<span>·</span>原画直放，退出即释放连接</p></div>
+      <div v-if="failure" class="reader-error error-box" role="alert"><Icon name="warning" /><span>{{ failure }}</span><button class="text-button" @click="isPlayback ? retryMedia() : loadReadingData()">重试</button><a v-if="isPlayback" :href="fileUrl" download class="text-button">下载原文件</a></div>
+      <p v-if="saveFailure" class="reader-save-error" role="status">{{ saveFailure }}</p><p v-if="closing" class="reader-save-error" role="status">正在保存进度…</p>
+      <div v-if="item.type === 'video'" class="video-stage"><video ref="video" :src="fileUrl" controls playsinline preload="metadata" :poster="item.coverUrl" @loadedmetadata="restoreMedia" @durationchange="restoreMedia" @waiting="mediaStatus = '缓冲中…'" @playing="mediaStatus = '原画直放 · 按需读取'" @canplay="mediaStatus = '原画直放 · 按需读取'" @error="mediaError" @timeupdate="saveProgress()" @pause="saveProgress(true)" @seeked="saveProgress(true)" @ended="saveProgress(true)" /><p class="video-help">{{ formatSize(item.size) }}<span>·</span>{{ formatDuration(playbackDuration) }}<span>·</span>原画直放，退出即释放连接</p></div>
+      <section v-else-if="item.type === 'music'" class="music-stage" aria-label="音乐播放器">
+        <div class="music-player"><div class="music-artwork"><img v-if="!artworkFailed" :src="item.coverUrl" :alt="`${item.title} 的封面`" @error="artworkFailed = true" /><div v-else class="music-artwork-fallback" aria-hidden="true"><Icon name="music" :size="72" /></div></div><div class="music-player-copy"><span class="eyebrow">YOUR PRIVATE SOUNDTRACK</span><h3>{{ item.title }}</h3><p class="music-meta">{{ extension(item.relativePath) }}<span>·</span>{{ formatDuration(playbackDuration) }}<span>·</span>{{ formatSize(item.size) }}</p><audio ref="audio" :src="fileUrl" :aria-label="`播放音乐：${item.title}`" controls preload="metadata" @loadedmetadata="restoreMedia" @durationchange="restoreMedia" @waiting="mediaStatus = '缓冲中…'" @playing="mediaStatus = '原音直放 · 按需读取'" @canplay="mediaStatus = '原音直放 · 按需读取'" @error="mediaError" @timeupdate="saveProgress()" @pause="saveProgress(true)" @seeked="saveProgress(true)" @ended="saveProgress(true)" /><p class="music-playback-note" role="status"><Icon name="music" :size="16" />{{ mediaStatus }}</p><p class="field-hint">音乐保存在你的 NAS，按需读取原文件。退出播放器后停止播放，并保存当前进度。</p><a :href="fileUrl" download class="text-button"><Icon name="download" :size="17" />下载原文件</a></div></div>
+      </section>
       <template v-else-if="item.type === 'image'">
         <div class="image-controls"><button class="secondary-button" :disabled="imageIndex <= 0" @click="adjacentImage(-1)"><Icon name="back" />上一张</button><label>缩放<select v-model.number="imageZoom"><option :value="1">适应窗口</option><option :value="1.5">150%</option><option :value="2">200%</option><option :value="3">300%</option></select></label><button class="secondary-button" :disabled="imageIndex < 0 || imageIndex >= (imageItems?.length || 0) - 1" @click="adjacentImage(1)">下一张<Icon name="chevron" /></button></div>
         <div class="image-stage"><img :src="fileUrl" :alt="item.title" :style="{ maxWidth: imageZoom === 1 ? '100%' : 'none', maxHeight: imageZoom === 1 ? '100%' : 'none', width: imageZoom === 1 ? 'auto' : `${imageZoom * 100}%` }" @error="failure = '图片暂时无法读取，请检查挂载和格式。'" /></div>

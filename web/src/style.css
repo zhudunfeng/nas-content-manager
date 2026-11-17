@@ -26,6 +26,10 @@
   --comic-ink: #c7b5eb;
   --novel-tint: #3d302b;
   --novel-ink: #e5bba2;
+  /* 音乐入口与播放器氛围背景，深色主题。 */
+  --music-tint: #293849;
+  /* 音乐入口图标与播放器状态文字，深色主题。 */
+  --music-ink: #accaf1;
   --motion: 160ms;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 14px;
@@ -63,6 +67,10 @@
   --comic-ink: #675384;
   --novel-tint: #f4e8e1;
   --novel-ink: #8b5740;
+  /* 音乐入口与播放器氛围背景，浅色主题。 */
+  --music-tint: #e5edf9;
+  /* 音乐入口图标与播放器状态文字，浅色主题。 */
+  --music-ink: #3f618f;
 }
 
 * { box-sizing: border-box; }
@@ -198,7 +206,7 @@ legend { margin-bottom: 10px; font-weight: 500; }
 .collection-count { color: var(--faint); font-size: 11px; white-space: nowrap; align-self: flex-end; padding-bottom: 4px; }
 .scan-banner { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; padding: 8px 15px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-subtle); font-size: 12px; color: var(--muted); }
 .scan-banner > .text-button { margin-left: auto; white-space: nowrap; font-size: 11px; }
-.type-shortcuts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 38px; }
+.type-shortcuts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin-bottom: 38px; }
 .type-shortcuts > button { display: flex; align-items: center; padding: 19px 20px; gap: 13px; border-radius: 11px; border: 1px solid var(--line); background: var(--surface); text-align: left; min-width: 0; }
 .type-shortcuts > button:hover { border-color: var(--border); background: var(--surface-hover); }
 .type-shortcuts > button > span:not(.shortcut-icon) { font-size: 13px; font-weight: 600; flex: 1; color: var(--text); }
@@ -209,6 +217,7 @@ legend { margin-bottom: 10px; font-weight: 500; }
 .shortcut-image .shortcut-icon, .library-icon.shortcut-image { background: var(--image-tint); color: var(--image-ink); }
 .shortcut-comic .shortcut-icon, .library-icon.shortcut-comic { background: var(--comic-tint); color: var(--comic-ink); }
 .shortcut-novel .shortcut-icon, .library-icon.shortcut-novel { background: var(--novel-tint); color: var(--novel-ink); }
+.shortcut-music .shortcut-icon, .library-icon.shortcut-music { background: var(--music-tint); color: var(--music-ink); }
 .shelf { margin-bottom: 38px; }
 .section-heading, .content-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 21px; }
 .section-heading h2, .content-toolbar h2 { font-size: 17px; font-weight: 600; }
@@ -241,6 +250,7 @@ legend { margin-bottom: 10px; font-weight: 500; }
 .card-progress > span { display: block; width: var(--progress); height: 100%; background: var(--accent); }
 .wide .cover-button { aspect-ratio: 16 / 9; }
 .media-image .cover-button, .photo-grid .cover-button { aspect-ratio: 4 / 3; }
+.media-music .cover-button { aspect-ratio: 1; }
 .photo-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
 .book-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .skeleton-card > div { aspect-ratio: 2 / 2.8; border-radius: 10px; background: var(--surface); }
@@ -321,7 +331,7 @@ legend { margin-bottom: 10px; font-weight: 500; }
 .library-form { padding: 26px; display: flex; flex-direction: column; gap: 23px; }
 .library-form > .muted { font-size: 12px; }
 .library-form label, .library-form legend, .field-heading { font-size: 12px; }
-.type-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.type-picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
 .type-picker button { display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--border); background: var(--surface-subtle); border-radius: 8px; padding: 12px 8px; color: var(--muted); min-height: 48px; font-size: 12px; }
 .type-picker button.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .field-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: -14px; }
@@ -340,6 +350,17 @@ legend { margin-bottom: 10px; font-weight: 500; }
 .detail-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 30px; padding: 30px; }
 .detail-cover { border-radius: 9px; overflow: hidden; align-self: start; background: var(--surface-subtle); aspect-ratio: 2 / 3; }
 .detail-cover img { width: 100%; height: 100%; object-fit: cover; }
+.music-detail-cover { aspect-ratio: 1; }
+
+/* 更多导航沿用原生模态框的焦点约束，手机主导航始终不超过五项。 */
+.more-navigation { padding: 22px; }
+.more-content-types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.more-content-types > button { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 86px; gap: 12px; padding: 12px; background: var(--surface-subtle); color: var(--muted); border: 1px solid var(--border); border-radius: 9px; }
+.more-content-types > button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.more-content-types > button:hover, .more-management > button:hover { background: var(--surface-hover); }
+.more-management { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--line); margin-top: 22px; padding-top: 15px; }
+.more-management > button { display: flex; align-items: center; gap: 13px; min-height: 48px; padding: 12px; border: 0; border-radius: 8px; background: none; color: var(--muted); text-align: left; }
+.more-management > button > span { flex: 1; }
 .detail-copy h3 { font-size: 24px; margin: 12px 0 16px; }
 .detail-copy > .muted { font-size: 12px; }
 .detail-progress { font-size: 12px; color: var(--accent); margin-top: 13px; }
@@ -373,6 +394,20 @@ legend { margin-bottom: 10px; font-weight: 500; }
 .video-stage { flex: 1; min-height: 0; background: #080b0e; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
 .video-stage video { width: 100%; max-height: calc(100% - 42px); flex: 1; min-height: 0; background: #080b0e; }
 .video-help { margin-top: 18px; font-size: 10px; color: #a4aebc; text-align: center; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+
+/* 音乐播放器直接交给浏览器处理字节请求，不创建整文件下载缓存。 */
+.music-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: safe center; justify-content: center; padding: 44px; background: radial-gradient(ellipse at top, var(--music-tint), transparent 70%); }
+.music-player { display: grid; grid-template-columns: minmax(180px, 300px) minmax(0, 430px); align-items: center; gap: 48px; width: min(100%, 820px); margin-block: auto; }
+.music-artwork { aspect-ratio: 1; overflow: hidden; border-radius: 14px; background: var(--music-tint); box-shadow: var(--shadow); border: 1px solid var(--border); }
+.music-artwork > img { width: 100%; height: 100%; object-fit: cover; }
+.music-artwork-fallback { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: var(--music-ink); }
+.music-player-copy { min-width: 0; }
+.music-player-copy > h3 { margin-top: 12px; font-size: clamp(24px, 3vw, 34px); line-height: 1.5; }
+.music-meta { color: var(--muted); margin: 15px 0 28px; display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; }
+.music-player audio { display: block; width: 100%; max-width: 100%; min-width: 0; height: 54px; }
+.music-playback-note { display: flex; align-items: center; gap: 8px; color: var(--music-ink); font-size: 12px; margin: 22px 0 12px; }
+.music-player-copy > .field-hint { max-width: 390px; }
+.music-player-copy > .text-button { margin-top: 14px; font-size: 12px; }
 .image-controls { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 15px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
 .image-controls > label { display: flex; align-items: center; flex-direction: row; gap: 10px; color: var(--muted); font-size: 11px; }
 .image-controls select { font-size: 11px; }
@@ -437,7 +472,7 @@ legend { margin-bottom: 10px; font-weight: 500; }
   .sidebar-bottom { width: 100%; }
   .profile-row { justify-content: center; padding: 20px 0 0; }
   .main-column { margin-left: 84px; width: calc(100% - 84px); }
-  .type-shortcuts { grid-template-columns: repeat(4, 1fr); }
+  .type-shortcuts { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .type-shortcuts > button { padding: 15px 10px; gap: 8px; }
   .shortcut-icon { width: 32px; }
   .shortcut-icon > svg { width: 20px; height: 20px; }
@@ -477,6 +512,7 @@ legend { margin-bottom: 10px; font-weight: 500; }
   .collection-count { display: none; }
   .page-heading > .secondary-button { font-size: 11px; padding: 9px 13px; }
   .type-shortcuts { grid-template-columns: repeat(2, 1fr); gap: 11px; margin-bottom: 31px; }
+  .type-shortcuts > button:last-child { grid-column: 1 / -1; }
   .type-shortcuts > button { padding: 15px 14px; gap: 13px; }
   .type-shortcuts small { font-size: 10px; }
   .shortcut-icon { width: 38px; height: 41px; }
@@ -583,6 +619,11 @@ legend { margin-bottom: 10px; font-weight: 500; }
   .reader-error > svg { display: none; }
   .reader-save-error { font-size: 10px; padding: 6px 15px; }
   .video-stage { padding: 12px; }
+  .music-stage { padding: 26px 24px 34px; }
+  .music-player { grid-template-columns: minmax(0, 1fr); width: min(100%, 430px); gap: 27px; }
+  .music-artwork { width: min(250px, 70vw); justify-self: center; }
+  .music-player-copy > h3 { font-size: 25px; }
+  .music-meta { margin-block: 11px 24px; }
   .video-help { font-size: 9px; gap: 8px; }
   .image-controls { padding: 9px 10px; gap: 8px; }
   .image-controls > .secondary-button { padding: 9px; font-size: 10px; gap: 4px; }

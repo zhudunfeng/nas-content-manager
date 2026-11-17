@@ -17,8 +17,9 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 - Use Vue composition state and computed values; no extra global state framework in v1. Keep server state authoritative, requery after mutation, and persist personal state through APIs.
 - `ApiError.status === 401` dispatches `session-expired`. Auth failure returns to login; never silently keep a dead session displayed as active.
 - Abort superseded list/reader requests, debounce search, preserve the list position when closing a reader, and clear timers/observers/media on unmount.
-- Native video uses `/api/items/{id}/file`, `preload=metadata`, and direct browser byte requests. It must never fetch the whole movie into Blob/ArrayBuffer.
-- Video uses seconds, comics zero-based pages, TXT zero-based paragraphs, and EPUB CFI in `Progress.locator`. Preserve these units across UI/API.
+- Native video/audio use `/api/items/{id}/file`, `preload=metadata`, and direct browser byte requests. Never fetch full audio/video into Blob/ArrayBuffer. Music uses the shared Item `duration` and optional cover; format support is determined by the browser.
+- Video/music use seconds, comics zero-based pages, TXT zero-based paragraphs, and EPUB CFI in `Progress.locator`. Preserve these units across UI/API. Media progress must not be written before metadata restoration is complete; early close/error cannot overwrite a saved position with zero. Closing must pause, clear src, and release the player.
+- Normal progress saves allow one in-flight request and one latest pending snapshot; merge intermediate positions instead of accumulating a Promise per event. Each write has a four-second timeout. Close releases the media immediately, then awaits the in-flight and latest final save. `pagehide` starts a keepalive request immediately, without waiting for the queue; unloading remains best effort, without a server-side ordering or delivery guarantee.
 - EPUB uses a dynamic local import, scripts disabled, sanitized sections, restrictive CSP, and archive preflight limits: 64 MiB download, 5000 entries, 32 MiB/entry, 256 MiB expanded total. No untrusted content may request application endpoints or remote resources.
 - ZIP preflight selects the last EOCD signature and requires its comment to end at EOF, both disk numbers to be zero, both entry counts to agree without ZIP64 sentinels, and `centralOffset + centralSize === eocdOffset`. Walk the actual directory byte boundary, not the untrusted declared count; check each record boundary, actual count, encryption/size limits, and non-overlapping local header/data ranges before JSZip.
 - `fetchEpub` awaits native streaming inflation of every entry before JSZip. Count actual bytes against the declared, per-entry and aggregate limits without retaining expanded output; feed at most 1 KiB compressed chunks, yield and propagate cancellation. A browser without safe raw-DEFLATE streaming gets an explicit unsupported message, with no unbounded fallback. JSZip only checks size mismatch after emitting output and cannot provide this resource boundary alone.
@@ -28,7 +29,7 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 - Directory browsing aborts the previous request and only accepts the latest request result; disable submission while it loads.
 - Use text interpolation for titles/TXT; never `v-html` raw content. Media URLs come from the same-origin backend.
 - Theme values live in semantic CSS variables. Dark graphite/teal and light neutral/teal; system fonts and SVG icons are local. Respect reduced motion and visible focus.
-- Desktop has sidebar/global search; mobile has at most five primary bottom entries. Readers are immersive, maintain usable touch controls, and do not leave background scroll unlocked.
+- Desktop has sidebar/global search; mobile has at most five primary bottom entries (home/video/music/image/more). The native More dialog exposes all content types and management with focus restoration. Music cards/artwork are square, keeping the existing semantic theme and local icons. Readers are immersive, maintain usable touch controls, and do not leave background scroll unlocked.
 - Empty/loading/errors are distinct, with explicit actions. Do not create fake records to make a new library look populated.
 
 ## 4. Validation & Error Matrix
@@ -53,8 +54,8 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 ## 6. Tests Required
 
 - Strict vue-tsc and production Vite build.
-- Browser workflow for initial setup/login, directory browser, all four readers, favorites/tags, jobs, settings/backup, logout.
-- Save/reopen progress for video/comic/TXT/EPUB; check request errors and console output.
+- Browser workflow for initial setup/login, directory browser, all five content types, favorites/tags, jobs, settings/backup, logout.
+- Save/reopen progress for video/music/comic/TXT/EPUB; check request errors and console output. Music additionally needs early-close/error without losing progress, direct byte requests, no audio src after close, and reachable mobile More entries. Delay progress responses to assert one normal in-flight write, coalescing to the latest seek position, immediate source release on close, and immediate keepalive dispatch during pagehide.
 - EPUB regressions cover a valid book, 5001 actual entries with EOCD counts forged to 1, truncated directory records, ZIP64/split/encrypted archives, invalid local offsets, declared/actual expansion budgets, abort, and download HTTP 401. JSZip tolerates mismatched directory counts, so a successful library parse is not sufficient validation.
 - At widths 375/768/1024/1440 inspect overflow, navigation, modal sizing, large/long titles, touch controls, light/dark themes, visible keyboard focus, and reduced motion.
 - Check that opening video triggers Range streaming, not a whole-file fetch, and closing removes the source.

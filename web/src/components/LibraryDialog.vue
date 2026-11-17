@@ -70,6 +70,7 @@ onBeforeUnmount((): void => { controller?.abort() })
       </div>
       <p class="field-hint">当前选择：{{ path || '尚未选择目录' }}。网页只能访问部署时授权的挂载。</p>
       <p v-if="type === 'comic'" class="field-hint">支持 CBZ 和图片文件夹；每个包含图片的目录会作为一册漫画，页码按文件名自然排序。</p>
+      <p v-if="type === 'music'" class="field-hint">支持 MP3、M4A、AAC、FLAC、OGG、OPUS、WAV 与 AIF/AIFF。后台提取时长和内嵌封面；播放兼容性取决于浏览器，暂不含转码。</p>
       <p v-if="error" class="error-box" role="alert">{{ error }}</p>
       <div class="dialog-actions"><button class="secondary-button" type="button" @click="emit('close')">取消</button><button class="primary-button" :disabled="saving || loading || !path || !name.trim()" type="submit"><Icon name="plus" />{{ saving ? '正在添加…' : '添加并扫描' }}</button></div>
     </form>

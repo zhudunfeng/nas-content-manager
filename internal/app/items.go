@@ -245,7 +245,7 @@ func (a *App) progress(w http.ResponseWriter, r *http.Request) {
 
 // stats 返回内容总量与原文件大小，避免误报 NAS 可用磁盘空间。
 func (a *App) stats(w http.ResponseWriter, r *http.Request) {
-	result := map[string]int64{"total": 0, "video": 0, "image": 0, "comic": 0, "novel": 0, "totalSize": 0}
+	result := map[string]int64{"total": 0, "video": 0, "image": 0, "comic": 0, "novel": 0, "music": 0, "totalSize": 0}
 	rows, err := a.db.QueryContext(r.Context(), "SELECT type,count(*),coalesce(sum(size),0) FROM items GROUP BY type")
 	if err != nil {
 		fail(w, 500, "无法读取内容统计")

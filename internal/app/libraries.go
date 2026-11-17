@@ -20,7 +20,7 @@ type browseEntry struct {
 
 // validType 检查媒体库类型是否属于首版支持范围。
 func validType(value string) bool {
-	return value == "video" || value == "image" || value == "comic" || value == "novel"
+	return value == "video" || value == "image" || value == "comic" || value == "novel" || value == "music"
 }
 
 // within 判断规范化路径是否位于给定根目录内。
