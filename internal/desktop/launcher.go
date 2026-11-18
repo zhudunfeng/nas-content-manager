@@ -267,7 +267,7 @@ func (c *controller) run(ctx context.Context) error {
 	var lastErr error
 	start := func() {
 		lastErr = c.start(ctx)
-		if errors.Is(lastErr, context.Canceled) && ctx.Err() != nil {
+		if cancellationOnly(lastErr) && ctx.Err() != nil {
 			lastErr = nil
 			return
 		}
@@ -285,13 +285,12 @@ func (c *controller) run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			if err := c.stop(); err != nil {
-				return err
-			}
-			return lastErr
+			return errors.Join(lastErr, c.stop())
 		case command := <-c.commands:
 			if err := c.stop(); err != nil {
+				lastErr = err
 				c.setState("failed", "", err)
+				c.logger.Error("本机服务未能完整停止，已拒绝重启", "error", err)
 				continue
 			}
 			if command.Kind == "docker-stop" {
@@ -318,8 +317,10 @@ func (c *controller) run(ctx context.Context) error {
 		case err := <-c.serviceDone:
 			c.serviceDone = nil
 			if ctx.Err() != nil {
-				_ = c.stop()
-				return lastErr
+				if cancellationOnly(err) {
+					err = nil
+				}
+				return errors.Join(lastErr, err, c.stop())
 			}
 			if err == nil {
 				err = errors.New("服务意外停止，请查看日志后重新启动")
@@ -334,6 +335,30 @@ func (c *controller) run(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+// cancellationOnly 仅识别全部叶子均为正常取消的错误，不能掩盖同时发生的资源清理失败。
+func cancellationOnly(err error) bool {
+	if err == context.Canceled {
+		return true
+	}
+	if joined, ok := err.(interface{ Unwrap() []error }); ok {
+		found := false
+		for _, child := range joined.Unwrap() {
+			if child == nil {
+				continue
+			}
+			if !cancellationOnly(child) {
+				return false
+			}
+			found = true
+		}
+		return found
+	}
+	if wrapped, ok := err.(interface{ Unwrap() error }); ok {
+		return cancellationOnly(wrapped.Unwrap())
+	}
+	return false
 }
 
 // start 将桌面配置交给共享核心校验，真实健康与网页就绪后才发布地址。
@@ -383,8 +408,7 @@ func (c *controller) start(ctx context.Context) error {
 	case address := <-ready:
 		url := "http://" + address
 		if err = verifyReady(serviceCtx, url); err != nil {
-			_ = c.stop()
-			return err
+			return errors.Join(err, c.stop())
 		}
 		c.setState("ready", url, nil)
 		c.logger.Info("本机媒体库已就绪", "模式", "原生媒体", "地址", url)
@@ -397,15 +421,16 @@ func (c *controller) start(ctx context.Context) error {
 		cancel()
 		_ = listener.Close()
 		if err == nil {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
 			err = errors.New("服务在就绪前已停止")
 		}
 		return err
 	case <-ctx.Done():
-		_ = c.stop()
-		return ctx.Err()
+		return errors.Join(ctx.Err(), c.stop())
 	case <-time.After(45 * time.Second):
-		_ = c.stop()
-		return errors.New("服务启动超时，请检查日志、数据目录权限与工具文件")
+		return errors.Join(errors.New("服务启动超时，请检查日志、数据目录权限与工具文件"), c.stop())
 	}
 }
 
@@ -421,7 +446,7 @@ func (c *controller) stop() error {
 		case err := <-c.serviceDone:
 			c.serviceDone = nil
 			c.serviceCancel = nil
-			if err != nil && !errors.Is(err, context.Canceled) {
+			if err != nil && !cancellationOnly(err) {
 				return err
 			}
 		case <-time.After(30 * time.Second):
@@ -444,11 +469,17 @@ func verifyReady(ctx context.Context, address string) error {
 		}
 		res, err := client.Do(req)
 		if err != nil {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
 			return errors.New("本机服务尚未通过真实就绪检查")
 		}
 		data, readErr := io.ReadAll(io.LimitReader(res.Body, 512<<10))
 		_ = res.Body.Close()
 		if readErr != nil || res.StatusCode != http.StatusOK {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
 			return errors.New("本机健康或网页入口未就绪，请检查日志和资源包")
 		}
 		if path == "/healthz" {

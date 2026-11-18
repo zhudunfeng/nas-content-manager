@@ -318,6 +318,12 @@ func showTrayMenu(window uintptr) {
 	user32.NewProc("SetForegroundWindow").Call(window)
 	command, _, _ := user32.NewProc("TrackPopupMenu").Call(menu, 0x100|0x2, uintptr(point.X), uintptr(point.Y), 0, window, 0)
 	postMessage.Call(window, 0, 0, 0)
+	dispatchTrayCommand(window, c, command)
+}
+
+// dispatchTrayCommand 统一执行原生菜单选择，退出动作与本机 IPC 共用启动器取消链。
+func dispatchTrayCommand(window uintptr, c *controller, command uintptr) {
+	cfg, _ := c.snapshot()
 	switch {
 	case command == 1:
 		go c.openPage()

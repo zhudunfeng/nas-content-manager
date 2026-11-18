@@ -9,11 +9,15 @@ if __name__ == "__main__":
     sys.dont_write_bytecode = True
 
 import argparse
+import ctypes
+from ctypes import wintypes
+import hashlib
 import http.cookiejar
 import json
 import os
 from pathlib import Path
 import socket
+import shutil
 import subprocess
 import tempfile
 import time
@@ -21,7 +25,7 @@ from typing import Any
 import urllib.parse
 import urllib.request
 
-from verify import generate_password
+from verify import generate_password, make_sparse_video
 
 
 def execute(binary: Path, arguments: list[str], environment: dict[str, str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -61,6 +65,112 @@ def request(opener: urllib.request.OpenerDirector, base: str, path: str, body: d
         return response.status, response.read(1 << 20)
 
 
+def assert_exclusive(path: Path, available: bool = True) -> None:
+    """用 Windows 零共享读写句柄验证本轮样本文件占用，绝不修改文件内容。"""
+    assert path.is_file(), f"文件释放检查目标不存在：{path.name}"
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    create_file = kernel.CreateFileW
+    create_file.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    create_file.restype = wintypes.HANDLE
+    close_handle = kernel.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+    # GENERIC_READ|GENERIC_WRITE、零共享、OPEN_EXISTING：现有读句柄或映像占用均不能假报释放。
+    handle = create_file(str(path), 0xC0000000, 0, None, 3, 0x80, None)
+    if handle == wintypes.HANDLE(-1).value:
+        error = ctypes.get_last_error()
+        assert not available and error in (32, 33), f"文件未完全释放：{path.name}，Windows 错误 {error}"
+        return
+    assert close_handle(handle), f"验证句柄关闭失败：{path.name}"
+    assert available, f"慢流验证未建立持续文件占用：{path.name}"
+
+
+def wait_item(opener: urllib.request.OpenerDirector, base: str, library_id: int, name: str) -> int:
+    """等待本轮小说库扫描结果，失败时给出任务状态而不读取用户数据。"""
+    deadline = time.monotonic() + 20
+    while time.monotonic() < deadline:
+        _, payload = request(opener, base, f"/api/items?libraryId={library_id}")
+        for item in json.loads(payload)["items"]:
+            if item["title"] == name:
+                return int(item["id"])
+        time.sleep(0.1)
+    _, payload = request(opener, base, "/api/jobs")
+    raise AssertionError(f"等待隔离文件索引超时：{payload.decode('utf-8')[:1500]}")
+
+
+def start_slow_stream(base: str, item_id: int, jar: http.cookiejar.CookieJar, length: int) -> socket.socket:
+    """建立认证的大文件慢读连接，保留小接收窗口使服务退出时仍有活动请求。"""
+    address = urllib.parse.urlparse(base)
+    cookie_request = urllib.request.Request(f"{base}/api/items/{item_id}/file")
+    jar.add_cookie_header(cookie_request)
+    stream = socket.create_connection((str(address.hostname), int(address.port or 80)), timeout=5)
+    try:
+        stream.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024)
+        cookie = cookie_request.get_header("Cookie", "")
+        message = f"GET /api/items/{item_id}/file HTTP/1.1\r\nHost: {address.netloc}\r\nCookie: {cookie}\r\nConnection: keep-alive\r\n\r\n"
+        stream.sendall(message.encode("ascii"))
+        headers = b""
+        while b"\r\n\r\n" not in headers:
+            part = stream.recv(1024)
+            assert part, "大文件响应在返回头部前已关闭"
+            headers += part
+            assert len(headers) <= 32 << 10, "大文件响应头超出预算"
+        header = headers.split(b"\r\n\r\n", 1)[0].lower()
+        assert header.startswith(b"http/1.1 200 ") and f"content-length: {length}".encode() in header
+        return stream
+    except BaseException:
+        stream.close()
+        raise
+
+
+def assert_sparse_source(path: Path, length: int) -> None:
+    """核对稀疏源长度与三个边界标记，避免只验证原文而漏掉慢流文件被改写。"""
+    assert path.stat().st_size == length, "退出流程改写了稀疏源文件长度"
+    with path.open("rb") as source:
+        for offset in (0, 4 * 1024 ** 3 + 17, length - 64):
+            source.seek(offset)
+            assert source.read(64) == bytes(range(64)), f"退出流程改写了稀疏源文件标记：{offset}"
+
+
+def file_digest(path: Path) -> str:
+    """以流式 SHA-256 固定启动前构建产物摘要，验证原位覆盖保留完整可执行内容。"""
+    with path.open("rb") as source:
+        return hashlib.file_digest(source, "sha256").hexdigest()
+
+
+def assert_released(binary: Path, source_binary: Path, expected_digest: str, profile: Path, data_dir: Path, media: Path, base: str, environment: dict[str, str], cwd: Path, check_control: bool = True) -> None:
+    """先验证 EXE 原位覆盖与程序目录替换，再检查附加资源；首次退出紧接真实重启。"""
+    # 必须先检查文件；不存在的 IPC 查询会等待五秒，不能让该延时掩盖退出后的句柄残留。
+    files = [binary, media, data_dir / "library.db", data_dir / ".nas-instance.lock", profile / "logs" / "desktop.log"]
+    files.extend(sorted(path for path in data_dir.glob("library.db-*") if path.is_file()))
+    for path in files:
+        assert_exclusive(path)
+        moved = path.with_name(path.name + ".exit-check")
+        assert not moved.exists()
+        path.rename(moved)
+        moved.rename(path)
+        if path == binary:
+            # 在原有 EXE 路径实际写入构建产物，不能只以读写句柄或改名推断更新可用。
+            shutil.copyfile(source_binary, binary)
+            assert file_digest(binary) == expected_digest, "退出后原位覆盖的 EXE 与启动前构建产物不一致"
+            program_directory = binary.parent
+            moved_directory = program_directory.with_name(program_directory.name + ".exit-check")
+            assert not moved_directory.exists()
+            program_directory.rename(moved_directory)
+            moved_directory.rename(program_directory)
+    address = urllib.parse.urlparse(base)
+    try:
+        connection = socket.create_connection((str(address.hostname), int(address.port or 80)), timeout=1)
+    except OSError:
+        pass
+    else:
+        connection.close()
+        raise AssertionError("退出后 HTTP 仍接受连接")
+    if check_control:
+        status = execute(binary, ["--headless", "--profile", str(profile), "--control", "status"], environment, cwd)
+        assert status.returncode != 0 and not status.stdout and "未找到可响应的已有实例" in status.stderr, "退出后的 IPC 未明确报告实例已不存在"
+
+
 def main() -> None:
     """验证跨工作目录、实际端口保留、配置恢复、单实例和数据锁，结束后精确回收样本。"""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -68,13 +178,20 @@ def main() -> None:
     parser.add_argument("--web-dir", type=Path, help="仅开发构建使用的显式前端目录；省略时验证包内嵌资源")
     args = parser.parse_args()
     assert os.name == "nt", "此脚本需要真实 Windows；Linux 使用原有 verify.py"
-    binary = args.binary.resolve(strict=True)
+    source_binary = args.binary.resolve(strict=True)
     environment = {key: value for key, value in os.environ.items() if not key.upper().startswith(("NAS_", "ENGINE_", "QBT_", "JACKETT_"))}
     if args.web_dir:
         environment["NAS_WEB_DIR"] = str(args.web_dir.resolve(strict=True))
     processes: list[subprocess.Popen[bytes]] = []
+    exit_durations: list[float] = []
+    slow_stream: socket.socket | None = None
     with tempfile.TemporaryDirectory(prefix="栖库 启动验证 ") as temporary:
         root = Path(temporary)
+        binary = root / "程序 更新验证" / "栖库.exe"
+        binary.parent.mkdir()
+        shutil.copy2(source_binary, binary)
+        expected_digest = file_digest(source_binary)
+        assert file_digest(binary) == expected_digest, "隔离程序副本与原始构建产物不一致"
         profile = root / "profiles" / "native"
         media = root / "中文 资料;音乐"
         foreign = root / "任意 工作目录"
@@ -82,6 +199,9 @@ def main() -> None:
         foreign.mkdir()
         (media / "只读 原文.txt").write_text("启动器验证保留原文。", encoding="utf-8")
         source_before = (media / "只读 原文.txt").read_bytes()
+        # EPUB 后缀仅用于文件流协议样本，不交给阅读器解码，也不启动媒体探测工具。
+        stream_file = media / "超大 慢流.epub"
+        stream_length = make_sparse_video(stream_file)
         occupied = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         occupied.bind(("127.0.0.1", 0))
         preferred = occupied.getsockname()[1]
@@ -118,17 +238,36 @@ def main() -> None:
                 collision = execute(binary, ["--headless", "--no-browser", "--profile", str(root / "second-profile"), "--data-dir", config["dataDir"], "--media-root", str(media)], environment, foreign)
                 assert collision.returncode != 0, "不同 profile 绕过同一 SQLite 数据目录锁"
                 assert json.loads(request(opener, address, "/healthz")[1])["status"] == "ok"
+                _, payload = request(opener, address, "/api/libraries", {"name": "退出慢流验证", "type": "novel", "path": str(media)})
+                library_id = int(json.loads(payload)["library"]["id"])
+                item_id = wait_item(opener, address, library_id, stream_file.stem)
+                slow_stream = start_slow_stream(address, item_id, jar, stream_length)
+                assert_exclusive(stream_file, available=False)
+                started = time.monotonic()
                 control(binary, profile, "quit", environment, foreign)
-                assert process.wait(timeout=30) == 0
+                assert process.wait(timeout=20) == 0
+                exited = time.monotonic()
+                assert_released(binary, source_binary, expected_digest, profile, Path(config["dataDir"]), stream_file, address, environment, foreign, check_control=False)
                 restored = subprocess.Popen([str(binary), "--headless", "--no-browser", "--profile", str(profile)], cwd=foreign, env=environment, stdout=output, stderr=output)
                 processes.append(restored)
+                exit_durations.append(round(exited - started, 3))
+                assert exit_durations[-1] < 8, f"慢读请求导致退出耗尽等待预算：{exit_durations[-1]} 秒"
+                slow_stream.close()
+                slow_stream = None
+                assert_sparse_source(stream_file, stream_length)
                 restored_reply = wait_ready(binary, profile, restored, environment, foreign)
                 assert restored_reply["url"] == address
                 assert json.loads((profile / "desktop.json").read_bytes())["instanceId"] == config["instanceId"]
                 _, payload = request(opener, address, "/api/status")
                 assert json.loads(payload)["setupRequired"] is False, "本机重启丢失已有账号"
+                started = time.monotonic()
                 control(binary, profile, "quit", environment, foreign)
-                assert restored.wait(timeout=30) == 0
+                assert restored.wait(timeout=20) == 0
+                exited = time.monotonic()
+                assert_released(binary, source_binary, expected_digest, profile, Path(config["dataDir"]), stream_file, address, environment, foreign)
+                exit_durations.append(round(exited - started, 3))
+                assert exit_durations[-1] < 8, f"空闲退出超过等待预算：{exit_durations[-1]} 秒"
+                assert_sparse_source(stream_file, stream_length)
                 bad_profile = root / "损坏 配置"
                 bad_profile.mkdir()
                 malformed = '{"schemaVersion":1,"instanceId":"' + "a" * 32 + '","mode":"native","Mode":"docker"}'
@@ -160,12 +299,14 @@ def main() -> None:
                     assert not (invalid_profile / "data" / "library.db").exists(), f"坏配置建立新库：{label}"
                 assert not (foreign / "library.db").exists(), "空数据路径在任意工作目录建立了数据库"
                 assert (media / "只读 原文.txt").read_bytes() == source_before
-                print(json.dumps({"result": "passed", "platform": "windows", "resourceMode": "explicit-web-dir" if args.web_dir else "embedded", "checks": ["中文/空格/分号路径", "任意工作目录", "端口冲突实际避让", "健康与HTML就绪", "真实命名管道", "重复启动", "同数据目录跨profile拒绝", "有序退出", "本机重启配置与账号保留", "重复JSON键拒绝且不覆盖", "保存配置完整字段/null/空相对路径拒绝", "源文件保持"]}, ensure_ascii=False))
+                print(json.dumps({"result": "passed", "platform": "windows", "resourceMode": "explicit-web-dir" if args.web_dir else "embedded", "exitSeconds": exit_durations, "checks": ["中文/空格/分号路径", "任意工作目录", "端口冲突实际避让", "健康与HTML就绪", "真实命名管道", "重复启动", "同数据目录跨profile拒绝", "5GiB稀疏慢流中断与快速退出", "HTTP和IPC关闭", "EXE优先独占打开/原位覆盖/SHA-256校验", "完整程序目录重命名与恢复", "数据库/锁/日志/媒体独占打开与重命名", "空闲退出", "覆盖后立即重启配置与账号保留", "重复JSON键拒绝且不覆盖", "保存配置完整字段/null/空相对路径拒绝", "源文件保持"]}, ensure_ascii=False))
             except BaseException:
                 output.flush()
                 print(log_path.read_text(encoding="utf-8", errors="replace")[-12000:])
                 raise
             finally:
+                if slow_stream is not None:
+                    slow_stream.close()
                 for process in processes:
                     if process.poll() is None:
                         try:

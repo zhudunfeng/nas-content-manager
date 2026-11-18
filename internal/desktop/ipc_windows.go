@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -107,17 +108,40 @@ func pipeReadWrite(ctx context.Context, handle windows.Handle, data []byte, writ
 	}
 	defer windows.CloseHandle(event)
 	overlap := windows.Overlapped{HEvent: event}
-	var count uint32
+	// 内核会在函数调用返回后继续持有地址，必须固定到完成或取消回收之后。
+	var pinned runtime.Pinner
+	pinned.Pin(&overlap)
+	if len(data) > 0 {
+		pinned.Pin(&data[0])
+	}
+	defer pinned.Unpin()
 	if write {
-		err = windows.WriteFile(handle, data, &count, &overlap)
+		err = windows.WriteFile(handle, data, nil, &overlap)
 	} else {
-		err = windows.ReadFile(handle, data, &count, &overlap)
+		err = windows.ReadFile(handle, data, nil, &overlap)
 	}
-	if err == nil {
-		return int(count), nil
-	}
-	count, err = awaitIO(ctx, handle, &overlap, err, 2*time.Second)
+	// 重叠 IO 即使立即完成，也以最终结果确认实际字节数，不能依赖初始 count。
+	count, err := awaitIO(ctx, handle, &overlap, err, 2*time.Second)
 	return int(count), err
+}
+
+// connectControlPipe 固定连接状态至重叠连接完成，避免栈迁移使内核写入失效地址。
+func connectControlPipe(ctx context.Context, handle windows.Handle) error {
+	event, err := windows.CreateEvent(nil, 1, 0, nil)
+	if err != nil {
+		return err
+	}
+	defer windows.CloseHandle(event)
+	overlap := windows.Overlapped{HEvent: event}
+	var pinned runtime.Pinner
+	pinned.Pin(&overlap)
+	defer pinned.Unpin()
+	err = windows.ConnectNamedPipe(handle, &overlap)
+	if errors.Is(err, windows.ERROR_PIPE_CONNECTED) {
+		return nil
+	}
+	_, err = awaitIO(ctx, handle, &overlap, err, 24*time.Hour)
+	return err
 }
 
 // serveControl 预先占有固定管道并拒绝远端与其他用户，仅开放三个固定动作。
@@ -146,18 +170,7 @@ func serveControl(ctx context.Context, profile string, handler func(string) cont
 		handle := first
 		defer windows.CloseHandle(handle)
 		for serveCtx.Err() == nil {
-			event, eventErr := windows.CreateEvent(nil, 1, 0, nil)
-			if eventErr != nil {
-				return
-			}
-			overlap := windows.Overlapped{HEvent: event}
-			connectErr := windows.ConnectNamedPipe(handle, &overlap)
-			if errors.Is(connectErr, windows.ERROR_PIPE_CONNECTED) {
-				connectErr = nil
-			} else if errors.Is(connectErr, windows.ERROR_IO_PENDING) {
-				_, connectErr = awaitIO(serveCtx, handle, &overlap, connectErr, 24*time.Hour)
-			}
-			_ = windows.CloseHandle(event)
+			connectErr := connectControlPipe(serveCtx, handle)
 			if connectErr == nil {
 				request := make([]byte, 257)
 				count, readErr := pipeReadWrite(serveCtx, handle, request, false)
@@ -223,7 +236,10 @@ func sendControl(profile string, action string, timeout time.Duration) (controlR
 	}
 	data := make([]byte, 4097)
 	count, err := pipeReadWrite(ctx, handle, data, false)
-	if err != nil || count == 0 || count > 4096 {
+	if err != nil {
+		return reply, fmt.Errorf("已有实例的控制响应读取失败：%w", err)
+	}
+	if count == 0 || count > 4096 {
 		return reply, errors.New("已有实例返回的控制响应无效")
 	}
 	if decodeStrictJSON(data[:count], &reply) != nil {

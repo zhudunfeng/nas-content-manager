@@ -38,6 +38,7 @@ type App struct {
 	wake          chan struct{}                // 合并任务唤醒通知。
 	wg            sync.WaitGroup               // 等待后台任务退出。
 	cacheMu       sync.Mutex                   // 保证缓存预算检查与发布串行。
+	cleanupErr    error                        // 由 mu 保护的进程树收尾错误，退出时必须如实返回。
 	backupMu      sync.Mutex                   // 一次只生成一个一致性备份。
 	streams       chan struct{}                // 限制并发大文件流数量。
 	readerSlots   chan struct{}                // 限制同时解压漫画或解析文本的请求数。
@@ -67,7 +68,7 @@ type RunOptions struct {
 }
 
 // RunWithOptions 在数据库恢复前取得数据锁，并统一管理 HTTP、工作线程与平台入口生命周期。
-func RunWithOptions(ctx context.Context, config Config, logger *slog.Logger, options RunOptions) error {
+func RunWithOptions(ctx context.Context, config Config, logger *slog.Logger, options RunOptions) (runErr error) {
 	listener := options.Listener
 	defer func() {
 		if listener != nil {
@@ -84,7 +85,7 @@ func RunWithOptions(ctx context.Context, config Config, logger *slog.Logger, opt
 	if err != nil {
 		return err
 	}
-	defer lease.Close()
+	defer func() { runErr = errors.Join(runErr, lease.Close()) }()
 	config.DataDir = dataDir
 	// 先保留真实 listener，绑定失败不能触发数据库迁移或后台任务恢复。
 	if listener == nil {
@@ -106,7 +107,7 @@ func RunWithOptions(ctx context.Context, config Config, logger *slog.Logger, opt
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() { runErr = errors.Join(runErr, db.Close()) }()
 	workCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	a := &App{config: config, db: db, logger: logger, ctx: workCtx, cancels: make(map[int64]context.CancelFunc), loginAttempts: make(map[string]loginAttempt), wake: make(chan struct{}, 1), streams: make(chan struct{}, 16), readerSlots: make(chan struct{}, 4), frontend: frontend}
@@ -124,7 +125,8 @@ func RunWithOptions(ctx context.Context, config Config, logger *slog.Logger, opt
 		}
 		routes.ServeHTTP(w, r)
 	})
-	server := &http.Server{Addr: config.Addr, Handler: handler, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, IdleTimeout: 90 * time.Second, MaxHeaderBytes: 32 << 10}
+	requests := &requestLifecycle{}
+	server := &http.Server{Addr: config.Addr, Handler: requests.wrap(handler), BaseContext: func(net.Listener) context.Context { return workCtx }, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, IdleTimeout: 90 * time.Second, MaxHeaderBytes: 32 << 10}
 	// 不设置全局 WriteTimeout，避免长视频被短响应超时截断。
 	serveDone := make(chan struct{})
 	var serveErr error
@@ -133,16 +135,22 @@ func RunWithOptions(ctx context.Context, config Config, logger *slog.Logger, opt
 		close(serveDone)
 	}()
 	defer func() {
+		logger.Info("正在停止媒体库服务，取消后台任务并释放活动连接")
+		requests.stop()
 		cancel()
-		shutdownCtx, stop := context.WithTimeout(context.Background(), 10*time.Second)
-		defer stop()
-		if shutdownErr := server.Shutdown(shutdownCtx); shutdownErr != nil {
-			logger.Warn("媒体库连接关闭超过等待预算，正在终止连接")
-			_ = server.Close()
+		// 退出不等待超大媒体传输自然结束；关闭本实例连接使阻塞写入立即返回。
+		if closeErr := server.Close(); closeErr != nil {
+			logger.Warn("媒体库连接关闭发生错误", "error", closeErr)
+			runErr = errors.Join(runErr, closeErr)
 		}
 		<-serveDone
+		// Serve 返回不代表 handler 已完成；先等待文件 defer，再关闭数据库和数据锁。
+		requests.wait()
 		a.wg.Wait()
-		logger.Info("媒体库服务已安全停止")
+		a.mu.Lock()
+		runErr = errors.Join(runErr, a.cleanupErr)
+		a.mu.Unlock()
+		logger.Info("媒体库请求与后台任务已停止")
 	}()
 	address := listener.Addr().String()
 	if options.Ready != nil {

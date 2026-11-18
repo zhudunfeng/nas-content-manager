@@ -31,6 +31,7 @@ Applies to all changes in `cmd/nas/`, `internal/app/`, Docker environment wiring
 - TXT: 16 MiB source, 100,000 paragraphs; CBZ: 2 GiB, 10,000 pages, 32 MiB/page, bounded decompression. Path traversal, symlinks outside roots, encrypted/unsupported archives are rejected. Raster formats only; no active SVG media.
 - TXT iterates `strings.Lines` before collecting non-empty paragraphs; do not `strings.Split` the complete input, since a bounded all-newline file otherwise allocates millions of string descriptors. Cover URLs include source mtime, size, and enrichment state, matching cache invalidation when sync tools preserve mtime.
 - File length/offset fields use `int64`. Do not install compression/buffering middleware or a short global `WriteTimeout` over audio/video responses. A size/mtime ETag is weak, not a byte identity hash.
+- Request contexts follow the application lifecycle. Shutdown closes request admission and active connections, then waits for admitted handlers and workers to finish before releasing SQLite and the data lease; a returned `Serve`/`Close` call is insufficient. Windows FFmpeg/ffprobe cancellation must reclaim the command's owned descendants and inherited pipes before workers complete. See [Cross-platform contract](./cross-platform-contract.md) for process ownership and exit regression assertions.
 
 ## 4. Validation & Error Matrix
 
