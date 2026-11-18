@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import sys
+
+if __name__ == "__main__":
+    # 直接执行入口时，在其他本地模块导入前关闭源码旁的字节码缓存。
+    sys.dont_write_bytecode = True
+
 import argparse
 import http.cookiejar
 import json
@@ -20,6 +26,8 @@ import zipfile
 import zlib
 from pathlib import Path
 from typing import Any
+
+from project_env import check_directory, verification_directory
 
 
 def generate_password() -> str:
@@ -294,7 +302,8 @@ def verify(base: str, root: Path, username: str, password: str, large: bool) -> 
 def main() -> None:
     """解析有中文说明的验证参数并执行指定阶段。"""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--root', type=Path, default=Path('.runtime/verify/media'), help='隔离样本根目录；必须包含 verify 路径段')
+    default_root: Path = verification_directory() / 'media'
+    parser.add_argument('--root', type=Path, default=default_root, help='隔离样本根目录；默认位于项目配置根下，必须包含 verify 路径段')
     parser.add_argument('--base-url', default='http://127.0.0.1:8090', help='已启动的被测应用根地址')
     parser.add_argument('--prepare-only', action='store_true', help='只准备样本，不请求应用')
     parser.add_argument('--large-file', action='store_true', help='创建并验证 5 GiB 稀疏文件，仅验证 HTTP 偏移')
@@ -302,6 +311,9 @@ def main() -> None:
     parser.add_argument('--username', default='nas-verify', help='隔离验证实例的管理员名称')
     parser.add_argument('--password', default=None, help='已有验证实例的密码；首次运行可自动生成')
     args = parser.parse_args()
+    if args.root == default_root:
+        # 默认样本目录允许复用，但必须在规范化之前拒绝媒体根本身的链接。
+        check_directory(default_root)
     root = args.root.resolve()
     if 'verify' not in root.parts:
         parser.error('为避免污染真实媒体，--root 路径必须包含 verify 路径段')
@@ -322,4 +334,6 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    from project_env import run_cli
+
+    raise SystemExit(run_cli(main))

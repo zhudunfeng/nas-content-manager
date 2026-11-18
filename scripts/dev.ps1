@@ -6,6 +6,7 @@ param(
     [string]$MediaRoots = ''
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'project-env.ps1')
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $projectRoot
 # 优先使用系统 Go，其次使用项目本地可选工具链。

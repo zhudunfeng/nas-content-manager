@@ -52,6 +52,8 @@ jobs:
         with:
           # 项目已验证的Go版本。
           go-version: '1.27.4'
+          # 项目缓存由统一入口放入仓库.runtime，避免Action还原到用户共享缓存。
+          cache: false
       # 固定前端构建主版本与当前镜像一致。
       - uses: actions/setup-node@v6
         # Node参数。
@@ -68,8 +70,8 @@ jobs:
       - name: Go checks
         # 两条独立命令，任一失败即停止步骤。
         run: |
-          go vet ./...
-          go test ./...
+          python -B scripts/project_env.py -- go vet ./...
+          python -B scripts/project_env.py -- go test ./...
       # 严格前端检查由npm build中的vue-tsc执行。
       - name: Build development package
         # 缺少正式工具清单的CI成品名称和元数据均标明development。

@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import sys
+
+if __name__ == "__main__":
+    # 直接执行入口时，在其他本地模块导入前关闭源码旁的字节码缓存。
+    sys.dont_write_bytecode = True
+
 import argparse
 import http.server
 import json
@@ -14,6 +20,7 @@ import time
 from typing import Any
 import urllib.parse
 
+from project_env import verification_directory
 from verify import Client, generate_password
 from verify_downloads import Harness
 
@@ -183,7 +190,7 @@ def main() -> None:
     """解析带中文说明的隔离运行参数。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary', type=Path, required=True, help='已经构建的本机栖库程序')
-    parser.add_argument('--root', type=Path, default=Path('.runtime/verify/engines-' + time.strftime('%Y%m%d-%H%M%S')), help='不存在且包含verify路径段的隔离目录')
+    parser.add_argument('--root', type=Path, default=verification_directory() / ('engines-' + time.strftime('%Y%m%d-%H%M%S')), help='不存在且包含verify路径段的隔离目录，默认位于项目配置根下')
     args = parser.parse_args()
     root = args.root.resolve()
     if root.exists() or 'verify' not in root.parts or not args.binary.is_file():
@@ -200,4 +207,6 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    from project_env import run_cli
+
+    raise SystemExit(run_cli(main))

@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import sys
+
+if __name__ == "__main__":
+    # 直接执行入口时，在其他本地模块导入前关闭源码旁的字节码缓存。
+    sys.dont_write_bytecode = True
+
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import http.server
@@ -15,6 +21,7 @@ from typing import Any
 import urllib.parse
 from xml.sax.saxutils import escape, quoteattr
 
+from project_env import verification_directory
 from verify import Client, generate_password
 from verify_downloads import Fixture, Harness
 
@@ -324,7 +331,7 @@ def main() -> None:
     # 被测二进制由独立构建产生，不在脚本中安装工具链。
     parser.add_argument('--binary', required=True, type=Path, help='已构建的栖库可执行文件')
     # 全新根目录必须含 verify 段，以免修改真实媒体和已有应用数据。
-    parser.add_argument('--root', type=Path, default=Path('.runtime/verify/search-' + time.strftime('%Y%m%d-%H%M%S') + '-' + secrets.token_hex(3)), help='全新隔离验证目录')
+    parser.add_argument('--root', type=Path, default=verification_directory() / ('search-' + time.strftime('%Y%m%d-%H%M%S') + '-' + secrets.token_hex(3)), help='全新隔离验证目录，默认位于项目配置根下')
     # 浏览器模式与自动断言分离，不能把准备fixture声称为验收通过。
     parser.add_argument('--serve', action='store_true', help='保持样本直到根目录出现stop文件')
     args = parser.parse_args()
@@ -348,4 +355,6 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    from project_env import run_cli
+
+    raise SystemExit(run_cli(main))

@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import sys
+
+if __name__ == "__main__":
+    # 直接执行入口时，在其他本地模块导入前关闭源码旁的字节码缓存。
+    sys.dont_write_bytecode = True
+
 import argparse
 import gzip
 import hashlib
@@ -12,12 +18,13 @@ import shutil
 import stat
 import struct
 import subprocess
-import sys
 import tarfile
 import tempfile
 import zipfile
 from pathlib import Path, PurePosixPath
 from typing import Any, BinaryIO
+
+from project_env import resolve_command, runtime_directory
 
 
 ROOT = Path(__file__).resolve().parents[1]  # 由当前脚本定位的源码根，不依赖调用工作目录。
@@ -213,7 +220,7 @@ def install_images(manifest_path: Path, stage: Path) -> None:
 def run(command: list[str], environment: dict[str, str] | None = None) -> None:
     """以参数数组运行构建命令，不经 shell 拼接配置或文件名。"""
     print("执行发布构建：" + command[0], flush=True)
-    subprocess.run(command, cwd=ROOT, env=environment, check=True)
+    subprocess.run(resolve_command(command), cwd=ROOT, env=environment, check=True)
 
 
 def archive_tree(stage: Path, destination: Path, windows: bool) -> None:
@@ -252,7 +259,7 @@ def build(args: argparse.Namespace) -> Path:
         raise ValueError("完整工具清单与缺少工具的开发包标识不能同时使用")
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
-    runtime = ROOT / ".runtime"
+    runtime = runtime_directory()
     runtime.mkdir(exist_ok=True)
     lock = runtime / "release-build.lock"
     # 嵌入资源是共享构建输入，串行化发布，禁止清掉其他发布进程的资源。
@@ -344,4 +351,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    from project_env import run_cli
+
+    raise SystemExit(run_cli(main))

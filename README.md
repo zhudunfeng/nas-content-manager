@@ -132,17 +132,17 @@ Range 只解决随机字节读取。尾部 MP4 索引、MKV 索引、关键帧�
 
 ## 本机开发
 
-需要 Node.js 22.14 或兼容版本、Go 1.26+、FFmpeg／ffprobe。工具缺失时仍可使用基础内容功能，音视频探测与封面能力受限。无需启动 Docker。
+需要 Node.js 22.14 或兼容版本、Go 1.26+、Python 3.10+、FFmpeg／ffprobe。工具缺失时仍可使用基础内容功能，音视频探测与封面能力受限。无需启动 Docker。以下跨平台命令在 Linux 使用 `python3`，Windows 替换为 `python`。
 
 ```sh
 # 安装锁文件中的前端依赖并构建。
-npm --prefix web ci
-npm --prefix web run build
+python3 -B scripts/project_env.py -- npm --prefix web ci
+python3 -B scripts/project_env.py -- npm --prefix web run build
 # 先创建 media 目录，或用 NAS_MEDIA_ROOTS 指定已有目录，再运行后端。
-go run ./cmd/nas
+python3 -B scripts/project_env.py -- go run ./cmd/nas
 ```
 
-默认网页地址为 `http://127.0.0.1:8090`。开发热更新另开终端运行 `npm --prefix web run dev`，Vite 的 `/api` 代理指向 `127.0.0.1:8090`。
+默认网页地址为 `http://127.0.0.1:8090`。开发热更新另开终端运行 `python3 -B scripts/project_env.py -- npm --prefix web run dev`，Vite 的 `/api` 代理指向 `127.0.0.1:8090`。
 
 PowerShell 快捷命令：
 
@@ -156,6 +156,24 @@ PowerShell 快捷命令：
 ```
 
 普通 `go build` 开发产物从 `NAS_WEB_DIR` 读取网页，移动时应带上 `web/dist`。发布脚本和容器构建使用 `webembed` 内嵌网页；显式设置 `NAS_WEB_DIR` 时仍优先使用该目录。完整原生包还携带经核验的媒体工具，运行时不依赖开发环境。
+
+### 构建缓存与临时目录
+
+开发、发布和验证脚本自动将可控缓存与临时文件放入当前项目的 `.runtime/`。统一配置为 `scripts/project-env.json`，支持改为 `.runtime/` 下的专用子目录，不修改系统或用户全局环境。已有的 `bin/`、`web/dist/` 和网页嵌入暂存目录继续位于项目内。
+
+```powershell
+# 当前 PowerShell 终端加载配置，之后直接运行 Go/npm 等命令。
+. .\scripts\project-env.ps1
+
+# Windows/Linux 通用：仅为这一条命令及其子进程加载配置。
+python -B scripts/project_env.py -- npm --prefix web run build
+```
+
+首次使用会重新建立项目独立依赖缓存。已启动的 IDE/MCP 服务需要在启动前加载配置，旧 C 盘缓存不会自动迁移或删除。目录列表、Linux 用法及控制范围见 [项目构建环境说明](docs/project-build-environment.md)。
+
+### Windows 会话缓存清理
+
+固定脚本 `scripts/clean-session-temp.ps1` 默认只预览并记录清单，使用 `-Execute` 才按已有清单清理。Go 缓存需要显式选择，浏览器资料需要精确指定测试 profile；清理依赖缓存后需联网重新下载。参数、目录范围与复用示例见 [会话缓存清理说明](docs/session-temp-cleanup.md)。
 
 ## 环境参数
 
@@ -184,11 +202,11 @@ Compose 对应的简化变量与中文说明见 `.env.example`。如使用反向
 ## 验证
 
 ```sh
-go vet ./...
-go test ./...
-go build ./cmd/nas
-npm --prefix web run typecheck
-npm --prefix web run build
+python3 -B scripts/project_env.py -- go vet ./...
+python3 -B scripts/project_env.py -- go test ./...
+python3 -B scripts/project_env.py -- go build ./cmd/nas
+python3 -B scripts/project_env.py -- npm --prefix web run typecheck
+python3 -B scripts/project_env.py -- npm --prefix web run build
 docker compose config --quiet
 ```
 

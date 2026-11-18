@@ -2,7 +2,7 @@
 
 ## 1. Scope / Trigger
 
-Applies to `cmd/nas-desktop`, `internal/desktop`, application lifecycle/static assets/tool discovery, `compose.desktop.yaml`, release scripts and changes to Linux/Windows platform boundaries. One media/download/search implementation remains authoritative. Do not introduce Windows GUI dependencies into the Linux CLI or silently migrate between native and container data.
+Applies to `cmd/nas-desktop`, `internal/desktop`, application lifecycle/static assets/tool discovery, `compose.desktop.yaml`, release/maintenance scripts and changes to Linux/Windows platform boundaries. One media/download/search implementation remains authoritative. Do not introduce Windows GUI dependencies into the Linux CLI or silently migrate between native and container data.
 
 ## 2. Signatures
 
@@ -12,6 +12,7 @@ Applies to `cmd/nas-desktop`, `internal/desktop`, application lifecycle/static a
 - `webassets.Files() fs.FS` returns embedded `dist` under `webembed`, nil in ordinary development builds.
 - Windows entry: `栖库.exe --mode native|docker --profile <local-root>`; native diagnostic flags include `--headless`, `--no-browser`, `--media-root` (repeatable), `--data-dir`, `--port`, `--print-config`, and `--control open|status|quit`.
 - `python scripts/release.py --target windows-amd64|linux-amd64|linux-arm64 --tools-manifest <file>` produces a package; `--development-without-tools` explicitly selects an incomplete development package.
+- Windows cache maintenance: `scripts/clean-session-temp.ps1 [-ManifestPath <repo-file>] [-IncludeGoBuildCache] [-IncludeGoModuleCache] [-BrowserProfileName <exact-name>] [-Since <date>]` previews; `-Execute [-ManifestPath <same-file>]` consumes that saved plan without adding selectors.
 
 ## 3. Contracts
 
@@ -47,6 +48,28 @@ Applies to `cmd/nas-desktop`, `internal/desktop`, application lifecycle/static a
 - Release-tool CLI entry points (`release.py`, `verify_release.py`, `package_desktop_images.py`) configure both standard streams as UTF-8 before argument parsing, including Chinese help and failure diagnostics. Share the initializer without reconfiguring the importing process at module import time; tolerate replacement streams without `reconfigure`. CI sets documented `PYTHONUTF8=1` and `PYTHONIOENCODING=utf-8`; scripts must also work when directly invoked with legacy redirected stream encodings. Changing the Windows code page or removing Chinese text is not the fix.
 - The build workflow uses Node 24 action runtimes (`checkout`, `setup-go`, `setup-node`, `setup-python`, `upload-artifact` v6, verified from their official `action.yml`). The JavaScript runtime executing an action is separate from the pinned `node-version` used to build the application; do not change application toolchain versions just to suppress an action-runtime deprecation warning.
 
+### Development cache maintenance
+
+#### Project-local build environment
+
+- `scripts/project-env.json` has one documented setting: `runtimeDirectory: {value: ".runtime", description: "<Chinese explanation>"}`. Accept `.runtime` or a descendant only; reject absolute paths, traversal, repository root, links/reparse points and unwritable destinations. Resolve from the script's repository root, not the caller's CWD. Never fall back to the system temp directory after configuration failure.
+- `scripts/project_env.py:configure_environment() -> dict[str, str]` explicitly initializes only the current process and its descendants. It must have no environment-changing import side effect. The CLI `python -B scripts/project_env.py -- <argv...>` runs from the repository root, preserves argument boundaries and child status, and uses no command-string shell interpolation. `--print-env` emits JSON only to stdout; `--shell sh` quotes every exported value.
+- `scripts/project-env.ps1` is dot-sourceable on Windows PowerShell 5.1/7, retains UTF-8 BOM, imports the same JSON environment without changing the current directory, and throws rather than exiting the interactive shell on failure. Resolve Windows npm/npx via Node and the corresponding CLI JavaScript, not the implicit batch shell; reject other batch wrappers explicitly. Release subprocesses reuse the same command resolver. The Linux release shell calls the automatically initialized Python release entry directly to retain caller-relative manifest/output semantics.
+- Default relative paths: `tmp/` for TEMP/TMP/TMPDIR, `tmp/go/` for GOTMPDIR, `go/build-cache/` for GOCACHE, `go/` for GOPATH, `go/pkg/mod/` for GOMODCACHE, `go/bin/` for GOBIN, `npm/cache/`, `npm/logs/`, `node/compile-cache/`, `cache/` for XDG cache, and `playwright/browsers/`, `playwright/profile/`, `playwright/output/`. Windows emits only lowercase npm cache/log keys, because environment keys are case-insensitive and PowerShell 5.1/7 JSON parsing rejects case-only duplicates; POSIX overrides both variants. PowerShell JSON conversion must stop on errors. Use `GOENV=off` and disable Python bytecode in environment and the current interpreter; reset an already-cached `tempfile.tempdir` to the project temp directory.
+- Python child text encoding uses PYTHONUTF8=1 and PYTHONIOENCODING=utf-8; PYTHONPYCACHEPREFIX points to `python/pycache/` as a fallback if a child explicitly enables bytecode, and PIP_CACHE_DIR to `python/pip-cache/`. Default verify sample roots and the release lock/staging root follow runtimeDirectory even when invoked from another working directory. Explicit output/root arguments preserve their prior semantics.
+- All project dev/release/verification entry points initialize this environment. Direct Python release entry calls remain supported, local sibling imports must not generate early `__pycache__`, and library imports must not reconfigure the importing process. Existing `bin/`, `web/dist/` and embedded staging layouts remain unchanged. CI Go checks use the runner; setup-go's shared project cache restore is disabled.
+- Preserve unrelated user settings such as process GOPROXY/GOPRIVATE. Explain that `GOENV=off` ignores persisted `go env -w` settings. Do not rewrite user/system environment, APPDATA/HOME, registry, Docker configuration or global telemetry; do not use Go's internal TEST_TELEMETRY_DIR hook. Go telemetry, OS/tool installation, explicit external output paths, existing IDE/MCP processes and released application business data are outside the containment promise.
+- Browser MCP service environment must be supplied before startup. PLAYWRIGHT_MCP_USER_DATA_DIR/OUTPUT_DIR apply only to supporting services, explicit arguments may override them, and one persistent profile cannot be shared concurrently. PLAYWRIGHT_BROWSERS_PATH does not move installed Chrome/Edge. Never silently delete or migrate prior C-drive caches.
+
+#### Legacy Windows cache cleanup
+
+- Support Windows PowerShell 5.1 and PowerShell 7. Preview is the default and writes a versioned exact-file manifest under the repository; execution is explicit and never silently rescans to enlarge that plan. Keep native/CLI/media data outside the allowlist.
+- Default candidates are Node compile-cache files containing the repository's absolute path with a path boundary after the repository name; a sibling such as `<repo>-old` must not match. Go build and module/checksum caches are shared, rebuildable resources and require separate explicit switches. A browser target requires an exact `mcp-chrome-<hex>` profile name; never choose the newest profile or the whole browser-cache parent.
+- Accept only known current-user C-drive cache roots. Validate canonical paths, every ancestor, and the manifest's repository/target identities; reject relative paths, unknown kinds, root-directory targets and reparse points. `Since` filters creation time; it does not establish ownership by itself.
+- Check relevant build/test-browser processes before execution; do not terminate them. Validate every file against its recorded length and creation/write metadata before deletion. Keep new or changed files, treat already absent files idempotently, and remove only recorded directories that are empty. Never use a recursive delete on a user/drive/Temp root.
+- Persist the actual per-file outcome and confirmed deleted-byte count; a preview total is not recovered space. Locked/failed files require a partial-failure result, not a success claim. Do not raise privileges, change execution policy, or use another API to bypass a rejected cleanup action.
+- Publish manifests atomically and exercise repeated writes on both PowerShell versions. For `File.Replace`, pass `[System.Management.Automation.Language.NullString]::Value` for an absent backup path; PowerShell can otherwise bind `$null` as an invalid empty string. Normalize JSON ISO timestamps because PowerShell 7 can deserialize them as `DateTime` while 5.1 retains strings.
+
 ## 4. Validation & Error Matrix
 
 | Condition | Expected behavior |
@@ -67,12 +90,19 @@ Applies to `cmd/nas-desktop`, `internal/desktop`, application lifecycle/static a
 | Formal release without tool manifest | Fail; only explicit development mode may omit tools |
 | Wrong tool architecture / repeated JSON/path traversal / existing archive | Refuse packaging |
 | Redirected stdout/stderr start as cp1252 or ASCII | Chinese help, progress, success and errors remain valid UTF-8; preserve success/failure exit codes |
+| Cache cleanup invoked without `-Execute` | Preview and record plan only; no cache deletions |
+| Cleanup manifest is foreign, malformed, out of bounds, uses links, or selects a running target | Fail explicitly before deleting files |
+| A planned file is missing / changed or an unplanned file appears | Missing is idempotent; changed and unplanned files remain |
+| Build environment contains external TEMP/Go/npm cache settings | Replace only the managed path keys with validated project-local paths |
+| Build runtime path escapes `.runtime`, uses links, is malformed or unwritable | Explicit error; no child launch or fallback to the system temporary directory |
+| Environment runner child returns a nonzero status | Preserve the actual failure status |
 
 ## 5. Good / Base / Bad Cases
 
 - Good: move a built package into a Chinese/space path, launch from a different CWD, serve embedded reader chunks, use the same user data after replacing the program directory, then restart safely.
 - Base: Linux CLI preserves all previous defaults, environment and no-desktop behavior; Windows repeated launch activates the existing instance; Docker and native profiles have separate identities/data.
 - Bad: treat a port probe as a data lock, restart before previous DB closes, load FFmpeg from arbitrary CWD, reset broken JSON, map arbitrary NTFS paths into helper bind mode, or announce a development artifact as an offline full release.
+- Cleanup base: review the exact-file plan, then execute it after closing the matching build/test-browser process. Bad: infer ownership from time alone, clear all of `%TEMP%`, or delete other Node projects/profile directories.
 
 ## 6. Tests Required
 
@@ -83,6 +113,8 @@ Applies to `cmd/nas-desktop`, `internal/desktop`, application lifecycle/static a
 - Release-console regression must launch fresh Python subprocesses with `PYTHONUTF8=0` and `PYTHONIOENCODING=cp1252` / `ascii`, capture bytes, then strictly decode UTF-8 and assert Chinese output plus exit codes. Cover all three release CLI help paths and release progress/error paths; a UTF-8 parent process alone does not reproduce the Windows Actions failure.
 - Go vet/test/build, strict Vue typecheck/production build, Linux amd64/arm64 cross-build, existing five-media + 5 GiB offset/auth/download/search/bootstrap regression harnesses. Empty retained Go test suite is compilation evidence only.
 - Docker `compose config --quiet` is offline structure validation. Actual image pulls, Desktop volumes, real qB/Jackett initialization, readiness and exact stop are separate manual deployment acceptance; do not start the daemon to obtain evidence when user reserved it for manual validation.
+- Maintenance checks cover both PowerShell parsers, read-only preview, selector opt-ins, manifest tampering, sibling/path escapes, links, active processes, changed/missing/new files, partial failure, idempotency and empty-directory handling. Use isolated or mocked cleanup targets for destructive behavior. If real deletion was rejected by tool policy, do not reroute it through the script; report preview and fixture evidence separately from actual cleanup.
+- Project environment checks cover clean imports, config validation and links/junctions, polluted external environment, fresh and pre-cached Python tempfile, argument/exit-code preservation, process-only scope, both PowerShell versions, real Node/npm/Go cache queries and applicable existing release verification. Test from a different CWD and a Chinese/space path; distinguish shell parsing from actual Linux execution. Remove newly generated temporary test sources after collecting evidence.
 
 ## 7. Wrong vs Correct
 
@@ -100,6 +132,10 @@ err := app.RunWithOptions(ctx, config, logger, app.RunOptions{
 ```
 
 Do not call `os.Setenv` to merge profile configuration. Use a snapshot lookup so native and Docker profiles, inherited environment and validation all agree without global mutation.
+
+Cache cleanup example: wrong — recursively remove `%TEMP%` or all browser profiles; correct — generate the repository-scoped file manifest, review the exact targets, then revalidate and execute only its unchanged cache files.
+
+Build environment example: wrong — run `go env -w GOCACHE=...` or set a fake `GOTELEMETRYDIR` environment variable and claim all system writes are isolated; correct — use `python -B scripts/project_env.py -- go build ...`, validate the actual cache paths, and document the scope of third-party tool settings.
 
 Release CLI encoding must be configured before argparse can print Chinese help:
 

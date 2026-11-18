@@ -8,6 +8,8 @@
 
 构建机使用项目 Go 工具链、Node 锁文件和 Python 3.10+。Go 不在 PATH 时可用 `--go`，或仓库 `.tools/go/bin/go.exe`。完整离线发布还需每目标经过审核的 FFmpeg/ffprobe 工具材料清单；不同平台不能混用。
 
+发布入口自动加载 `scripts/project-env.json`，将 Go/npm/Node 缓存和通用临时目录放到当前仓库 `.runtime/`；直接执行 Python 发布脚本也会生效。手动执行 Go/npm 检查时通过 `python -B scripts/project_env.py -- <命令>` 加载同样的环境，具体见[项目构建环境](project-build-environment.md)。安装开发工具的 Action、Docker daemon 自身的镜像存储和用户显式指定的外部归档目录不受此配置控制。
+
 发布、归档校验和桌面镜像打包的 Python 命令在解析参数前统一将标准输出、错误输出设为 UTF-8，保留中文帮助与日志；不依赖构建机的本地代码页。GitHub Actions 同时设置 `PYTHONUTF8=1`（启用 Python UTF-8 模式）和 `PYTHONIOENCODING=utf-8`（明确重定向日志编码），避免 Windows runner 输出中文时出现 `charmap` 编码异常。
 
 构建工作流使用基于 Node.js 24 运行的官方 Actions v6（checkout、setup-go、setup-node、setup-python、upload-artifact）。Action 自身的运行时与 `setup-node` 安装的应用构建工具是独立的；项目仍使用工作流中固定的 Node/Go/Python 版本。

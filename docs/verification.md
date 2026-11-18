@@ -303,3 +303,27 @@ WSL1会报告fsuid切换成功但拒绝目标身份写入，不能作为Docker L
 - 浏览器已关闭，隔离实例已停止，数据库、锁及临时实例目录已删除；核验测试进程和 11774 监听均为 0。只保留忽略目录内矩阵、脱敏日志和截图。本轮未执行 Docker，也未重复首轮五媒体/5 GiB 稀疏 Range 的 52 项回归；不能将首轮结果记为此次重跑。
 
 本轮详细记录见 `.trellis/tasks/11-18-password-policy/research/ascii-implementation-result.md` 与 `research/ascii-quality-review.md`。
+
+## 2026-11-18 Windows 会话缓存清理脚本验收
+
+新增固定入口 `scripts/clean-session-temp.ps1`，默认只预览并生成 `.runtime/session-temp-cleanup/manifest.json`；`-Execute` 只消费已有清单。Go 编译与依赖缓存分别显式选择，测试浏览器需要准确 profile 名称，默认仅选择带当前仓库路径边界标记的 Node 编译缓存。
+
+- PowerShell 7.6.4 与 Windows PowerShell 5.1.19041.6456 的解析器均为 0 错误，脚本保留 UTF-8 BOM。实现验证在两版运行时中各通过 55 项隔离断言，独立复核各通过 34 项；所有可删除样本均位于 E 盘仓库自建 fixture，未将隔离结果当作真实 C 盘删除验收。
+- 覆盖清单首次写入/原子覆盖、ISO 时间兼容、空清单、路径与目录边界、兄弟项目排除、字段/目标篡改、重解析点及祖先链接、活动进程与查询失败阻断、普通浏览器保留、只读/锁定文件、变更/新增/缺失文件、空目录、部分失败、重试和幂等。9 文件隔离场景首次准确记录 5 删除、1 缺失、2 变化保留、1 锁定失败，共 74 个已确认删除的逻辑字节；解锁重试后第三次运行删除 0 字节。
+- 两版 PowerShell 真实默认只读预览均识别 139 个 Node 缓存文件、5,733,716 逻辑字节。最终全选预览匹配先前盘点：Go 编译 13,752 文件、模块 10,936 文件、校验 1 文件、指定浏览器 354 文件，加 Node 合计 **25,182 文件、1,735,601,734 逻辑字节，约 1.62 GiB**。精确绝对路径、长度与创建/修改时间保存在已忽略的清单中。随后读回全部计划文件：缺失 0、元数据变化 0，相关目标当前空闲，确认真实缓存仍保留。
+- 独立复核修复了 PowerShell 将 `File.Replace` 的 `$null` 备份参数绑定为空字符串的问题，以及仓库路径子串误匹配同名前缀兄弟项目的问题。临时验证源已通过 E 盘精确单文件删除清除，隔离 fixture 与临时 JSON 发布文件均无残留。
+- 本轮维护脚本没有改动 Go/Vue 应用和密码逻辑，未运行 Docker、全应用构建或 PSScriptAnalyzer；解析器检查不等于 PSScriptAnalyzer。README、专门用法文档和跨平台维护契约已同步。
+
+先前真实 C 盘递归删除命令被工具自动审批拒绝，本轮没有改用脚本或其他 API 重试真实 C 盘删除。现有缓存仍保留；预览的 1.62 GiB 不是已回收空间。用户可审阅清单、关闭相关构建/测试浏览器后手动执行。详细实现和独立复核记录位于 `.trellis/tasks/11-18-session-temp-cleanup/research/`。
+
+## 2026-11-18 项目内构建环境验收
+
+新增 `scripts/project-env.json` 统一配置，默认将可控构建缓存和临时文件写入仓库 `.runtime/`。Python 通用入口、PowerShell 当前终端初始化、开发/发布/验证脚本和 CI Go 检查已接入；原有 `bin/`、`web/dist/` 等项目内产物布局保持一致。
+
+- 实现环境回归 61 项、独立复核 49 项通过。覆盖配置边界、污染环境覆盖、不可写失败、真实临时文件及缓存重置、导入无副作用、参数/退出码、中文空格项目路径、junction 拒绝和外部哨兵保留。新增临时测试源及专属样本均已删除。
+- PowerShell 5.1/7 实际解析和严格无错误点源通过。修复 Windows npm/npx 批处理隐式解释元字符的问题，改为原生 Node CLI；Windows 环境 JSON 不再包含仅大小写不同的重复键，解析失败立即终止。真实 Go、npm 和 Python 查询的受控目录均指向本仓库。
+- `go vet ./...`、`go test ./...`、Windows CLI 构建、严格 Vue 类型检查和 Vite 生产构建通过。当前无保留 Go 单测，`go test` 仅作为包编译证据。首次官方 Go 代理请求超时后，仅验证子终端临时使用 `https://goproxy.cn` 完成检查，未改默认代理或校验配置。
+- 修复后的发布边界回归 68 项通过；真实生成 Windows amd64、Linux amd64/arm64 三份开发归档并逐一通过架构、结构和内外摘要核验。归档在 `.runtime/project-env-validation/releases/`，复用已构建网页且不携带 FFmpeg，不能作为完整离线发行版。本轮 Linux 目标为交叉构建与归档核验，没有在 Linux/ARM 实机执行，也没有运行 Docker。
+- Git Bash 的 Shell 解析、外部工作目录调用和相对参数保真检查通过，未扩大为 Linux 实机证据。CodeGraph 已同步，Trellis 上下文与 Git 空白检查通过；发布锁和嵌入暂存已清理。
+
+配置只影响初始化进程及其后续子进程，不更改用户/系统环境，不迁移或清理旧 C 盘缓存。已启动的 IDE/MCP 需在配置后重新启动；Go 工具遥测、操作系统、安装器、Docker/WSL 存储和显式外部输出不在绝对隔离承诺内。具体用法见 `docs/project-build-environment.md`，实现和复核证据见 `.trellis/tasks/11-18-project-local-runtime/research/`。

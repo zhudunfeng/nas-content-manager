@@ -1,0 +1,6 @@
+{
+  "runtimeDirectory": {
+    "value": ".runtime",
+    "description": "本项目构建缓存与临时文件目录，只允许 .runtime 或其仓库内子目录；修改后重新初始化终端环境。"
+  }
+}

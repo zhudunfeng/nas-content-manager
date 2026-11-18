@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import sys
+
+if __name__ == "__main__":
+    # 直接执行入口时，在其他本地模块导入前关闭源码旁的字节码缓存。
+    sys.dont_write_bytecode = True
+
 import argparse
 import http.cookiejar
 import json
@@ -173,4 +179,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from project_env import run_cli
+
+    raise SystemExit(run_cli(main))

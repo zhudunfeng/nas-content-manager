@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import sys
+
+if __name__ == "__main__":
+    # 直接执行入口时，在其他本地模块导入前关闭源码旁的字节码缓存。
+    sys.dont_write_bytecode = True
+
 import argparse
 from dataclasses import dataclass, field
 from email import policy
@@ -24,6 +30,7 @@ import urllib.parse
 import urllib.request
 import wave
 
+from project_env import verification_directory
 from verify import Client, generate_password, make_png
 
 
@@ -668,7 +675,7 @@ def main() -> None:
     # 应用二进制必须提前完成构建，脚本不隐式安装工具链。
     parser.add_argument('--binary', type=Path, required=True, help='本机构建的栖库可执行文件')
     # 根路径包含 verify 段且不存在，避免触碰真实媒体或老测试实例。
-    parser.add_argument('--root', type=Path, default=Path('.runtime/verify/downloads-' + time.strftime('%Y%m%d-%H%M%S')), help='全新隔离目录，路径必须包含 verify 段')
+    parser.add_argument('--root', type=Path, default=verification_directory() / ('downloads-' + time.strftime('%Y%m%d-%H%M%S')), help='全新隔离目录，默认位于项目配置根下，路径必须包含 verify 段')
     # 浏览器联调模式仅准备样本，不将其输出误计为自动断言通过。
     parser.add_argument('--serve', action='store_true', help='保留隔离浏览器样本，创建根目录下stop文件后退出')
     args = parser.parse_args()
@@ -696,4 +703,6 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    from project_env import run_cli
+
+    raise SystemExit(run_cli(main))

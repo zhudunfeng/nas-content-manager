@@ -12,6 +12,7 @@ param(
     [switch]$SkipWebBuild
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'project-env.ps1')
 $releaseArguments = @((Join-Path $PSScriptRoot 'release.py'), '--target', 'windows-amd64')
 if ($ToolsManifest) { $releaseArguments += @('--tools-manifest', $ToolsManifest) }
 if ($ImagesManifest) { $releaseArguments += @('--images-manifest', $ImagesManifest) }
