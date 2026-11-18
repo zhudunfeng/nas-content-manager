@@ -1,0 +1,19 @@
+# 搜种公共覆盖；复用已有Prowlarr/Jackett，或另叠加compose.search.jackett.yaml。
+services:
+  # 保留应用基础配置与可选下载配置，仅增加独立搜种开关和来源凭据。
+  nas:
+    # 敏感来源文件只读挂载，不通过环境变量值传递API Key。
+    secrets:
+      - torrent_search_sources
+    # 搜种与下载分别启用；仅搜索不要求下载器在线。
+    environment:
+      # 是否启用Torznab来源，默认关闭，不影响媒体库基础部署。
+      NAS_TORRENT_SEARCH_ENABLED: ${TORRENT_SEARCH_ENABLED:-false}
+      # 容器内固定配置路径，文件内容在服务端读取，不返回浏览器。
+      NAS_TORRENT_SEARCH_SOURCES_FILE: /run/secrets/torrent_search_sources
+# 文件应由宿主单独备份，不包含在应用SQLite备份中。
+secrets:
+  # 文件顶层sources数组，每个来源含id/name/url/apiKey，字段说明见docs/torrent-search.md。
+  torrent_search_sources:
+    # 宿主文件必须预先存在且应用1000:1000身份可读；不能指向目录。
+    file: ${TORRENT_SEARCH_SOURCES_FILE:-./.runtime/search/sources.json}

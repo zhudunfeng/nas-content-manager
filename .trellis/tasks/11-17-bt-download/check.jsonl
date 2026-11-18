@@ -1,0 +1,8 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/tasks/11-17-bt-download/prd.md", "reason": "区分下载规划默认、首期范围与未执行验收"}
+{"file": ".trellis/tasks/11-17-bt-download/info.md", "reason": "检查跨层状态、清单发布、恢复与用户手动 Docker 边界"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "已有后端任务、源文件、协议与备份回归"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "已有五类界面与阅读播放行为回归"}
+{"file": ".trellis/tasks/11-17-bt-download/implementation-contract.md", "reason": "核对实际接线、清单门禁与接口契约"}
+{"file": ".trellis/spec/backend/download-contract.md", "reason": "下载发布门禁与恢复可执行规范"}

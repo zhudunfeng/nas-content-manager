@@ -9,6 +9,7 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 - `api<T>(path: string, method: string = 'GET', body?: unknown, signal?: AbortSignal): Promise<T>` in `src/api.ts` prefixes `/api`, sends same-origin credentials, and raises `ApiError`.
 - `errorMessage(error: unknown): string` supplies readable errors; `isAbort(error: unknown): boolean` distinguishes intentional cancellation.
 - DTOs are defined in `src/types.ts` and follow `docs/api.md`.
+- Download views use `DownloadCenter.vue`, `AddDownloadDialog.vue`, `DownloadDetailDialog.vue` and the typed multipart helper in `api.ts`; see the backend download contract for upload/selection budgets and publication behavior.
 - `ReaderDialog.vue` owns media/reading sessions. `LibraryDialog.vue` selects already mounted directories. `DialogShell.vue` owns the native modal lifecycle and focus restoration.
 - `fetchEpub(url: string, signal: AbortSignal): Promise<ArrayBuffer>` and `sanitizeEpubSection(output: string, section: Section): void` isolate the one bounded full-book download workflow.
 
@@ -31,6 +32,13 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 - Theme values live in semantic CSS variables. Dark graphite/teal and light neutral/teal; system fonts and SVG icons are local. Respect reduced motion and visible focus.
 - Desktop has sidebar/global search; mobile has at most five primary bottom entries (home/video/music/image/more). The native More dialog exposes all content types and management with focus restoration. Music cards/artwork are square, keeping the existing semantic theme and local icons. Readers are immersive, maintain usable touch controls, and do not leave background scroll unlocked.
 - Empty/loading/errors are distinct, with explicit actions. Do not create fake records to make a new library look populated.
+- `ViewName` may include downloads; `ContentType` stays the five existing media types. Download center is in the desktop sidebar and mobile More dialog. Keep the five mobile bottom entries.
+- Download status/transfer/import are independent; offline views label old snapshots and suppress live speed/ETA claims. Selection uses actual engine file IDs and manifestVersion. Do not enable confirmation until the entire paginated selectable manifest has loaded; clear it on version changes. Confirmed selection is locked. Every add/action retries with its original requestId, and optimistic actions include revision.
+- Poll with one in-flight request, schedule the next after completion, abort on unmount/filter changes and discard stale responses. Detail and list requests must not overwrite newer data. Return imported Item objects through the existing reader lifecycle rather than adding another media player.
+- Restored management/download hashes must wait for the app session before privileged metadata/settings requests. Disabling downloads stops mutations and engine coordination but still loads local historical tasks and read-only details.
+- `TorrentSearchDialog.vue` uses the typed Torznab DTOs and manual submission, aborts superseded requests and rejects late responses. Distinguish unconfigured, initial, empty, partial failure, all failed and expired states; sort/page the bounded snapshot locally (20 rows/page). Unknown numbers remain unknown. Use text interpolation, never links or HTML from a source. See the [torrent search contract](../backend/torrent-search-contract.md).
+- Selecting a search result first unmounts the search modal, then opens `AddDownloadDialog` after `nextTick`. Its optional `searchResult` prop sends only `searchResultId` through the original confirmation flow. Preserve the requestId on retry and reset it on result/type/library changes. Engine offline allows searching but disables adding with a reason. Do not nest native dialogs or add mobile navigation entries.
+- `EngineStatusCards` and `EngineSetupDialog` distinguish helper availability, resource presence, runtime and actual app readiness. See [engine bootstrap contract](../backend/engine-bootstrap-contract.md). No GET/open action installs engines. Never preselect qB notice; persist exact requestId/revision across uncertain POST retries. Clear task events/cursor atomically when task ID changes; a404 clears a stale recovery ID. Layer progress needs a real denominator, never an overall percentage. Search→engine management closes the first native modal before opening the next; retain focus restoration, one in-flight polling request, hidden-page pause and stale-response guards.
 
 ## 4. Validation & Error Matrix
 
@@ -59,6 +67,8 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 - EPUB regressions cover a valid book, 5001 actual entries with EOCD counts forged to 1, truncated directory records, ZIP64/split/encrypted archives, invalid local offsets, declared/actual expansion budgets, abort, and download HTTP 401. JSZip tolerates mismatched directory counts, so a successful library parse is not sufficient validation.
 - At widths 375/768/1024/1440 inspect overflow, navigation, modal sizing, large/long titles, touch controls, light/dark themes, visible keyboard focus, and reduced motion.
 - Check that opening video triggers Range streaming, not a whole-file fetch, and closing removes the source.
+- Download flows require delayed/failed pagination, non-contiguous IDs, 20,000-file confirmation within 256 KiB, idempotent retry, locked read-only selection, offline snapshots, imported item navigation, mobile More and both themes at all target widths.
+- Search flows require cancellation/late-response isolation, nullable metadata, partial/empty/all-failed states, local sorting/pagination, expiry disabling, stable add retries, focus restoration and a real application result-to-selection handoff. Source credentials and private links must be absent from browser responses and console output.
 
 Record executed evidence and remaining device limitations in `docs/verification.md`. Browser checks are not a substitute for real NAS throughput measurements.
 

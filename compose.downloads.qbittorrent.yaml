@@ -1,0 +1,62 @@
+# 可选官方 qB 引擎：与 compose.yaml、compose.downloads.yaml 一起使用。
+services:
+  # 独立下载引擎仅挂载专用下载卷和配置卷，无法改写原 /media。
+  qbittorrent:
+    # 固定 5.2.4-1 多架构清单摘要；来源与验证边界见 docs/downloads.md。
+    image: ${QBT_IMAGE:-qbittorrentofficial/qbittorrent-nox:5.2.4-1@sha256:92bfd78d731e254ba64f62b77b0696add6447a33642ee5feda106a26b285aa7f}
+    # 宿主重启后恢复引擎，保留手动停止意图。
+    restart: unless-stopped
+    # 官方镜像修改 PUID/PGID 需要可写容器根；媒体数据仍限制在专用挂载。
+    read_only: false
+    # 上游建议给予充分退出时间，避免中断恢复状态保存。
+    stop_grace_period: 30m
+    # 临时数据不写入镜像层；配置和下载另有持久卷。
+    tmpfs:
+      - /tmp
+    # 首次临时密码通过容器标准输出查看，不增加固定公开 WebUI 端口。
+    tty: true
+    # 只映射 BT peer 流量；WebUI 默认仅对 Compose 网络开放。
+    ports:
+      - "${QBT_PEER_PORT:-6881}:${QBT_PEER_PORT:-6881}/tcp"
+      - "${QBT_PEER_PORT:-6881}:${QBT_PEER_PORT:-6881}/udp"
+    # 使用官方镜像真实支持的参数，不存在通用 QBT_PASSWORD 初始化变量。
+    environment:
+      # 阅读上游法律告知后手工填写 confirm，示例不代替用户确认。
+      QBT_LEGAL_NOTICE: ${QBT_LEGAL_NOTICE:?请先阅读上游法律告知并设置此参数}
+      # WebUI 内部端口，应用固定通过服务名访问。
+      QBT_WEBUI_PORT: "8080"
+      # BT 监听端口与上述宿主映射保持一致。
+      QBT_TORRENTING_PORT: ${QBT_PEER_PORT:-6881}
+      # 下载进程用户标识，应与宿主专用下载目录的所有者一致。
+      PUID: ${QBT_UID:-1000}
+      # 下载进程组标识，应保证栖库进程有读取与目录遍历权限。
+      PGID: ${QBT_GID:-1000}
+      # 新文件默认所有者可写、组与其他用户可读，不使用 chmod 777。
+      UMASK: "022"
+      # 日志时区，默认与中国大陆 NAS 的本地时间一致。
+      TZ: ${QBT_TIMEZONE:-Asia/Shanghai}
+    # 下载器不挂载原媒体或应用 SQLite。
+    volumes:
+      - ${QBT_CONFIG_PATH:?请设置qB配置恢复目录的宿主绝对路径}:/config
+      - ${DOWNLOAD_PATH:?请设置专用下载根的宿主绝对路径}:/downloads
+    # 禁止进程通过 setuid 等机制获得额外权限。
+    security_opt:
+      - no-new-privileges:true
+    # 容器日志轮转，首次临时密码仍应及时更换。
+    logging:
+      # 使用 Docker 本地轮转驱动。
+      driver: local
+      # 限制单个日志与保留份数。
+      options:
+        # 每份日志最大 10 MiB。
+        max-size: "10m"
+        # 保留三份，防止长期做种日志占满系统盘。
+        max-file: "3"
+  # 应用使用内部服务名，外接引擎请省略本覆盖文件。
+  nas:
+    # 该覆盖仅改变连接地址和对应引擎根，不修改基础媒体挂载。
+    environment:
+      # qB WebUI 不需要发布到宿主即可由应用访问。
+      NAS_DOWNLOAD_QB_URL: http://qbittorrent:8080
+      # 两容器挂载同一宿主根并使用同一容器路径。
+      NAS_DOWNLOAD_ENGINE_ROOT: /downloads

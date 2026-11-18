@@ -263,7 +263,7 @@ def verify(base: str, root: Path, username: str, password: str, large: bool) -> 
     import sqlite3
     with sqlite3.connect(root.parent / 'verified-backup.db') as connection:
         client.check(connection.execute('PRAGMA integrity_check').fetchone()[0] == 'ok', '备份数据库完整性检查通过')
-        client.check(connection.execute('PRAGMA user_version').fetchone()[0] == 1 and connection.execute("SELECT count(*) FROM items WHERE type='music'").fetchone()[0] > 0, '音乐与原四类共存于兼容的 v1 数据库备份')
+        client.check(connection.execute('PRAGMA user_version').fetchone()[0] == 2 and connection.execute("SELECT count(*) FROM items WHERE type='music'").fetchone()[0] > 0, '音乐与原四类共存，v2 数据库备份保留媒体并包含增量下载表')
     if large:
         video = next(item for item in items if '5GiB' in item['title'])
         source = root / 'video' / '仅协议验证-5GiB.mp4'

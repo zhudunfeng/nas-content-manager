@@ -22,6 +22,7 @@ import (
 
 // App 持有服务资源和有限后台任务，不保存媒体文件内容。
 type App struct {
+	engines       *engineRuntime               // 独立控制面与托管连接快照，助手离线不停止已就绪数据面。
 	config        Config                       // 已验证配置。
 	db            *sql.DB                      // 本地数据库连接。
 	logger        *slog.Logger                 // 中文结构化业务日志。
@@ -35,6 +36,8 @@ type App struct {
 	backupMu      sync.Mutex                   // 一次只生成一个一致性备份。
 	streams       chan struct{}                // 限制并发大文件流数量。
 	readerSlots   chan struct{}                // 限制同时解压漫画或解析文本的请求数。
+	downloads     *downloadManager             // 独立下载协调器，不占用媒体扫描执行器。
+	torrentSearch *torrentSearchManager        // 只保存有限搜索快照和独立网络限额的搜种适配器。
 }
 
 // loginAttempt 保存单个来源的短期失败次数。
@@ -56,6 +59,10 @@ func Run(ctx context.Context, config Config, logger *slog.Logger) error {
 	workCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	a := &App{config: config, db: db, logger: logger, ctx: workCtx, cancels: make(map[int64]context.CancelFunc), loginAttempts: make(map[string]loginAttempt), wake: make(chan struct{}, 1), streams: make(chan struct{}, 16), readerSlots: make(chan struct{}, 4)}
+	a.torrentSearch = newTorrentSearchManager(config.TorrentSearch)
+	defer a.torrentSearch.http.CloseIdleConnections()
+	a.startDownloads()
+	a.startEngineRuntime()
 	a.startWorkers()
 	server := &http.Server{Addr: config.Addr, Handler: a.routes(), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, IdleTimeout: 90 * time.Second, MaxHeaderBytes: 32 << 10}
 	// 不设置全局 WriteTimeout，避免长视频被短响应超时截断。
@@ -101,6 +108,9 @@ func (a *App) routes() http.Handler {
 	} {
 		mux.HandleFunc(pattern, a.auth(handler))
 	}
+	a.downloadRoutes(mux)
+	a.torrentSearchRoutes(mux)
+	a.engineRoutes(mux)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) { fail(w, http.StatusNotFound, "接口不存在") })
 	mux.HandleFunc("/", a.static)
 	return a.security(mux)
@@ -133,7 +143,18 @@ func (a *App) security(next http.Handler) http.Handler {
 				fail(w, 403, "不允许跨站修改请求")
 				return
 			}
-			r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
+			bodyLimit := int64(64 << 10)
+			// 仅种子上传开放 8 MiB 文件及有限表单开销，其他写接口保持原限额。
+			mediaType, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
+			if r.Method == http.MethodPost && r.URL.Path == "/api/downloads" && mediaType == "multipart/form-data" {
+				bodyLimit += 8 << 20
+			}
+			selectionPath := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/downloads/"), "/")
+			if r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/api/downloads/") && len(selectionPath) == 2 && selectionPath[0] != "" && selectionPath[1] == "selection" {
+				// 两万个文件索引的完整选集仍受独立额度约束。
+				bodyLimit = 256 << 10
+			}
+			r.Body = http.MaxBytesReader(w, r.Body, bodyLimit)
 		}
 		next.ServeHTTP(w, r)
 	})
@@ -167,11 +188,21 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, target any) bool {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(target); err != nil {
-		fail(w, 400, "请求内容格式不正确或超过大小限制")
+		var sizeError *http.MaxBytesError
+		if errors.As(err, &sizeError) {
+			fail(w, 413, "请求内容超过大小限制")
+		} else {
+			fail(w, 400, "请求内容格式不正确")
+		}
 		return false
 	}
-	if decoder.Decode(&struct{}{}) != io.EOF {
-		fail(w, 400, "请求必须为单个 JSON 对象")
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		var sizeError *http.MaxBytesError
+		if errors.As(err, &sizeError) {
+			fail(w, 413, "请求内容超过大小限制")
+		} else {
+			fail(w, 400, "请求必须为单个 JSON 对象")
+		}
 		return false
 	}
 	return true

@@ -1,0 +1,91 @@
+{
+  "engine": "qBittorrent Windows 5.2.4",
+  "dockerExecuted": false,
+  "version": "v5.2.4",
+  "webApiVersion": "2.15.1",
+  "network": {
+    "dht": false,
+    "pex": false,
+    "lsd": false,
+    "upnp": false,
+    "current_interface_address": "127.0.0.1",
+    "listen_port": 6126
+  },
+  "v1Hash": "9668353fe6c03e3374c95c2c4cf2f5c12cbf5dee",
+  "torrentStoppedAdd": {
+    "state": "stoppedDL",
+    "downloaded": 0
+  },
+  "v1Properties": {
+    "infohash_v1": "9668353fe6c03e3374c95c2c4cf2f5c12cbf5dee",
+    "infohash_v2": ""
+  },
+  "magnetMetadataReceived": {
+    "state": "stoppedDL",
+    "downloaded": 0,
+    "completed": 0,
+    "files": [
+      {
+        "availability": 0,
+        "index": 0,
+        "is_seed": false,
+        "name": "probe-files/first.bin",
+        "piece_range": [
+          0,
+          63
+        ],
+        "priority": 1,
+        "progress": 0,
+        "size": 1048576
+      },
+      {
+        "availability": 0,
+        "index": 1,
+        "name": "probe-files/second.bin",
+        "piece_range": [
+          64,
+          127
+        ],
+        "priority": 1,
+        "progress": 0,
+        "size": 1048576
+      }
+    ]
+  },
+  "selectedFileProgress": [
+    {
+      "availability": 0,
+      "index": 0,
+      "is_seed": true,
+      "name": "probe-files/first.bin",
+      "piece_range": [
+        0,
+        63
+      ],
+      "priority": 1,
+      "progress": 1,
+      "size": 1048576
+    },
+    {
+      "availability": 0,
+      "index": 1,
+      "name": "probe-files/second.bin",
+      "piece_range": [
+        64,
+        127
+      ],
+      "priority": 0,
+      "progress": 0.09375,
+      "size": 1048576
+    }
+  ],
+  "selectedTransferAndMove": {
+    "state": "stalledUP",
+    "selectedSize": 1048576,
+    "savePathMatches": true,
+    "selectedBytesMatch": true,
+    "unselectedExists": false
+  },
+  "removeKeepsFiles": true,
+  "passed": true
+}

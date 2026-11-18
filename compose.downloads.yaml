@@ -1,0 +1,34 @@
+# 下载功能公共覆盖：可搭配已有 qB，或继续叠加 compose.downloads.qbittorrent.yaml。
+services:
+  # 保留基础应用的数据库、原媒体只读挂载、端口和后台处理配置。
+  nas:
+    # 下载目录在应用中严格只读，种子实际写入由独立下载器负责。
+    volumes:
+      - ${DOWNLOAD_PATH:?请设置专用下载根的宿主绝对路径}:/downloads:ro
+    # 密码通过独立只读文件提供，不作为环境变量值或前端配置传播。
+    secrets:
+      - qb_password
+    # 所有路径均为容器内部路径；已有下载器可通过引擎根进行固定映射。
+    environment:
+      # 显式启用可选下载模块；基础 compose.yaml 仍默认关闭。
+      NAS_DOWNLOAD_ENABLED: "true"
+      # 仅授权已完成区域，staging 不属于媒体根。
+      NAS_MEDIA_ROOTS: /media:/downloads/complete
+      # 应用看到的专用下载根；不可与应用数据目录重叠。
+      NAS_DOWNLOAD_ROOT: /downloads
+      # 下载器看到的同一宿主根目录，必须指向相同实体数据。
+      NAS_DOWNLOAD_ENGINE_ROOT: ${DOWNLOAD_ENGINE_ROOT:-/downloads}
+      # 已有 qB 的固定 WebAPI 基地址；内置引擎覆盖文件会设置服务名地址。
+      NAS_DOWNLOAD_QB_URL: ${DOWNLOAD_QB_URL:-http://qbittorrent:8080}
+      # 下载器 WebUI 用户名，与栖库管理员账户相互独立。
+      NAS_DOWNLOAD_QB_USERNAME: ${DOWNLOAD_QB_USERNAME:-admin}
+      # Compose secret 挂载位置，栖库只读取文件内容。
+      NAS_DOWNLOAD_QB_PASSWORD_FILE: /run/secrets/qb_password
+      # 下载卷安全余量，单位 GiB；外部程序仍可能继续占用磁盘。
+      NAS_DOWNLOAD_MIN_FREE_GB: ${DOWNLOAD_MIN_FREE_GB:-2}
+# 独立密码文件不包含在栖库数据库备份中，请另行保护与备份。
+secrets:
+  # 密码文件必须事先存在且只含固定密码，可带末尾换行。
+  qb_password:
+    # 推荐放在已忽略的 .runtime 目录，避免误加入版本控制。
+    file: ${QBT_PASSWORD_FILE:-./.runtime/downloads/qb-password}

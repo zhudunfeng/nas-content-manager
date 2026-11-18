@@ -13,6 +13,9 @@ The first release is a standard-library Go HTTP service with pure-Go SQLite. Its
 1. Read [Runtime contract](./runtime-contract.md), `docs/api.md`, and the current task PRD.
 2. Inspect the affected handler and its storage/path helpers before changing behavior.
 3. Keep Chinese function/field/config comments, explicit types, and Chinese business logs.
+4. For downloads or scan/read/storage changes, also read [Download contract](./download-contract.md).
+5. For source search, secret configuration or search-origin additions, also read [Torrent search contract](./torrent-search-contract.md).
+6. For engine setup, helper/Docker integration or managed connection changes, read [Engine bootstrap contract](./engine-bootstrap-contract.md).
 
 ## Quality Check
 
@@ -25,6 +28,9 @@ Run `go vet ./...`, `go test ./...`, `go build ./cmd/nas`, and the isolated `scr
 | Guide | Description | Status |
 |-------|-------------|--------|
 | [Runtime contract](./runtime-contract.md) | Actual API, SQLite, jobs, path boundaries, streaming and resource rules | Implemented |
+| [Download contract](./download-contract.md) | Optional qB coordinator, v2 migration, selected publication gate and deployment boundaries | Implemented |
+| [Torrent search contract](./torrent-search-contract.md) | Optional bounded Torznab aggregation, private result cache and original managed-download handoff | Implemented |
+| [Engine bootstrap contract](./engine-bootstrap-contract.md) | Optional private helper, fixed Docker templates, durable recovery and managed runtime activation | Implemented |
 | [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
 | [Database Guidelines](./database-guidelines.md) | ORM patterns, queries, migrations | To fill |
 | [Error Handling](./error-handling.md) | Error types, handling strategies | To fill |

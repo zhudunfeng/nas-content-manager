@@ -1,0 +1,23 @@
+# syntax=docker/dockerfile:1
+# 助手与主应用采用相同Go工具链，依赖由go.sum锁定。
+FROM golang:1.27.4-bookworm AS builder
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY cmd/nas-engine-helper ./cmd/nas-engine-helper
+COPY internal/enginehelper ./internal/enginehelper
+COPY internal/enginecontract ./internal/enginecontract
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/nas-engine-helper ./cmd/nas-engine-helper
+
+# 助手无需shell、Docker CLI或对外监听，仅使用本机Unix socket。
+FROM scratch
+COPY --from=builder /out/nas-engine-helper /nas-engine-helper
+# 私有状态、连接与引擎配置的容器侧固定专用根。
+ENV ENGINE_MANAGED_ROOT=/managed
+# 应用通过专用IPC目录访问助手，不开放TCP控制端口。
+ENV ENGINE_HELPER_SOCKET=/ipc/helper.sock
+# 仅助手持有本机Docker socket，应用不可挂载。
+ENV ENGINE_DOCKER_SOCKET=/var/run/docker.sock
+# 创建目录和使用Docker需要受信任root助手，正常下载进程另用目标UID。
+USER 0:0
+ENTRYPOINT ["/nas-engine-helper"]

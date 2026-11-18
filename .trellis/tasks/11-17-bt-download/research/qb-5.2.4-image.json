@@ -1,0 +1,45 @@
+{
+  "dockerExecuted": false,
+  "image": "qbittorrentofficial/qbittorrent-nox:5.2.4-1",
+  "date": "2026-11-17",
+  "platforms": [
+    {
+      "digest": "sha256:326d63d0b04211c5708e96962e1beeffd888dab58c9cad7180bd951e395a48c4",
+      "os": "linux",
+      "variant": null,
+      "architecture": "386"
+    },
+    {
+      "digest": "sha256:f5d34c27db7853bef7262666561d1b6e84fbffde0ffa7e9e24ed21337f006ef1",
+      "os": "linux",
+      "variant": null,
+      "architecture": "amd64"
+    },
+    {
+      "digest": "sha256:7a6413552fb78510f7034092db9e0bb0cdd77c828ba3a203eff349f709f26631",
+      "os": "linux",
+      "variant": "v6",
+      "architecture": "arm"
+    },
+    {
+      "digest": "sha256:75eb5962a719a6503b6f3f2b6c35533596cf047ac41f419bfe6c5594bbfe2def",
+      "os": "linux",
+      "variant": "v7",
+      "architecture": "arm"
+    },
+    {
+      "digest": "sha256:34141cc7be961bf6de05ad883d4d6174e73188933602aa9d5bbf6045f8b8f7d5",
+      "os": "linux",
+      "variant": null,
+      "architecture": "arm64"
+    },
+    {
+      "digest": "sha256:050df435f6be83bcd3682b840967ea6c9bac125d801eab895cf622635585aa3a",
+      "os": "linux",
+      "variant": null,
+      "architecture": "riscv64"
+    }
+  ],
+  "source": "https://registry-1.docker.io/v2/qbittorrentofficial/qbittorrent-nox/manifests/5.2.4-1",
+  "digest": "sha256:92bfd78d731e254ba64f62b77b0696add6447a33642ee5feda106a26b285aa7f"
+}

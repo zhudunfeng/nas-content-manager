@@ -1,0 +1,39 @@
+# 可选索引聚合服务：镜像由LinuxServer维护，不属于Jackett项目官方镜像。
+services:
+  # 仅提供Torznab搜索和小种子代理，不接收媒体挂载或写入下载卷。
+  jackett:
+    # 固定版本及多架构摘要；注册表核验不等于已完成容器运行验收。
+    image: ${JACKETT_IMAGE:-ghcr.io/linuxserver/jackett:v0.24.3065-ls36@sha256:31b58c6acfae963dbb334ffd1b721fbefebed498a3df872f058d1e5544f8b02d}
+    # NAS重启后自动恢复，用户手动停止后不强行拉起。
+    restart: unless-stopped
+    # 管理UI默认仅NAS本机访问；应用通过Compose网络服务名连接。
+    ports:
+      - "127.0.0.1:${JACKETT_SETUP_PORT:-19117}:9117"
+    # 保存索引器配置、站点授权和API Key，目录需要独立保护与备份。
+    volumes:
+      - ${JACKETT_CONFIG_PATH:?请设置Jackett持久配置绝对路径}:/config
+    # 使用镜像发布方支持的身份与时区参数。
+    environment:
+      # 专用配置文件的宿主所有者UID。
+      PUID: ${JACKETT_UID:-1000}
+      # 专用配置文件的宿主所有者GID。
+      PGID: ${JACKETT_GID:-1000}
+      # 日志时区。
+      TZ: ${JACKETT_TIMEZONE:-Asia/Shanghai}
+      # 禁止运行时自更新，镜像内版本跟随上方固定摘要。
+      AUTO_UPDATE: "false"
+    # 为索引服务退出保留保存配置时间。
+    stop_grace_period: 30s
+    # 防止服务借setuid等机制提升权限。
+    security_opt:
+      - no-new-privileges:true
+    # 避免索引错误重复刷日志占满磁盘。
+    logging:
+      # 使用Docker本地轮转驱动。
+      driver: local
+      # 单文件大小和保留数量均有上限。
+      options:
+        # 每份日志最多10MiB。
+        max-size: "10m"
+        # 最多保留3份日志。
+        max-file: "3"

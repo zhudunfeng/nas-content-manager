@@ -92,3 +92,13 @@ Create detailed flow docs when:
 - Multiple teams are involved
 - Data format is complex
 - Feature has caused bugs before
+
+## External Service Round Trips
+
+For an authenticated service adapter, verify the complete exchange with the actual client and a real isolated service: login status/body/cookie names, a subsequent authenticated call, expired-session refresh, and failure propagation. A separate probe using a cookie jar can pass while a production client that manually forwards a hardcoded cookie name fails. Mocks must follow observed version-specific responses rather than validate the adapter's assumptions.
+
+Record only sanitized protocol metadata in evidence. Do not log cookie values, credentials, private source URLs or unfiltered upstream response bodies. Keep a reusable end-to-end probe when temporary unit tests must be removed.
+
+When a network response changes persisted state, also verify revision ownership, transaction rollback and later reads. A conditional update that affects zero rows must not leave dependent manifest rows or delete recovery input. Publication checks must run before every early-return path that could leave previously ready data readable.
+
+For short-lived external search results that create durable tasks, check whether an accepted retry survives cache expiry/restart, whether identity aliases preserve the same ownership, and whether cancellation or partial source failure is represented correctly. See the [torrent search contract](../backend/torrent-search-contract.md) for concrete budgets, credential boundaries and request binding.

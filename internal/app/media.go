@@ -15,6 +15,9 @@ func (a *App) openSource(item Item) (*os.File, error) {
 	if err != nil || canonical != item.LibraryPath {
 		return nil, fmt.Errorf("媒体挂载已变化或不可访问")
 	}
+	if err = a.checkDownloadPath(filepath.Join(canonical, filepath.FromSlash(item.RelativePath)), item.IsDir); err != nil {
+		return nil, err
+	}
 	root, err := os.OpenRoot(canonical)
 	if err != nil {
 		return nil, fmt.Errorf("媒体目录离线或无读取权限")

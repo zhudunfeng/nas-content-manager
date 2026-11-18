@@ -197,9 +197,13 @@ func archivePages(file *os.File) ([]*zip.File, error) {
 	return pages, nil
 }
 
-// directoryPages 列出漫画目录中直接包含的安全图片，不跟随软链接。
-func directoryPages(directory *os.File) ([]string, error) {
+// directoryPages 列出漫画目录中已发布的所选图片，不跟随软链接。
+func (a *App) directoryPages(directory *os.File, item Item) ([]string, error) {
 	pages := []string{}
+	gate, gateErr := a.loadDownloadGate(a.ctx)
+	if gateErr != nil {
+		return nil, gateErr
+	}
 	for {
 		entries, err := directory.ReadDir(256)
 		if err != nil && err != io.EOF {
@@ -207,6 +211,13 @@ func directoryPages(directory *os.File) ([]string, error) {
 		}
 		for _, entry := range entries {
 			if entry.Type()&os.ModeSymlink != 0 || entry.IsDir() || !isImage(entry.Name()) {
+				continue
+			}
+			allowed, checkErr := gate.allow(filepath.Join(item.LibraryPath, filepath.FromSlash(item.RelativePath), entry.Name()), false)
+			if checkErr != nil {
+				return nil, checkErr
+			}
+			if !allowed {
 				continue
 			}
 			info, infoErr := entry.Info()
@@ -254,7 +265,7 @@ func (a *App) comic(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 	names := []string{}
 	if item.IsDir {
-		names, err = directoryPages(file)
+		names, err = a.directoryPages(file, item)
 	} else {
 		var pages []*zip.File
 		pages, err = archivePages(file)
@@ -284,7 +295,7 @@ func (a *App) readComicPage(item Item, index int) ([]byte, string, error) {
 		return nil, "", fmt.Errorf("页码无效")
 	}
 	if item.IsDir {
-		names, readErr := directoryPages(file)
+		names, readErr := a.directoryPages(file, item)
 		if readErr != nil {
 			return nil, "", readErr
 		}
@@ -292,6 +303,7 @@ func (a *App) readComicPage(item Item, index int) ([]byte, string, error) {
 			return nil, "", fmt.Errorf("页码超出漫画范围")
 		}
 		pageItem := item
+		pageItem.IsDir = false
 		pageItem.RelativePath = filepath.ToSlash(filepath.Join(filepath.FromSlash(item.RelativePath), names[index]))
 		page, openErr := a.openSource(pageItem)
 		if openErr != nil {

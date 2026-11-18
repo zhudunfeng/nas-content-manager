@@ -42,7 +42,7 @@ func openDatabase(ctx context.Context, dataDir string) (*sql.DB, error) {
 		db.Close()
 		return nil, err
 	}
-	if version > 1 {
+	if version > 2 {
 		db.Close()
 		return nil, fmt.Errorf("数据库版本较新，请使用匹配的应用版本")
 	}
@@ -64,6 +64,28 @@ func openDatabase(ctx context.Context, dataDir string) (*sql.DB, error) {
 		if err != nil {
 			db.Close()
 			return nil, fmt.Errorf("初始化数据库失败: %w", err)
+		}
+		version = 1
+	}
+	if version == 1 {
+		// 下载表采用独立增量迁移，原媒体、进度及扫描唯一索引不重建。
+		tx, txErr := db.BeginTx(ctx, nil)
+		if txErr != nil {
+			db.Close()
+			return nil, txErr
+		}
+		_, err = tx.ExecContext(ctx, schemaV2)
+		if err == nil {
+			_, err = tx.ExecContext(ctx, "PRAGMA user_version=2")
+		}
+		if err == nil {
+			err = tx.Commit()
+		} else {
+			_ = tx.Rollback()
+		}
+		if err != nil {
+			db.Close()
+			return nil, fmt.Errorf("升级下载数据库失败: %w", err)
 		}
 	}
 	_, err = db.ExecContext(ctx, "UPDATE jobs SET status='queued',message='应用重启，等待恢复',updated_at=? WHERE status='running'", now())

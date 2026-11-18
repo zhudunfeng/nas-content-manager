@@ -1,0 +1,6 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/tasks/11-18-torrent-search/info.md", "reason": "搜种跨层契约"}
+{"file": ".trellis/spec/backend/download-contract.md", "reason": "保留安全下载入口"}
+{"file": ".trellis/spec/backend/torrent-search-contract.md", "reason": "已实现的搜种协议、凭据、预算和幂等契约"}

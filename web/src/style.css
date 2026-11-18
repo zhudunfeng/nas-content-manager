@@ -637,6 +637,379 @@ legend { margin-bottom: 10px; font-weight: 500; }
   .text-page { padding: 30px 22px 45px; }
   .chapter-panel { top: 168px; bottom: 70px; }
 }
+/* 下载中心复用主题语义令牌；列表、表单与分页均保留可触达的原生控件。 */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.download-center { min-width: 0; }
+.download-connection { display: flex; align-items: center; gap: 18px; padding: 22px 24px; border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); background: var(--surface); border-radius: 12px; margin-bottom: 26px; }
+.download-connection-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 48px; width: 48px; height: 48px; border-radius: 12px; color: var(--accent); background: var(--accent-soft); }
+.download-connection-muted { border-color: var(--border); }
+.download-connection-muted .download-connection-icon { color: var(--warning); background: var(--surface-hover); }
+.download-connection-copy { flex: 1; min-width: 0; }
+.download-connection-copy h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 15px; margin: 0 0 7px; }
+.download-connection-copy p { color: var(--muted); font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; margin: 0; }
+.download-connection-copy small { display: block; color: var(--faint); font-size: 12px; margin-top: 7px; overflow-wrap: anywhere; }
+.download-connection > button { flex-shrink: 0; min-height: 44px; }
+.download-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.download-toolbar > .primary-button { min-height: 44px; flex-shrink: 0; }
+.download-filters { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.download-filters button { min-height: 44px; padding: 10px 15px; border-radius: 7px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.download-filters button:hover { background: var(--surface-hover); color: var(--text); }
+.download-filters button.active { background: var(--accent-soft); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 25%, transparent); }
+.download-search-row { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.download-search-row > span { margin-left: auto; color: var(--muted); white-space: nowrap; font-size: 12px; }
+.download-search { display: flex; flex-direction: row; align-items: center; gap: 10px; width: min(360px, 100%); border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding-left: 13px; color: var(--muted); }
+.download-search input { flex: 1; width: 100%; border: 0; background: transparent; min-height: 44px; padding: 10px 4px; font-size: 12px; }
+.download-search > svg { flex-shrink: 0; }
+.download-search > button { margin: 0 2px 0 -4px; flex-shrink: 0; }
+.download-search-row > button, .download-task-actions .icon-button { width: 44px; height: 44px; }
+.download-feedback { display: flex; gap: 9px; align-items: flex-start; color: var(--accent); font-size: 12px; line-height: 1.7; margin: 16px 0; }
+.download-feedback > svg { flex-shrink: 0; margin-top: 2px; }
+.download-list { display: flex; flex-direction: column; gap: 14px; }
+.download-task { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 23px 25px; min-width: 0; }
+.download-task-top { display: flex; align-items: center; gap: 14px; margin-bottom: 19px; }
+.download-task-top > .library-icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; }
+.download-task-copy { flex: 1; min-width: 0; }
+.download-title { text-align: left; display: block; max-width: 100%; font-size: 15px; font-weight: 600; color: var(--text); background: transparent; border: 0; min-height: 30px; overflow-wrap: anywhere; line-height: 1.6; padding: 0; }
+.download-title:hover { color: var(--accent); }
+.download-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 5px; }
+.download-badges .status-pill { font-size: 11px; }
+.download-type-label, .download-import-label, .download-stale-label { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.download-type-label { margin-right: 3px; }
+.download-percentage { color: var(--text); font-size: 23px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.download-percentage > small { color: var(--muted); font-size: 12px; margin-left: 2px; }
+.download-progress { display: block; appearance: none; border: 0; width: 100%; height: 5px; border-radius: 5px; overflow: hidden; background: var(--surface-hover); color: var(--accent); accent-color: var(--accent); }
+.download-progress::-webkit-progress-bar { background: var(--surface-hover); border-radius: 5px; }
+.download-progress::-webkit-progress-value { background: var(--accent); border-radius: 5px; }
+.download-progress::-moz-progress-bar { background: var(--accent); border-radius: 5px; }
+.download-task-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; margin-top: 14px; }
+.download-task-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; color: var(--muted); font-size: 12px; line-height: 1.7; font-variant-numeric: tabular-nums; }
+.download-task-actions { display: flex; align-items: center; gap: 7px; margin-left: auto; flex-shrink: 0; }
+.download-task-actions .secondary-button { min-height: 44px; padding: 9px 12px; font-size: 12px; }
+.download-task-error { display: flex; align-items: flex-start; gap: 7px; color: var(--danger); font-size: 12px; line-height: 1.7; margin: 12px 0 0; overflow-wrap: anywhere; }
+.download-task-error > svg { flex-shrink: 0; margin-top: 2px; }
+.download-empty { min-height: 400px; }
+.download-empty > p { max-width: 420px; }
+.download-inline-state { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 30px 12px; color: var(--muted); font-size: 13px; line-height: 1.8; text-align: center; }
+.download-add-form textarea { display: block; width: 100%; padding: 14px; resize: vertical; line-height: 1.7; }
+.download-source-switch { display: flex; padding: 4px; gap: 4px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-subtle); }
+.download-source-switch > button { display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1; min-height: 44px; color: var(--muted); background: transparent; border: 0; border-radius: 6px; font-size: 13px; }
+.download-source-switch > button.active { color: var(--accent); background: var(--accent-soft); }
+.download-add-form fieldset > .field-hint { margin-top: 10px; }
+.download-upload input { width: 100%; padding: 13px; min-height: 54px; cursor: pointer; }
+.download-upload input::file-selector-button { border: 1px solid var(--border); background: var(--surface); border-radius: 6px; padding: 9px 12px; margin-right: 12px; color: var(--text); cursor: pointer; }
+.download-options { border: 1px solid var(--border); border-radius: 9px; padding: 0 16px; min-width: 0; }
+.download-options summary { min-height: 48px; padding: 14px 0; font-size: 13px; color: var(--text); cursor: pointer; }
+.download-options[open] { padding-bottom: 14px; }
+.download-options > .field-hint { margin: 8px 0 0; }
+.download-checkbox { flex-direction: row; align-items: flex-start; gap: 10px; padding: 8px 0; min-height: 44px; line-height: 1.6; }
+.download-checkbox input, .download-file-row input { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--accent); margin: 2px 0 0; }
+.download-detail { padding: 25px 26px; display: flex; flex-direction: column; gap: 19px; }
+.download-detail-title { display: flex; align-items: flex-start; gap: 14px; }
+.download-detail-title > .library-icon { flex-shrink: 0; }
+.download-detail-title > div { flex: 1; min-width: 0; }
+.download-detail-title h3 { overflow-wrap: anywhere; line-height: 1.6; font-size: 18px; margin: 4px 0 0; }
+.download-detail-title .eyebrow { font-size: 11px; }
+.download-detail > .download-badges { margin: -8px 0 0; }
+.download-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin: 3px 0 0; }
+.download-metrics > div { min-width: 0; }
+.download-metrics dt { color: var(--muted); font-size: 12px; line-height: 1.7; }
+.download-metrics dd { color: var(--text); margin: 5px 0 0; font-size: 13px; overflow-wrap: anywhere; line-height: 1.7; font-variant-numeric: tabular-nums; }
+.download-detail-section { padding-top: 22px; border-top: 1px solid var(--line); }
+.download-detail-section .section-heading { margin: 0 0 8px; }
+.download-detail-section h3 { font-size: 14px; }
+.download-detail-section .field-hint { margin: 8px 0 15px; }
+.download-detail-section .field-hint > svg { vertical-align: -2px; margin-right: 4px; }
+.download-detail-section .text-button { min-height: 44px; }
+.download-file-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 10px; justify-content: space-between; font-size: 12px; color: var(--muted); margin: 8px 0; }
+.download-file-toolbar > div { display: flex; gap: 12px; }
+.download-file-list { border: 1px solid var(--line); border-radius: 8px; max-height: 360px; overflow-y: auto; overscroll-behavior: contain; }
+.download-file-row { display: flex; flex-direction: row; align-items: flex-start; gap: 12px; padding: 14px; border-bottom: 1px solid var(--line); cursor: pointer; min-height: 60px; }
+.download-file-row:last-child { border-bottom: 0; }
+.download-file-row:hover { background: var(--surface-subtle); }
+.download-file-copy { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; font-weight: 400; }
+.download-file-copy > span { font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.download-file-copy > small { color: var(--muted); font-size: 12px; }
+.download-file-pagination { margin-top: 16px; gap: 16px; }
+.download-file-pagination > button { min-height: 44px; }
+.download-confirm { margin-top: 18px; min-height: 44px; }
+.download-limit-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 14px; margin-top: 5px; }
+.download-limit-form label { font-size: 12px; }
+.download-limit-form input { padding: 12px; min-height: 44px; }
+.download-limit-form > button { min-height: 44px; grid-column: 1 / -1; justify-self: start; }
+.download-imported-list { margin-top: 14px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.download-imported-list > button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 12px 14px; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); }
+.download-imported-list > button:last-child { border-bottom: 0; }
+.download-imported-list > button:hover { background: var(--surface-hover); }
+.download-imported-list > button > span { min-width: 0; flex: 1; overflow-wrap: anywhere; font-size: 13px; }
+.download-imported-list > button > svg { flex-shrink: 0; color: var(--muted); }
+@media (max-width: 900px) {
+  .download-task { padding: 20px; }
+  .download-connection { padding: 18px; gap: 13px; }
+  .download-connection > button { padding: 10px 12px; font-size: 12px; }
+}
+@media (max-width: 700px) {
+  .download-connection { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: flex-start; gap: 12px; padding: 18px 16px; margin-bottom: 21px; }
+  .download-connection-icon { flex-basis: 40px; width: 40px; height: 40px; border-radius: 9px; }
+  .download-connection-copy h2 { font-size: 14px; }
+  .download-connection > button { grid-column: 2; justify-self: start; margin-left: 0; }
+  .download-toolbar { flex-direction: column-reverse; align-items: stretch; gap: 15px; margin-bottom: 13px; }
+  .download-toolbar > .primary-button { align-self: flex-start; }
+  .download-filters { gap: 2px; justify-content: space-between; }
+  .download-filters button { flex: 1; padding: 10px 7px; font-size: 12px; }
+  .download-search-row { gap: 8px; }
+  .download-search-row > span { font-size: 11px; }
+  .download-search { flex: 1; min-width: 0; width: auto; gap: 6px; padding-left: 10px; }
+  .download-search input { font-size: 12px; }
+  .download-task { padding: 17px 15px; }
+  .download-task-top { gap: 11px; align-items: flex-start; margin-bottom: 16px; }
+  .download-task-top > .library-icon { width: 37px; height: 37px; border-radius: 8px; }
+  .download-title { font-size: 14px; min-height: 28px; }
+  .download-percentage { font-size: 18px; padding-top: 3px; }
+  .download-badges { gap: 6px; }
+  .download-import-label { flex-basis: 100%; }
+  .download-badges .status-pill { white-space: normal; }
+  .download-task-stats { gap: 7px 12px; font-size: 11px; }
+  .download-task-bottom { gap: 11px; }
+  .download-task-actions { margin-left: 0; width: 100%; }
+  .download-task-actions > .secondary-button { flex: 1; justify-content: center; }
+  .download-task-actions > .icon-button { flex-shrink: 0; }
+  .download-upload-speed { display: none; }
+  .download-empty { min-height: 350px; padding-left: 8px; padding-right: 8px; }
+  .download-detail { padding: 20px 17px; gap: 18px; }
+  .download-detail-title h3 { font-size: 16px; }
+  .download-detail-title > .library-icon { width: 40px; height: 40px; }
+  .download-metrics { gap: 16px 14px; }
+  .download-metrics dd { font-size: 12px; }
+  .download-file-toolbar { align-items: flex-start; }
+  .download-file-toolbar > span { padding-top: 11px; }
+  .download-file-row { padding: 12px; gap: 10px; }
+  .download-confirm { width: 100%; justify-content: center; }
+  .download-add-form .type-picker { gap: 5px; }
+  .download-add-form .type-picker button { flex-direction: column; gap: 6px; padding: 10px 4px; }
+  .download-limit-form { gap: 12px; }
+}
+
+/* 搜种复用现有主题与原生对话框，来源凭据始终由服务端保管。 */
+.download-toolbar-actions { display: flex; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+.download-toolbar-actions > button { min-height: 44px; }
+.torrent-search-modal { width: min(960px, calc(100vw - 40px)); }
+.torrent-search-dialog { padding: 25px 26px 20px; min-width: 0; }
+.torrent-search-intro { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+.torrent-search-emblem { display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; flex-shrink: 0; color: var(--accent); background: var(--accent-soft); border-radius: 13px; }
+.torrent-search-intro > div { min-width: 0; }
+.torrent-search-intro .eyebrow { font-size: 10px; margin: 0 0 7px; }
+.torrent-search-intro h3 { font-size: 19px; line-height: 1.6; margin: 0; }
+.torrent-search-intro p:last-child { color: var(--muted); font-size: 12px; line-height: 1.8; margin: 6px 0 0; }
+.torrent-search-form { padding-bottom: 19px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+.torrent-search-form label { display: flex; flex-direction: column; gap: 8px; color: var(--muted); font-size: 12px; }
+.torrent-search-input { display: flex; align-items: center; gap: 11px; background: var(--surface-subtle); border: 1px solid var(--border); padding: 0 14px; border-radius: 9px; }
+.torrent-search-input:focus-within { border-color: var(--accent); }
+.torrent-search-input > svg { flex-shrink: 0; }
+.torrent-search-input input { background: transparent; border: 0; min-height: 50px; width: 100%; min-width: 0; padding: 12px 0; font-size: 14px; }
+.torrent-search-input input:focus-visible { outline-offset: -3px; }
+.torrent-search-controls { display: flex; align-items: flex-end; gap: 12px; margin-top: 15px; }
+.torrent-search-controls > label { flex: 1; min-width: 0; }
+.torrent-search-controls select, .torrent-search-results-heading select { min-height: 44px; max-width: 100%; width: 100%; padding: 10px 28px 10px 12px; color: var(--text); font-size: 12px; }
+.torrent-search-controls > button { min-height: 44px; flex-shrink: 0; }
+.torrent-search-form > .field-hint { margin: 11px 0 0; }
+.torrent-search-notice { display: flex; align-items: flex-start; gap: 9px; color: var(--muted); padding: 13px 14px; margin: 15px 0; background: var(--surface-subtle); border: 1px solid var(--line); border-radius: 8px; line-height: 1.8; font-size: 12px; overflow-wrap: anywhere; }
+.torrent-search-notice > svg { flex-shrink: 0; margin-top: 2px; }
+.torrent-search-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; color: var(--muted); padding: 40px 22px; min-height: 220px; }
+.torrent-search-state > svg { color: var(--accent); opacity: .8; }
+.torrent-search-state h3 { color: var(--text); font-size: 16px; line-height: 1.7; margin: 0; }
+.torrent-search-state p { max-width: 390px; font-size: 12px; line-height: 1.9; margin: 0; overflow-wrap: anywhere; }
+.torrent-search-setup { padding: 25px 20px; background: var(--surface-subtle); border: 1px solid var(--line); border-radius: 10px; }
+.torrent-search-setup > svg { color: var(--accent); }
+.torrent-search-setup h3 { margin: 16px 0 10px; font-size: 16px; line-height: 1.7; }
+.torrent-search-setup p { color: var(--muted); font-size: 12px; line-height: 1.9; margin: 10px 0; overflow-wrap: anywhere; }
+.torrent-search-setup code { font-size: 11px; color: var(--text); }
+.torrent-search-setup > button { min-height: 44px; margin-top: 8px; }
+.torrent-search-warning { padding: 14px 16px; color: var(--warning); border: 1px solid color-mix(in srgb, var(--warning) 40%, var(--border)); background: var(--surface-subtle); border-radius: 9px; font-size: 12px; line-height: 1.8; margin: 15px 0; overflow-wrap: anywhere; }
+.torrent-search-warning > div { display: flex; align-items: center; gap: 8px; }
+.torrent-search-warning ul { margin: 8px 0; padding-left: 20px; }
+.torrent-search-warning p { color: var(--muted); margin: 7px 0 0; }
+.torrent-search-results-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin: 25px 0 14px; scroll-margin-top: 16px; }
+.torrent-search-results-heading > div { flex: 1; min-width: 0; }
+.torrent-search-results-heading h3 { font-size: 14px; line-height: 1.7; margin: 0; overflow-wrap: anywhere; }
+.torrent-search-results-heading p { font-size: 11px; color: var(--muted); line-height: 1.8; margin: 5px 0 0; }
+.torrent-search-results-heading label { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; color: var(--muted); font-size: 11px; }
+.torrent-search-results-heading select { width: 144px; }
+.torrent-search-results { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 11px; }
+.torrent-search-result { display: flex; gap: 18px; align-items: center; min-width: 0; padding: 18px 19px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-subtle); }
+.torrent-search-result-copy { flex: 1; min-width: 0; }
+.torrent-search-source { display: inline-block; color: var(--muted); border: 1px solid var(--border); background: var(--surface); border-radius: 4px; padding: 3px 7px; font-size: 10px; line-height: 1.5; max-width: 100%; overflow-wrap: anywhere; }
+.torrent-search-result h4 { font-size: 13px; line-height: 1.8; margin: 8px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+.torrent-search-result dl { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 0 0; }
+.torrent-search-result dl > div { display: flex; gap: 6px; font-size: 11px; line-height: 1.7; }
+.torrent-search-result dt { color: var(--muted); }
+.torrent-search-result dd { color: var(--text); margin: 0; font-variant-numeric: tabular-nums; }
+.torrent-search-result dd.torrent-search-seeders { color: var(--accent); }
+.torrent-search-result > button { min-height: 44px; flex-shrink: 0; font-size: 12px; }
+.torrent-search-result .field-hint { margin: 9px 0 0; }
+.torrent-search-pagination { margin-top: 24px; gap: 12px; }
+.torrent-search-pagination > button { min-height: 44px; }
+.torrent-search-footer { margin: 21px 0 0; }
+.torrent-search-footer > svg { vertical-align: -2px; margin-right: 5px; }
+.download-search-selection { min-width: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-subtle); padding: 18px; }
+.download-search-selection .status-pill { display: inline-block; white-space: normal; overflow-wrap: anywhere; }
+.download-search-selection h3 { font-size: 15px; line-height: 1.8; margin: 12px 0 8px; overflow-wrap: anywhere; }
+.download-search-selection p { margin: 7px 0 0; }
+@media (max-width: 700px) {
+  .download-toolbar-actions { width: 100%; }
+  .download-toolbar-actions > button { flex: 1; justify-content: center; }
+  .torrent-search-modal { width: calc(100vw - 24px); max-height: calc(100dvh - 28px); }
+  .torrent-search-dialog { padding: 21px 16px; }
+  .torrent-search-intro { gap: 12px; align-items: flex-start; margin-bottom: 20px; }
+  .torrent-search-emblem { width: 41px; height: 41px; border-radius: 10px; }
+  .torrent-search-intro h3 { font-size: 16px; }
+  .torrent-search-intro p:last-child { font-size: 11px; }
+  .torrent-search-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px; }
+  .torrent-search-controls > button { justify-content: center; }
+  .torrent-search-controls > .primary-button { grid-column: 1 / -1; }
+  .torrent-search-controls > .secondary-button { grid-column: 1 / -1; }
+  .torrent-search-input input { font-size: 16px; }
+  .torrent-search-controls select, .torrent-search-results-heading select { font-size: 16px; }
+  .torrent-search-results-heading { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  .torrent-search-results-heading > div { flex-basis: 100%; }
+  .torrent-search-results-heading label { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; }
+  .torrent-search-results-heading select { width: min(190px, 72%); }
+  .torrent-search-result { flex-direction: column; align-items: stretch; padding: 16px 14px; gap: 14px; }
+  .torrent-search-result > button { align-self: flex-end; }
+  .torrent-search-result dl { gap: 7px 15px; }
+  .torrent-search-result h4 { font-size: 13px; }
+  .torrent-search-pagination { justify-content: space-between; font-size: 11px; gap: 6px; }
+  .torrent-search-pagination button { padding: 10px; font-size: 12px; }
+  .torrent-search-setup { padding: 21px 16px; }
+  .download-search-selection { padding: 15px; }
+}
+
+/* 引擎控制面沿用媒体库语义色与原生对话框，不增加移动端导航入口。 */
+.engine-overview { margin: 22px 0 28px; }
+.engine-overview-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 12px; }
+.engine-overview-heading h2 { font-size: 14px; }
+.engine-overview-heading p { font-size: 11px; color: var(--muted); margin-top: 5px; }
+.engine-overview-heading > button { min-height: 44px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.engine-status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.engine-status-card { display: flex; align-items: center; gap: 13px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.engine-card-icon { width: 42px; height: 42px; border: 1px solid var(--line); background: var(--surface-subtle); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; flex-shrink: 0; }
+.engine-card-copy { flex: 1; min-width: 0; }
+.engine-card-copy h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 9px; font-size: 13px; line-height: 1.7; }
+.engine-card-copy small { font-size: 11px; font-weight: 400; color: var(--muted); }
+.engine-card-copy p { font-size: 11px; margin-top: 5px; color: var(--muted); }
+.engine-state-ready { color: var(--accent); }
+.engine-status-stale .engine-card-icon { color: var(--muted); }
+.engine-status-loading { color: var(--muted); font-size: 12px; padding: 18px; border: 1px solid var(--line); border-radius: 9px; }
+.engine-setup-modal { width: min(760px, calc(100vw - 48px)); }
+.engine-setup-dialog { padding: 27px 29px 23px; }
+.engine-setup-intro { display: flex; align-items: center; gap: 17px; margin-bottom: 24px; }
+.engine-setup-intro > div { min-width: 0; }
+.engine-setup-intro h3 { font-size: 20px; margin: 6px 0 7px; }
+.engine-setup-intro p:last-child { font-size: 12px; color: var(--muted); }
+.engine-helper-status { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 15px 0 19px; }
+.engine-helper-status > div { min-width: 0; }
+.engine-helper-status strong { font-size: 12px; }
+.engine-helper-status p { font-size: 12px; color: var(--muted); margin-top: 6px; overflow-wrap: anywhere; }
+.engine-helper-status > button { flex-shrink: 0; font-size: 12px; }
+.engine-deployment-guide { display: flex; align-items: flex-start; gap: 12px; padding: 17px; margin-bottom: 20px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-subtle); }
+.engine-deployment-guide > svg { margin-top: 2px; color: var(--accent); }
+.engine-deployment-guide > div { min-width: 0; }
+.engine-deployment-guide h4 { margin: 0 0 7px; font-size: 13px; }
+.engine-deployment-guide p { color: var(--muted); font-size: 12px; line-height: 1.9; margin-top: 7px; overflow-wrap: anywhere; }
+.engine-setup-dialog code { font-size: 11px; color: var(--text); overflow-wrap: anywhere; }
+.engine-component-list { display: flex; flex-direction: column; gap: 14px; }
+.engine-component { padding: 18px; border: 1px solid var(--line); background: var(--surface-subtle); border-radius: 10px; min-width: 0; }
+.engine-component-ready { border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); }
+.engine-component-top { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.engine-component-top > div { flex: 1; min-width: 0; }
+.engine-component-top h4 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 9px; font-size: 13px; line-height: 1.7; margin: 0; }
+.engine-component-top h4 small { font-size: 11px; color: var(--muted); font-weight: 400; }
+.engine-component-top .status-pill { white-space: normal; text-align: center; flex-shrink: 0; max-width: 110px; }
+.engine-mode { font-size: 11px; color: var(--muted); display: inline-block; margin-top: 3px; }
+.engine-component-message { margin: 13px 0 0; font-size: 12px; line-height: 1.9; overflow-wrap: anywhere; }
+.engine-component > .field-hint { margin-top: 9px; }
+.engine-component > button { margin-top: 13px; font-size: 12px; }
+.engine-jackett-guide { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--line); }
+.engine-jackett-guide p { font-size: 12px; color: var(--muted); line-height: 1.9; overflow-wrap: anywhere; }
+.engine-jackett-guide > code { display: block; padding: 11px 12px; background: var(--surface); border-radius: 6px; margin: 10px 0; line-height: 1.8; }
+.engine-initialize { margin-top: 25px; padding-top: 21px; border-top: 1px solid var(--line); }
+.engine-initialize legend { font-size: 13px; padding-top: 21px; }
+.engine-checkbox { display: flex; flex-direction: row; align-items: center; gap: 11px; min-height: 44px; margin: 7px 0; padding: 5px 0; font-size: 12px; line-height: 1.8; cursor: pointer; }
+.engine-checkbox input { width: 18px; height: 18px; min-height: 18px; flex-shrink: 0; accent-color: var(--accent); margin: 0; }
+.engine-checkbox > span { min-width: 0; overflow-wrap: anywhere; }
+.engine-checkbox small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; line-height: 1.8; }
+.engine-notice { padding: 15px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-subtle); margin: 16px 0 19px; }
+.engine-notice strong { font-size: 12px; }
+.engine-notice p { color: var(--muted); font-size: 12px; line-height: 1.9; margin: 8px 0 10px; }
+.engine-notice .engine-checkbox { margin-bottom: 0; }
+.engine-initialize > .primary-button { margin: 13px 0 9px; }
+.engine-source-selection { margin: 24px 0; border-top: 1px solid var(--line); padding-top: 20px; }
+.engine-source-selection h4 { font-size: 13px; margin: 0 0 8px; line-height: 1.8; }
+.engine-source-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 15px; max-height: 270px; overflow: auto; padding: 8px 6px 12px 0; margin: 12px 0; }
+.engine-task { border-top: 1px solid var(--line); margin-top: 25px; padding-top: 23px; }
+.engine-task-heading { display: flex; gap: 15px; justify-content: space-between; align-items: center; }
+.engine-task-heading h3 { font-size: 15px; }
+.engine-task-heading p { font-size: 12px; color: var(--muted); margin-top: 6px; overflow-wrap: anywhere; }
+.engine-task-heading button { font-size: 12px; flex-shrink: 0; }
+.engine-task-explanation { font-size: 12px; color: var(--muted); line-height: 1.9; margin: 13px 0; }
+.engine-step-list { list-style: none; margin: 21px 0; padding: 0; display: flex; flex-direction: column; gap: 17px; }
+.engine-step-list > li { display: flex; gap: 12px; }
+.engine-step-list > li > div { flex: 1; min-width: 0; padding: 2px 0 4px; }
+.engine-step-marker { width: 29px; height: 29px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 50%; color: var(--muted); }
+.engine-step-completed .engine-step-marker { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent); }
+.engine-step-failed .engine-step-marker { color: var(--danger); border-color: var(--danger); }
+.engine-step-running .engine-step-marker { color: var(--accent); border-color: var(--accent); }
+.engine-step-list h4 { display: flex; gap: 7px 13px; align-items: baseline; flex-wrap: wrap; font-size: 12px; margin: 0; line-height: 1.8; }
+.engine-step-list h4 span { font-weight: 400; color: var(--muted); }
+.engine-step-list p { color: var(--muted); font-size: 12px; line-height: 1.9; margin-top: 5px; overflow-wrap: anywhere; }
+.engine-layer-list { list-style: none; padding: 0; margin: 12px 0 0; max-height: 220px; overflow: auto; }
+.engine-layer-list li { padding: 7px 2px; }
+.engine-layer-list li > div { display: flex; gap: 6px 12px; align-items: center; flex-wrap: wrap; color: var(--muted); font-size: 11px; line-height: 1.8; }
+.engine-layer-list small { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 10px; }
+.engine-layer-list progress { width: 100%; height: 4px; display: block; margin: 8px 0 1px; accent-color: var(--accent); border: 0; border-radius: 2px; background: var(--line); }
+.engine-layer-list progress::-webkit-progress-bar { background: var(--line); border-radius: 2px; }
+.engine-layer-list progress::-webkit-progress-value { background: var(--accent); border-radius: 2px; }
+.engine-event-details { padding: 14px; margin: 15px 0; background: var(--surface-subtle); border: 1px solid var(--line); border-radius: 8px; }
+.engine-event-details summary { cursor: pointer; font-size: 12px; min-height: 25px; line-height: 2; }
+.engine-event-details summary span { color: var(--muted); font-size: 11px; margin-left: 9px; }
+.engine-events { list-style: none; padding: 0; margin: 10px 0 0; max-height: 240px; overflow: auto; }
+.engine-events li { display: flex; gap: 7px 14px; align-items: baseline; margin-top: 9px; font-size: 11px; line-height: 1.8; overflow-wrap: anywhere; }
+.engine-events time { color: var(--faint); font-size: 10px; flex-shrink: 0; }
+.engine-events span { min-width: 0; }
+.engine-setup-footer { display: flex; align-items: flex-start; gap: 9px; border-top: 1px solid var(--line); margin-top: 25px; padding-top: 18px; color: var(--muted); }
+.engine-setup-footer svg { margin-top: 3px; }
+.engine-setup-footer p { font-size: 11px; line-height: 1.9; }
+.engine-setup-entry-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+@media (max-width: 700px) {
+  .engine-overview-heading { align-items: flex-start; gap: 10px; }
+  .engine-overview-heading p { max-width: 190px; line-height: 1.8; }
+  .engine-status-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .engine-status-card { padding: 12px 13px; gap: 12px; }
+  .engine-setup-modal { width: calc(100vw - 24px); max-height: calc(100dvh - 28px); }
+  .engine-setup-dialog { padding: 21px 16px; }
+  .engine-setup-intro { align-items: flex-start; gap: 12px; }
+  .engine-setup-intro h3 { font-size: 17px; }
+  .engine-setup-intro p:last-child { font-size: 11px; }
+  .engine-helper-status { flex-wrap: wrap; gap: 13px; }
+  .engine-helper-status > div { flex-basis: 100%; }
+  .engine-helper-status > button { margin-left: auto; }
+  .engine-component { padding: 15px 13px; }
+  .engine-component-top { gap: 10px; flex-wrap: wrap; }
+  .engine-component-top .engine-card-icon { width: 36px; height: 36px; }
+  .engine-component-top h4 { font-size: 12px; }
+  .engine-component-top h4 small { font-size: 10px; }
+  .engine-component-top .status-pill { font-size: 10px; max-width: 85px; }
+  .engine-notice { padding: 13px; }
+  .engine-initialize > .primary-button { width: 100%; }
+  .engine-source-options { grid-template-columns: minmax(0, 1fr); }
+  .engine-task-heading { flex-wrap: wrap; align-items: flex-start; gap: 12px; }
+  .engine-task-heading > div { flex-basis: 100%; }
+  .engine-task-heading button { margin-left: auto; }
+  .engine-layer-list small { margin-left: 0; }
+  .engine-events li { flex-direction: column; gap: 2px; }
+  .engine-setup-entry-actions { flex-direction: column; }
+  .engine-setup-entry-actions > button { width: 100%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }

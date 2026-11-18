@@ -228,6 +228,10 @@ func (a *App) runScan(ctx context.Context, job Job) error {
 		_, _ = a.db.ExecContext(a.ctx, "UPDATE libraries SET status='offline' WHERE id=?", library.ID)
 		return fmt.Errorf("媒体目录不可访问，请检查挂载与权限")
 	}
+	gate, err := a.loadDownloadGate(ctx)
+	if err != nil {
+		return err
+	}
 	_, _ = a.db.ExecContext(ctx, "UPDATE libraries SET status='scanning' WHERE id=?", library.ID)
 	a.logger.Info("媒体扫描开始", "libraryId", library.ID, "jobId", job.ID)
 	token := now()
@@ -240,6 +244,16 @@ func (a *App) runScan(ctx context.Context, job Job) error {
 			return fmt.Errorf("目录遍历失败，请检查挂载与权限")
 		}
 		if entry.Type()&os.ModeSymlink != 0 {
+			return nil
+		}
+		allowed, gateErr := gate.allow(path, entry.IsDir())
+		if gateErr != nil {
+			return gateErr
+		}
+		if !allowed {
+			if entry.IsDir() {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		if entry.IsDir() {
@@ -255,6 +269,13 @@ func (a *App) runScan(ctx context.Context, job Job) error {
 			count := 0
 			for _, child := range children {
 				if child.Type()&os.ModeSymlink == 0 && !child.IsDir() && isImage(child.Name()) {
+					selected, checkErr := gate.allow(filepath.Join(path, child.Name()), false)
+					if checkErr != nil {
+						return checkErr
+					}
+					if !selected {
+						continue
+					}
 					info, infoErr := child.Info()
 					if infoErr != nil {
 						return infoErr
@@ -300,7 +321,8 @@ func (a *App) runScan(ctx context.Context, job Job) error {
 	}
 	// 空挂载可能只是网络存储临时失联；保留旧索引供用户确认，绝不清库。
 	if processed > 0 {
-		_, err = a.db.ExecContext(ctx, "UPDATE items SET missing=1 WHERE library_id=? AND scan_token<>?", library.ID, token)
+		// 冻结、未发布或离线下载保留旧索引；普通媒体继续采用原缺失标记语义。
+		err = a.markScanMissing(ctx, library, token, gate)
 		if err != nil {
 			return err
 		}
@@ -313,6 +335,66 @@ func (a *App) runScan(ctx context.Context, job Job) error {
 	a.logger.Info("媒体扫描完成", "libraryId", library.ID, "processed", processed)
 	a.notifyWorkers()
 	return nil
+}
+
+// markScanMissing 分批清理未见索引，门禁阻止的下载不能被误判为源文件已删除。
+func (a *App) markScanMissing(ctx context.Context, library Library, token string, gate *downloadGate) error {
+	if !gate.blockedUnder(library.Path) {
+		_, err := a.db.ExecContext(ctx, "UPDATE items SET missing=1 WHERE library_id=? AND scan_token<>?", library.ID, token)
+		return err
+	}
+	// 再取一次快照，覆盖遍历期间刚进入移动或冻结状态的下载任务。
+	latest, err := a.loadDownloadGate(ctx)
+	if err != nil {
+		return err
+	}
+	var after int64
+	for {
+		rows, queryErr := a.db.QueryContext(ctx, "SELECT id,relative_path,is_dir FROM items WHERE library_id=? AND scan_token<>? AND id>? ORDER BY id LIMIT 200", library.ID, token, after)
+		if queryErr != nil {
+			return queryErr
+		}
+		type missingCandidate struct {
+			id        int64  // 待判断的索引编号。
+			path      string // 媒体库内相对路径。
+			directory bool   // 是否为目录漫画。
+		}
+		candidates := []missingCandidate{}
+		for rows.Next() {
+			var candidate missingCandidate
+			if err = rows.Scan(&candidate.id, &candidate.path, &candidate.directory); err != nil {
+				break
+			}
+			candidates = append(candidates, candidate)
+		}
+		if err == nil {
+			err = rows.Err()
+		}
+		rows.Close()
+		if err != nil {
+			return err
+		}
+		if len(candidates) == 0 {
+			return nil
+		}
+		for _, candidate := range candidates {
+			after = candidate.id
+			path := filepath.Join(library.Path, filepath.FromSlash(candidate.path))
+			oldAllowed, checkErr := gate.allow(path, candidate.directory)
+			if checkErr != nil {
+				return checkErr
+			}
+			currentAllowed, checkErr := latest.allow(path, candidate.directory)
+			if checkErr != nil {
+				return checkErr
+			}
+			if oldAllowed && currentAllowed {
+				if _, err = a.db.ExecContext(ctx, "UPDATE items SET missing=1 WHERE id=? AND scan_token<>?", candidate.id, token); err != nil {
+					return err
+				}
+			}
+		}
+	}
 }
 
 // indexItem 增量更新文件元数据，用户标签、收藏和进度不随扫描覆盖。

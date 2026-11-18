@@ -1,0 +1,39 @@
+{
+  "verifiedAt": "2026-11-18",
+  "registry": "ghcr.io",
+  "repository": "linuxserver/jackett",
+  "tag": "v0.24.3065-ls36",
+  "dockerContentDigest": "sha256:31b58c6acfae963dbb334ffd1b721fbefebed498a3df872f058d1e5544f8b02d",
+  "bodySHA256": "sha256:31b58c6acfae963dbb334ffd1b721fbefebed498a3df872f058d1e5544f8b02d",
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "platforms": [
+    {
+      "digest": "sha256:5269aa16893a9e7fa7c009ca78a98eef6e83d703e9dd0354435c22b6fb8d68f4",
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    },
+    {
+      "digest": "sha256:37a9c5765f49b8eaaec27fc132674e5de116752e43579ac1a25040bcc6b6af14",
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "digest": "sha256:bad273512d4897b77702576080065db0a880a6fd2021abe13241b0fdcf625ba5",
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      }
+    },
+    {
+      "digest": "sha256:d4db6b1ecff15a8a9db2205a3a9fdae41def8636b97e04065378dc6da0916f57",
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    }
+  ]
+}

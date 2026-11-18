@@ -39,6 +39,11 @@ func (a *App) cover(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// 缓存也不能绕过冻结或未发布下载的可见性限制。
+	if err := a.checkDownloadPath(filepath.Join(item.LibraryPath, filepath.FromSlash(item.RelativePath)), item.IsDir); err != nil {
+		fail(w, 404, err.Error())
+		return
+	}
 	if file, err := os.Open(a.cachePath(item)); err == nil {
 		defer file.Close()
 		if info, statErr := file.Stat(); statErr == nil {

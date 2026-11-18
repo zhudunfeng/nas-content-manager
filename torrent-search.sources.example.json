@@ -1,0 +1,10 @@
+{
+  "sources": [
+    {
+      "id": "example",
+      "name": "我的索引来源",
+      "url": "http://jackett:9117/api/v2.0/indexers/替换为索引器ID/results/torznab/api",
+      "apiKey": "请替换为索引服务API-Key"
+    }
+  ]
+}

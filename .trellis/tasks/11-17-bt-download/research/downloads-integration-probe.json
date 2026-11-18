@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "assertions": 36,
+  "engine": "controlled fake qB",
+  "realApplication": true,
+  "realBTTransfer": false,
+  "dockerExecuted": false
+}

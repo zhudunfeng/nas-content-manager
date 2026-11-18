@@ -1,6 +1,78 @@
 # 功能验证记录
 
-验证日期：**2026-11-17（Asia/Shanghai）**。本记录区分已经执行的检查与目标设备待验事项，不将编译成功、稀疏文件或短视频样本视为完整 NAS 性能验收。
+最新验证日期：**2026-11-18（Asia/Shanghai）**。搜种章节记录本日新增检查；后续 BT／音乐章节保留 2026-11-17 历史结果。本记录区分已经执行的检查与目标设备待验事项，不将编译成功、稀疏文件或短视频样本视为完整 NAS 性能验收。
+
+## 搜种扩展验证（2026-11-18）
+
+本轮新增可选 Torznab 适配器，通过已配置的 Prowlarr／Jackett 搜索，并复用原 BT 添加、选集、发布及五类入库。不增加 SQLite 迁移，不自动安装站点插件。**按用户要求，未执行任何 Docker 命令。**
+
+### 真实应用、受控协议与原功能回归
+
+- 最终 Windows 源码构建运行 `scripts/verify_torrent_search.py`，**43 项断言全部通过，exit 0**。实际运行 Go 应用、SQLite 和原下载协调器，Torznab／qB 为本机受控实现，不是实际索引站点或 BT 传输。
+- 覆盖鉴权／同源、关键词和配置来源、类别参数、64 位体积、不同 XML namespace 前缀、未知元数据、来源部分失败／全部失败／成功空结果、10 秒超时、并发 429、2 MiB／DTD／畸形响应、100 条来源截断和身份去重。
+- 覆盖浏览器／日志脱敏、密钥横跨标题截断边界、无 Cookie 转发、跨源／同源管理端点拒绝、跨源 HTTP 重定向拒绝、磁力重定向、无效种子及 8 MiB 上限。
+- 搜索得到的 HTTP 种子经原文件选集、异步移动、发布后，**仅所选的一篇小说入库且读取原字节一致**。直接磁力与代理磁力同样先停在等待选集。重启丢失缓存后，已接受请求仍返回原任务且不再次取种；关闭搜种不访问来源，也不删除原下载和媒体。
+- 针对复核发现的标题截断、无身份同名、可用来源替换及 hybrid 桥接／冲突，临时后端行为回归合计 **9 个顶层测试、30 个子用例通过**，执行后已按 AGENTS.md 清除。最终无测试文件的 `go test` 只计编译检查。
+- 同一最终二进制重跑原 `scripts/verify_downloads.py`，**36 项断言通过**；原 `scripts/verify.py --large-file` **52 项断言通过**，保留五类内容、音乐、收藏进度、备份，以及 5,368,709,243 B 稀疏样本的大偏移 Range／HEAD／suffix／416／304。该稀疏样本仅证明协议。
+
+可重复运行命令、隔离结果和边界见[搜种运行时验收](../.trellis/tasks/11-18-torrent-search/research/search-runtime-validation.md)，独立代码复核见[质量报告](../.trellis/tasks/11-18-torrent-search/research/search-quality-check.md)。
+
+### 页面、构建与部署资料
+
+- 真实 Go 服务提供生产页面，完成登录→下载中心→搜索→来源部分失败仍保留结果→体积排序→成功空结果／失败错误→选择种子→确认小说→原两文件清单→只选第一章并锁定。最终 API 为 `state=downloading`、`selectionLocked=true`、`ready=false`，两个复选框按锁定选择禁用。
+- 恶意 HTML 样本标题按文本展示，没有生成图片节点。搜索、添加、详情切换时只有一个原生模态框；Esc 关闭搜索后焦点回到“搜种”，body overflow 恢复。
+- 真实页面在 **375／768／1024／1440 px、明暗两主题**下无文档／弹窗横向溢出，手机底栏仍为五项。浏览器唯一控制台错误是主动测试全部来源失败产生的预期 HTTP 502，警告和未处理页面异常为 0。
+- 前端可控 API 专项另覆盖 45 条结果的 20／20／5 分页、排序不重复联网、取消／迟到响应隔离、过期、未配置、下载器离线仍可搜但禁加、失败添加保持同一请求键。该检查不代替真实应用接口验证。
+- 最终通过 strict vue-tsc、Vite 生产构建、`gofmt`、`go vet`、空套件 `go test`、Windows 构建，以及无 CGO 的 Linux amd64／arm64 交叉编译。Python 脚本编译、来源 JSON 和两份新 YAML 的 PyYAML 语法解析通过；YAML 解析不等于 Compose 合并和容器启动。
+- Trellis implement／check 引用与最终 diff 检查通过，CodeGraph 已同步，任务进入 review；本轮新增临时 Go 单测文件已清除。
+- 部署提供已有索引服务接入及可选 LinuxServer Jackett 覆盖文件；镜像固定版本／多架构摘要仅经注册表 HTTP 元数据核验。来源配置字段、密钥权限、反向代理、故障与停用步骤见[搜种部署文档](torrent-search.md)。
+
+页面记录与截图位置见[真实页面验收](../.trellis/tasks/11-18-torrent-search/research/search-browser-acceptance.md)和[前端专项](../.trellis/tasks/11-18-torrent-search/research/search-frontend-validation.md)。
+
+### 本轮手动验收边界
+
+真实 Prowlarr／Jackett 与站点账号搜索、来源类别支持／下载代理兼容、Docker 构建启动、NAS UID／ACL／secret 权限和网络，以及真实大影片下载同时播放的吞吐及恢复仍由用户验收。未将受控 fixture、交叉编译或注册表核验写成真实站点／容器成功。所有本轮隔离服务与浏览器已关闭；未自动 Git 提交或归档。
+
+## BT 下载扩展验证
+
+本轮完成可选 qBittorrent 集成、下载中心、安全发布门禁及五类内容自动入库。SQLite 由 v1 增量迁移为 v2；原 `/media` 保持只读，下载数据由独立引擎写入专用卷。**按用户要求，本轮未执行任何 Docker 命令。**
+
+### 真实应用与真实下载器
+
+在 Windows 本机解包官方 qBittorrent **5.2.4 / WebAPI 2.15.1**，使用隔离双实例与唯一回环 Peer。真实应用联调结果 `passed=true`：
+
+- 认证实际返回 HTTP 204、空正文与 `QBT_SID_<WebUI端口>`；生产 Go 适配器已保存并回送实际受限名称，同时兼容旧 `SID`。失败状态、失败正文、空／任意名称 Cookie 仍拒绝。
+- 从应用提交本机磁力，取得完整元数据后引擎为 `stoppedDL`，下载载荷 **0 B**，`ready=false`。
+- 确认只选择一篇 65,536 B 小说后，实际完成 BT 传输、移动到 complete、`ready=true`、`imported`，API 原字节与种源一致，只有一个内容条目，任务仍做种。
+- 未选篇的 priority 为 0，API progress 曾为 0.5，仍未入库。独立 2 MiB 协议探针也观察到未选文件分片进度；这印证了必须按锁定清单发布，不能把目录里所有实体都开放。
+- 独立协议探针还验证停止添加种子、移动结束与 `deleteFiles=false` 保留文件移除。首次不收敛的探针如实保留失败记录，未放松完成判据。
+
+真实应用结果见 [qb-5.2.4-app-probe.json](../.trellis/tasks/11-17-bt-download/research/qb-5.2.4-app-probe.json)，来源、重现步骤及协议样本见[实施探针](../.trellis/tasks/11-17-bt-download/research/bt-implementation-probes.md)。该实测限 v1 BT；纯 v2／hybrid 只完成解析与身份编排验证。独立官方 Linux 镜像已固定版本和摘要，但没有拉取或运行容器。
+
+### 编排、门禁与旧功能
+
+- 可复用 `scripts/verify_downloads.py` 使用真实应用、SQLite 和可控假 qB，最终 HTTP 204／新 Cookie 名称轮 **36 项断言全部通过，exit 0**。覆盖认证／同源、上传与 JSON 限额、路径、身份去重、外部冲突、文件选择与版本、任务动作／限速、异步移动、五类入库、目录漫画未选页、SID 过期、离线读取、应用重启、入库失败重试、提交响应中断后对账及保留文件移除。生产 60 秒故障退避未缩短；该脚本不证明真实 BT。
+- 临时后端行为回归验证解析／身份、命令恢复、迟到清单和绑定的条件修订、ready 在元数据／校验／空清单前冻结、请求限额及脱敏。认证补充 **14 个子项**验证 HTTP 200／204、受限会话名称、合法端口与下一次实际请求回送。
+- 主代理另完成 **4 组门禁／迁移回归**，独立 reviewer 再次通过：staging／未知／未选／归档／关闭功能、尺寸／mtime／版本变化、v1→v2 保留收藏标签和 12 秒进度，以及合成 Linux 深层挂载别名。真实 Linux bind mount 尚未执行。
+- 用最终 Cookie 修复后的 Windows 构建重启原隔离数据目录，`scripts/verify.py --large-file` 再次 **52 项全通过**。包括五类媒体、真实音乐格式／时长／封面、收藏进度、TXT／CBZ／EPUB、备份、鉴权和 5,368,709,243 B 稀疏样本的大偏移 Range／HEAD／suffix／416／304。
+- 备份独立查询为 `user_version=2`、`integrity_check=ok`，含 `downloads`、`download_files`、`download_operations`。临时迁移回归两次打开旧库后保留原音乐及个人状态；降级需还原匹配的 v1 快照。
+
+可重复的原媒体回归命令与临测范围见[运行时回归记录](../.trellis/tasks/11-17-bt-download/research/bt-runtime-validation.md)，独立复核见[质量报告](../.trellis/tasks/11-17-bt-download/research/bt-quality-check.md)。按项目要求，新增临时 Go 单测已清除；最终 `go test ./...` 的空套件结果仅计编译，不计行为覆盖。
+
+### 页面与构建
+
+- 前端可控接口验收：20,000 文件／200 页完整加载后才可确认；非连续实际索引提交为 114,541 B，低于 256 KiB；检查幂等重试、版本过期、轮询无重叠、隐藏页暂停、搜索竞态、上传 boundary 与焦点恢复。
+- 实际 Go 页面验收：磁力添加、只选第一章及锁定、任务限速、暂停、离线历史／未知速率、恢复连接；已入库小说跳入原 TXT 阅读器并恢复 12/20 进度。
+- 修复并复验未登录直接 `/#downloads`：完整刷新只请求 `/api/status` 200，无过早私有请求和 401；登录后恢复下载页。关闭模块时仍读取历史任务，写操作禁用。
+- 375／768／1024／1440 px、两种主题无横向溢出；手机底栏五项，下载中心位于“更多”。最终页面控制台错误／警告为 0。浏览器证据及截图位置见[页面验收](../.trellis/tasks/11-17-bt-download/research/bt-browser-acceptance.md)。
+- 最终源码通过 `gofmt`、`go vet ./...`、`go test ./...`、Windows 构建及无 CGO 的 Linux amd64／arm64 交叉编译；前端 strict vue-tsc 与 Vite 生产构建通过。
+- Python 验证／真实探针脚本语法、三份 YAML 的 PyYAML 语法解析、Trellis implement／check 引用及 `git diff --check` 通过，CodeGraph 已同步。YAML 解析不等于 Compose 合并或容器启动。
+
+### 本轮边界与手动验收
+
+Docker 构建／启动／重启、官方 Linux 镜像初始化、目标 NAS UID／ACL／secret 权限、Linux 实际 bind mount、真实 pure v2／hybrid BT、空间耗尽／挂载失联／引擎或 NAS 掉电恢复，以及真实 50–100 GiB 影片下载同时播放的起播／拖动／吞吐／峰值资源，仍待目标环境验证。稀疏文件只能证明协议，回环小样本只能证明对应流程。步骤见 [BT 部署文档](downloads.md)。
+
+本轮不自动 Git 提交或归档；隔离浏览器与原媒体服务已停止，真实 qB 探针通过自身 finally 清理应用与双 qB 进程。下载集成脚本同样在结束后释放自己的进程。
 
 ## 音乐扩展验证
 
@@ -134,9 +206,40 @@ FFmpeg 路径为本机验证路径，其他环境应改为实际位置。脚本�
 
 ## 用户手动部署与目标设备待验事项
 
-- **按用户要求，Docker 部署由用户手动验证，不再执行相关检查。**此前 Compose 配置校验通过；没有执行镜像实际构建和容器运行。本机原生测试实例已停止，8090/8091/8092 测试端口已释放，避免影响手动部署。
-- Linux amd64／arm64 为交叉编译通过，尚未在对应 NAS 架构及厂商容器管理器上启动。
+- 原媒体交付阶段按当时要求仅由用户手动验证Docker；2026-11-18用户追加授权的BT引擎隔离远程验收见下节。此前原生测试实例已停止，8090/8091/8092测试端口已释放。
+- Linux amd64／arm64交叉编译通过；本次另运行了Linux amd64测试容器，arm64及各厂商容器管理器仍需目标设备验收。
 - 没有真实 100 GiB 影片、长时间 4K/HDR 或 NAS 网络吞吐／峰值 RSS 基准。稀疏样本只证明文件长度、偏移和 HTTP 字节语义；短 MP4 只证明基础浏览器播放流程。
 - 未验证硬件转码、HLS、转封装、CBR、PDF、HEIC、RAW、DRM、多用户权限；这些不属于首版已交付功能。
 
 目标 NAS 上建议补测：实际镜像启动及 UID/GID 读取权限、真实大影片起播与接近片尾 seek、数小时播放／网络中断恢复、并发播放下 RSS/CPU/磁盘/带宽、物理移动端浏览器。以真实硬件与样本结果决定性能阈值。
+
+## 2026-11-18 BT引擎初始化实施验收
+
+本轮按追加授权在独立数据、端口和资源上执行。实现包括可选私有Unix-socket助手、固定镜像模板、持久幂等任务/事件/恢复、随机永久凭据、运行时自动接入及来源选择、下载中心管理界面。默认基础部署仍不访问Docker；主库保持schema v2。
+
+### 本地与跨平台检查
+
+- `go vet ./...`、双命令构建、Linux amd64/arm64交叉构建通过；临时行为测试执行后删除，最终`go test ./...`无测试文件仅代表编译检查。
+- 助手真实Linux行为测试11组通过（另含拉取安全3个子场景）：pwritev2兼容分支、严格清单、拉取流错误/真实层进度、创建响应丢失对账、归属矩阵、tmpfs、持久幂等/恢复、严格私有HTTP、原子凭据与目标UID访问。安装级flock另1组通过。
+- 应用临时6组运行时测试及独立复核2组404/Key脱敏测试通过后删除。跨进程锁在真实Linux默认安全策略下通过。
+- `scripts/verify_engine_bootstrap.py`35项断言通过：真实Go应用/SQLite/生产下载适配器、受控回环qB/Torznab；覆盖401/403/400/413/409、无助手unknown、managed空启动、重复清单不重登、0/9来源/显式选择、DTD拒绝、旧连接保留、重启和secret边界。
+- 原`verify_downloads.py`36项、`verify_torrent_search.py`43项通过；两者是受控引擎集成，不代表真实BT传输。
+- `verify.py --large-file`52项通过：五类真实样本/FFmpeg元数据与音频封面、鉴权/状态/快照、5GiB稀疏文件HEAD/大偏移Range/suffix/416/304；未将稀疏文件解释为解码或吞吐基准。
+- 前端strict typecheck、生产构建、托管Compose合并校验和diff空白检查通过。浏览器45项断言通过，明暗主题×375/768/1024/1440共8组无横向溢出，含Tab/Esc/焦点/单模态、告知非预勾选、幂等重试/刷新恢复、任务日志隔离、来源上限和移动五项底栏。真实隔离应用验证认证和助手未启用；其他引擎状态/操作使用明确标记的fixture。证据见任务`research/ui-verification-result.json`及`verify-engine-ui.js`。
+
+### 授权Linux Docker实测及限制
+
+测试宿主为Docker20.10.3/API1.41、x86_64、3.10.0-1127内核。先保存基线，使用随机任务标签与专用`/tmp`根；没有修改daemon配置、停动既有容器或执行全局prune。
+
+- 实际构建并运行了应用/助手专属scratch验收镜像；主应用UID1000，经只读连接目录及Unix socket访问root助手。GET仅检测无创建副作用，缺失状态、告知拒绝、durable requestId幂等/目标冲突、失败重试及助手重启保留任务均通过。
+- 应用真实生产qB适配器在内部bridge以容器DNS连接固定5.2.4，通过实际会话Cookie和版本验证。官方镜像离线PBKDF2永久密码首启及重启后仍可认证；未读取临时密码日志，也未关闭Host/CSRF校验。未添加任何BT载荷任务。
+- Jackett固定GHCR镜像实际拉取成功。默认seccomp以EPERM阻断`pwritev2`，导致.NET无法写配置；同机临时放宽seccomp的**诊断容器**对该调用返回ENOSYS，运行时回退写入成功。产品增加拉取前兼容性预检并明确失败，未自动降低安全策略。
+- 仅在上述诊断容器中进一步确认：空站点发现返回0，设置管理密码并持久化后，Torznab API Key发现仍正常，匿名管理访问被重定向到认证。真实已配置站点同步/关键词搜索/BT载荷未实测；0/9/选择来源分支由受控集成覆盖。
+- qB官方镜像直接拉取受仓库网络超时限制。宿主已有阿里云加速；显式探测加速端点返回403，重试固定摘要仍失败，未更改全局源。为验证真实qB首启，通过本机原registry获取同一固定摘要，校验index/platform/config/每个压缩层和diffID后导入远程。Docker load不保留canonical RepoDigests，产品未放宽digest验证，因此该机助手完整自动拉取→两引擎成功闭环**尚未验证通过**。
+- scratch验收镜像不等于完整生产Dockerfile及FFmpeg发行镜像构建。arm64仅交叉编译；真实站点、长时BT传输、目标NAS吞吐和百GiB影片性能仍需兼容环境补验。
+
+脱敏远程证据保存在忽略目录`.runtime/engine-bootstrap/`；任务中另有独立代码审查记录。不应把测试期间的诊断容器当作正式部署配置。
+
+### 清理核验
+
+2026-11-18已完成远程精确清理：任务标签容器0、任务网络0、跟踪的测试镜像及非基线父层0，专用`/tmp`根已删除。清理以任务标签、精确ID、基线和引用共同验证，无force镜像删除、无全局prune。测试前的66个容器、7563个镜像及全部原网络仍保留；卷清单与基线一致，均为3354个。测试用明文随机凭据也已从本机忽略目录删除。完整脱敏结果见`.runtime/engine-bootstrap/cleanup-result.json`。

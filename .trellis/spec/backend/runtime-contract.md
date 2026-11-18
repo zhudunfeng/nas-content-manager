@@ -11,7 +11,7 @@ Applies to all changes in `cmd/nas/`, `internal/app/`, Docker environment wiring
 - `(*App).openSource(item Item) (*os.File, error)` validates the registered canonical library path and opens a relative path through `os.OpenRoot`.
 - `(*App).file(w http.ResponseWriter, r *http.Request)` delegates seekable streaming to `http.ServeContent`.
 - HTTP payloads and paths are defined in `docs/api.md`; Go models are in `models.go`.
-- SQLite schema version 1 is `schemaV1` in `store.go`, recorded in `PRAGMA user_version`. Tables: users, sessions, libraries, items, user_items, progress, jobs.
+- SQLite schema v1 is `schemaV1` in `store.go`; additive `schemaV2` adds downloads, download_files, download_operations. Current `PRAGMA user_version` is 2, even when downloads are disabled. Preserve users, sessions, libraries, items, user_items, progress and jobs. See [Download contract](./download-contract.md) for all download changes.
 - Content types are `video/image/comic/novel/music`. Schema v1 type columns have no four-type CHECK; music reuses `duration`, so preserve existing databases without a migration or rebuild.
 
 ## 3. Contracts

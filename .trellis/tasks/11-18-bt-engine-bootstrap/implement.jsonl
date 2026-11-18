@@ -1,0 +1,11 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": "AGENTS.md", "reason": "中文注释类型日志及Trellis约束"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "保留主应用与SQLite运行契约"}
+{"file": ".trellis/spec/backend/download-contract.md", "reason": "保留下载所有权选集发布和卷隔离"}
+{"file": ".trellis/spec/backend/torrent-search-contract.md", "reason": "保留私密来源预算与持久添加幂等"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "保持主题导航模态与请求生命周期"}
+{"file": ".trellis/tasks/11-18-bt-engine-bootstrap/info.md", "reason": "初始化架构接口状态恢复和实施清单"}
+{"file": ".trellis/tasks/11-18-bt-engine-bootstrap/research/engine-bootstrap-options.md", "reason": "官方API凭据源码证据与实施探针门槛"}
+{"file": ".trellis/spec/backend/engine-bootstrap-contract.md", "reason": "已实现的助手归属与运行时私密连接契约"}

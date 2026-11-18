@@ -63,6 +63,9 @@ func (a *App) readableDirectory(path string) (string, error) {
 	if err != nil || !info.IsDir() {
 		return "", fmt.Errorf("请选择可访问的目录")
 	}
+	if err = a.checkDownloadPath(canonical, true); err != nil {
+		return "", err
+	}
 	if _, err = file.ReadDir(1); err != nil && err != io.EOF {
 		return "", fmt.Errorf("无法读取目录内容")
 	}
@@ -74,9 +77,16 @@ func (a *App) browse(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Query().Get("path")
 	entries := []browseEntry{}
 	parent := ""
+	gate, gateErr := a.loadDownloadGate(r.Context())
+	if gateErr != nil {
+		fail(w, 503, "下载发布状态暂不可用")
+		return
+	}
 	if path == "" {
 		for _, root := range a.config.MediaRoots {
-			entries = append(entries, browseEntry{Name: filepath.Base(root), Path: root, IsDir: true})
+			if allowed, checkErr := gate.allow(root, true); checkErr == nil && allowed {
+				entries = append(entries, browseEntry{Name: filepath.Base(root), Path: root, IsDir: true})
+			}
 		}
 		respond(w, 200, map[string]any{"path": "", "parent": "", "entries": entries, "roots": a.config.MediaRoots})
 		return
@@ -102,13 +112,18 @@ func (a *App) browse(w http.ResponseWriter, r *http.Request) {
 		}
 		info, statErr := os.Stat(safe)
 		if statErr == nil && info.IsDir() {
+			if allowed, checkErr := gate.allow(safe, true); checkErr != nil || !allowed {
+				continue
+			}
 			entries = append(entries, browseEntry{Name: child.Name(), Path: safe, IsDir: true})
 		}
 	}
 	sort.Slice(entries, func(i int, j int) bool { return naturalLess(entries[i].Name, entries[j].Name) })
 	if candidate := filepath.Dir(canonical); candidate != canonical {
 		if safe, safeErr := a.allowedPath(candidate); safeErr == nil {
-			parent = safe
+			if allowed, checkErr := gate.allow(safe, true); checkErr == nil && allowed {
+				parent = safe
+			}
 		}
 	}
 	respond(w, 200, map[string]any{"path": canonical, "parent": parent, "entries": entries, "roots": a.config.MediaRoots})

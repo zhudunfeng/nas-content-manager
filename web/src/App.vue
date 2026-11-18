@@ -10,6 +10,8 @@ import DialogShell from './components/DialogShell.vue'
 
 // 播放器与 EPUB 解析依赖按需加载，保持首页轻量。
 const ReaderDialog = defineAsyncComponent((): Promise<typeof import('./components/ReaderDialog.vue')> => import('./components/ReaderDialog.vue'))
+// 下载中心仅在进入页面时加载，基础媒体库保持轻量。
+const DownloadCenter = defineAsyncComponent((): Promise<typeof import('./components/DownloadCenter.vue')> => import('./components/DownloadCenter.vue'))
 /** 首次启动状态。 */
 interface Status { /** 是否需要创建管理员。 */ setupRequired: boolean; /** 当前会话。 */ user: User | null; /** 应用版本。 */ version: string }
 /** 导航项定义。 */
@@ -17,7 +19,7 @@ interface Navigation { /** 页面标识。 */ id: ViewName; /** 显示名称。 
 const primaryNav: Navigation[] = [{ id: 'home', label: '首页', icon: 'home' }, { id: 'video', label: '视频', icon: 'video' }, { id: 'music', label: '音乐', icon: 'music' }, { id: 'image', label: '图片', icon: 'image' }, { id: 'comic', label: '漫画', icon: 'comic' }, { id: 'novel', label: '小说', icon: 'novel' }]
 /** 手机底栏保留四个常用入口，其余通过原生对话框访问。 */
 const mobileNav: Navigation[] = primaryNav.filter((entry: Navigation): boolean => ['home', 'video', 'music', 'image'].includes(entry.id))
-const secondaryNav: Navigation[] = [{ id: 'favorites', label: '我的收藏', icon: 'heart' }, { id: 'libraries', label: '媒体库', icon: 'folder' }, { id: 'jobs', label: '后台任务', icon: 'jobs' }]
+const secondaryNav: Navigation[] = [{ id: 'favorites', label: '我的收藏', icon: 'heart' }, { id: 'libraries', label: '媒体库', icon: 'folder' }, { id: 'downloads', label: '下载中心', icon: 'download' }, { id: 'jobs', label: '后台任务', icon: 'jobs' }]
 const allNavigation: Navigation[] = [...primaryNav, ...secondaryNav, { id: 'settings', label: '设置', icon: 'settings' }]
 const status = ref<Status>({ setupRequired: false, user: null, version: '' })
 const starting = ref<boolean>(true)
@@ -68,7 +70,7 @@ const activeJobs = computed<Job[]>((): Job[] => jobs.value.filter((job: Job): bo
 const filteredLibraries = computed<Library[]>((): Library[] => libraries.value.filter((library: Library): boolean => !(view.value in typeLabels) || library.type === view.value))
 const pageTitle = computed<string>((): string => view.value === 'home' ? (debouncedSearch.value ? '搜索你的内容' : '欢迎回到栖库') : allNavigation.find((entry: Navigation): boolean => entry.id === view.value)?.label || '内容库')
 const pageDescription = computed<string>((): string => {
-  const descriptions: Record<ViewName, string> = { home: '喜欢的影像、音乐与文字，都在这里。', video: '把好故事，留给属于自己的时间。', image: '那些值得留下的日常，随时重温。', comic: '翻开下一页，走进另一个世界。', novel: '让文字慢下来，让阅读继续。', music: '让熟悉的旋律，陪伴此刻的日常。', favorites: '不必再找，喜欢的都收在这里。', libraries: '连接你的内容目录，其余交给栖库。', jobs: '索引与封面在后台处理，浏览不必等待。', settings: '你的内容空间，由你掌握。' }
+  const descriptions: Record<ViewName, string> = { home: '喜欢的影像、音乐与文字，都在这里。', video: '把好故事，留给属于自己的时间。', image: '那些值得留下的日常，随时重温。', comic: '翻开下一页，走进另一个世界。', novel: '让文字慢下来，让阅读继续。', music: '让熟悉的旋律，陪伴此刻的日常。', favorites: '不必再找，喜欢的都收在这里。', libraries: '连接你的内容目录，其余交给栖库。', downloads: '从下载到收藏，让喜欢的内容有序归位。', jobs: '索引与封面在后台处理，浏览不必等待。', settings: '你的内容空间，由你掌握。' }
   return descriptions[view.value]
 })
 const homeShelves = computed<boolean>((): boolean => view.value === 'home' && !debouncedSearch.value && !libraryFilter.value && page.value === 1)
@@ -126,6 +128,7 @@ async function initializeLibrary(): Promise<void> {
 
 /** 刷新媒体库与索引统计，不把单一失败隐藏为有效空库。 */
 async function refreshMetadata(): Promise<void> {
+  if (!status.value.user) return
   try {
     const [libraryResult, statsResult, jobResult] = await Promise.all([api<{ libraries: Library[] }>('/libraries'), api<Stats>('/stats'), api<{ jobs: Job[] }>('/jobs')])
     libraries.value = libraryResult.libraries
@@ -302,6 +305,7 @@ async function jobAction(job: Job, action: 'cancel' | 'retry'): Promise<void> {
 
 /** 读取服务端配置状态，防止将硬件能力猜测为已启用。 */
 async function loadSettings(): Promise<void> {
+  if (!status.value.user) return
   contentError.value = ''
   try { settings.value = await api<Settings>('/settings') }
   catch (error: unknown) { contentError.value = errorMessage(error) }
@@ -351,6 +355,8 @@ watch(search, (value: string): void => {
   searchTimer = setTimeout((): void => { if (!isContentView.value) navigate('home'); debouncedSearch.value = value.trim(); page.value = 1 }, 300)
 })
 watch([view, debouncedSearch, sort, libraryFilter, page], (): void => {
+  // 恢复 URL 时会话可能仍在启动读取中，登录后统一由初始化入口加载私有数据。
+  if (!status.value.user) return
   contentError.value = ''
   if (view.value === 'settings') void loadSettings()
   else if (isContentView.value) void loadItems()
@@ -388,7 +394,7 @@ onBeforeUnmount((): void => {
     <a href="#main-content" class="skip-link">跳转到主要内容</a>
     <aside class="sidebar"><button class="brand brand-button" aria-label="栖库首页" @click="navigate('home')"><div class="brand-mark"><Icon name="comic" :size="26" /></div><span>栖库<small>QIKU</small></span></button><span class="nav-caption">我的内容空间</span><nav aria-label="主要导航"><button v-for="entry in primaryNav" :key="entry.id" class="nav-item" :aria-label="entry.label" :class="{ active: view === entry.id }" :aria-current="view === entry.id ? 'page' : undefined" @click="navigate(entry.id)"><Icon :name="entry.icon" /><span>{{ entry.label }}</span><small v-if="navCount(entry.id)">{{ navCount(entry.id).toLocaleString() }}</small></button></nav><div class="nav-divider" /><nav aria-label="内容管理"><button v-for="entry in secondaryNav" :key="entry.id" class="nav-item" :aria-label="entry.label" :class="{ active: view === entry.id }" :aria-current="view === entry.id ? 'page' : undefined" @click="navigate(entry.id)"><Icon :name="entry.icon" /><span>{{ entry.label }}</span><small v-if="entry.id === 'jobs' && activeJobs.length" class="task-count">{{ activeJobs.length }}</small></button></nav><div class="sidebar-bottom"><div class="local-badge"><Icon name="storage" /><div><span>私有内容库</span><small>{{ stats.total.toLocaleString() }} 个内容 · {{ formatSize(stats.totalSize) }}</small></div><span class="status-dot" /></div><button class="nav-item" aria-label="设置" :class="{ active: view === 'settings' }" @click="navigate('settings')"><Icon name="settings" /><span>设置</span></button><div class="profile-row"><span class="avatar">{{ status.user.username.slice(0, 1).toUpperCase() }}</span><div><strong>{{ status.user.username }}</strong><small>空间管理员</small></div><button class="icon-button" aria-label="退出登录" @click="logout"><Icon name="logout" :size="18" /></button></div></div></aside>
     <div class="main-column"><header class="topbar"><button class="mobile-brand" aria-label="返回首页" @click="navigate('home')"><Icon name="comic" :size="24" />栖库</button><label class="search-field"><Icon name="search" /><input ref="searchInput" v-model="search" aria-label="搜索内容、文件名或标签" placeholder="搜索内容、文件名或标签…" /><kbd>⌘ / Ctrl K</kbd><button v-if="search" class="search-clear icon-button" aria-label="清除搜索" @click="search = ''"><Icon name="close" :size="16" /></button></label><div class="topbar-actions"><button class="icon-button" :aria-label="`切换到${theme === 'dark' ? '浅色' : '深色'}主题`" @click="toggleTheme"><Icon :name="theme === 'dark' ? 'sun' : 'moon'" /></button><button class="icon-button mobile-manage" aria-label="媒体库与设置" @click="navigate(view === 'libraries' ? 'settings' : 'libraries')"><Icon name="settings" /></button><button class="primary-button add-top" @click="showLibraryDialog = true"><Icon name="plus" /><span>添加媒体库</span></button></div></header>
-      <main id="main-content" class="main-content" tabindex="-1"><div class="page-heading"><div><span class="eyebrow">{{ view === 'home' ? 'YOUR PRIVATE COLLECTION' : view === 'favorites' ? 'COLLECTED WITH LOVE' : isContentView ? 'EXPLORE YOUR LIBRARY' : 'MAKE IT YOURS' }}</span><h1>{{ pageTitle }}<span v-if="view === 'home' && !debouncedSearch" class="heading-dot">.</span></h1><p>{{ pageDescription }}</p></div><button v-if="['libraries', 'jobs', 'settings'].includes(view)" class="secondary-button" @click="view === 'settings' ? loadSettings() : refreshMetadata()"><Icon name="refresh" />刷新</button><span v-else-if="stats.total" class="collection-count">{{ total.toLocaleString() }} 个内容</span></div>
+      <main id="main-content" class="main-content" tabindex="-1"><div class="page-heading"><div><span class="eyebrow">{{ view === 'home' ? 'YOUR PRIVATE COLLECTION' : view === 'favorites' ? 'COLLECTED WITH LOVE' : isContentView ? 'EXPLORE YOUR LIBRARY' : 'MAKE IT YOURS' }}</span><h1>{{ pageTitle }}<span v-if="view === 'home' && !debouncedSearch" class="heading-dot">.</span></h1><p>{{ pageDescription }}</p></div><button v-if="['libraries', 'jobs', 'settings'].includes(view)" class="secondary-button" @click="view === 'settings' ? loadSettings() : refreshMetadata()"><Icon name="refresh" />刷新</button><span v-else-if="isContentView && stats.total" class="collection-count">{{ total.toLocaleString() }} 个内容</span></div>
         <div v-if="activeJobs.length && view !== 'jobs'" class="scan-banner" role="status"><span class="loader" /><span>{{ activeJobs.length }} 个后台任务正在处理<span class="desktop-only"> · 新内容会陆续出现在媒体库</span></span><button class="text-button" @click="navigate('jobs')">查看任务<Icon name="chevron" :size="16" /></button></div>
         <p v-if="metadataError" class="error-box content-error" role="alert"><Icon name="warning" />媒体库信息暂未加载：{{ metadataError }}<button class="text-button" @click="refreshMetadata">重试</button></p>
         <p v-if="contentError" class="error-box content-error" role="alert"><Icon name="warning" />{{ contentError }}<button class="text-button" @click="isContentView ? loadItems() : view === 'settings' ? loadSettings() : refreshMetadata()">重试</button></p>
@@ -401,6 +407,7 @@ onBeforeUnmount((): void => {
           <div v-else-if="items.length" class="media-grid" :class="{ 'photo-grid': view === 'image', 'music-grid': view === 'music', 'book-grid': view === 'novel' || view === 'comic' }" :aria-busy="loading"><MediaCard v-for="item in items" :key="item.id" :item="item" @open="openDetails" @favorite="toggleFavorite" /></div>
           <div v-if="total > 48" class="pagination"><button class="secondary-button" :disabled="page <= 1 || loading" @click="changePage(-1)"><Icon name="back" />上一页</button><span>第 {{ page }} / {{ Math.ceil(total / 48) }} 页</span><button class="secondary-button" :disabled="page * 48 >= total || loading" @click="changePage(1)">下一页<Icon name="chevron" /></button></div>
         </template>
+        <DownloadCenter v-else-if="view === 'downloads'" @open-item="openDetails" />
         <template v-else-if="view === 'libraries'">
           <div class="section-note"><Icon name="info" /><p>媒体库连接部署时挂载的目录。移除媒体库只删除索引，不会删除你的原文件。</p><button class="primary-button" @click="showLibraryDialog = true"><Icon name="plus" />添加媒体库</button></div>
           <div v-if="libraries.length" class="library-grid"><article v-for="library in libraries" :key="library.id" class="library-card"><div class="library-card-head"><span class="library-icon" :class="`shortcut-${library.type}`"><Icon :name="library.type" :size="28" /></span><span class="status-pill" :class="{ warning: library.status === 'offline' || library.status === 'failed' }">{{ jobLabel(library.status) }}</span></div><h2>{{ library.name }}</h2><p class="library-path">{{ library.path }}</p><div class="library-meta"><span>{{ typeLabels[library.type] }} · {{ library.itemCount }} 个内容</span><span>扫描 {{ formatDate(library.lastScannedAt) }}</span></div><div class="library-actions"><button class="secondary-button" @click="scanLibrary(library)"><Icon name="refresh" :size="16" />重新扫描</button><button class="icon-button danger-text" :aria-label="`移除媒体库：${library.name}`" @click="deleting = library"><Icon name="trash" :size="18" /></button></div></article></div><div v-else-if="!metadataError" class="empty-state"><Icon name="folder" :size="52" /><h2>还没有连接媒体目录</h2><p>添加已挂载目录，即可开始整理你的内容。</p><button class="primary-button" @click="showLibraryDialog = true"><Icon name="plus" />添加媒体库</button></div>
