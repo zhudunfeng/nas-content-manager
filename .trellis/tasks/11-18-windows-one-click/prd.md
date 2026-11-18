@@ -110,5 +110,17 @@
 
 ## Technical Notes
 
+### Follow-up: Windows Actions Python console encoding (2026-11-18)
+
+- 用户报告 `release.py --target windows-amd64 --go go --development-without-tools` 在 GitHub Actions 以 `charmap` 编码错误失败；本机强制 `PYTHONIOENCODING=cp1252` 已复现同样的首条中文日志异常。
+- 修复发布工具入口的标准输出与错误输出编码，在参数解析之前生效；保留中文帮助、日志、文件名和真实失败退出码。
+- Actions 构建任务显式声明 Python UTF-8 环境；发布归档校验及同类发布入口复用处理，不仅修复首条日志。
+- 用户补充 Node.js 20 Action 运行时弃用提示；将工作流五个官方 Action 升级到已核对 `runs.using: node24` 的 v6，保留项目 Node/Go/Python 工具链版本与三目标矩阵。
+- 验收：强制非 UTF-8 重定向下帮助、成功日志、失败日志可解码为 UTF-8；原有发布边界回归继续通过；本机实际生成 Windows 开发包并核验结构与摘要。
+- 本次只修复发布工具与 CI，不执行 Docker 部署，不改业务功能，不自动提交或归档。
+- [x] 编码子进程回归新增 16 项，原有 52 项保留，共 68 项通过；局部质量复核无确认问题。
+- [x] 强制 cp1252 的完整 Windows 构建通过，真实八文件开发归档与内外摘要核验通过；共享暂存与锁已清理。
+- [x] 五个 Action 的官方 v6 元数据均已核对使用 Node.js 24；远端 Actions 待推送变更后重新运行。
+
 - 优先 CodeGraph CLI 导航，近期 helper 文件索引缺口使用 rg 和定点读取。
 - 构建、行为测试、发布验证和环境边界分别记录于 research/*-implementation.md 与 docs/verification.md。Docker部署验收由用户手动完成，不沿用旧远程测试结果。

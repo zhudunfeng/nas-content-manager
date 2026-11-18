@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from release import digest
+from release import configure_console, digest
 
 
 IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}\Z")  # 精确本地镜像身份，禁止用可变标签作为发布结果。
@@ -92,6 +92,7 @@ def package(args: argparse.Namespace) -> Path:
 
 def main() -> int:
     """解析有中文说明的镜像打包参数。"""
+    configure_console()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--context", help="本机Docker context；默认读取当前选择并校验socket")
     parser.add_argument("--app-image", required=True, help="维护者已构建的Linux amd64应用镜像引用")

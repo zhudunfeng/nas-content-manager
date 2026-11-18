@@ -51,6 +51,9 @@
     "quality_review_passed": true,
     "docker_deployment_executed": false,
     "full_offline_release_created": false,
-    "development_artifacts": ".runtime/windows-one-click/verified-releases-20261118"
+    "development_artifacts": ".runtime/windows-one-click/verified-releases-20261118",
+    "ci_encoding_fix": "verified_locally_68_assertions_and_actual_windows_package",
+    "ci_encoding_fix_artifacts": ".runtime/ci-encoding-fix",
+    "ci_action_runtime": "node24_verified_v6_metadata"
   }
 }

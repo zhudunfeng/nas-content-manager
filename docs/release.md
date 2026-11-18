@@ -8,6 +8,10 @@
 
 构建机使用项目 Go 工具链、Node 锁文件和 Python 3.10+。Go 不在 PATH 时可用 `--go`，或仓库 `.tools/go/bin/go.exe`。完整离线发布还需每目标经过审核的 FFmpeg/ffprobe 工具材料清单；不同平台不能混用。
 
+发布、归档校验和桌面镜像打包的 Python 命令在解析参数前统一将标准输出、错误输出设为 UTF-8，保留中文帮助与日志；不依赖构建机的本地代码页。GitHub Actions 同时设置 `PYTHONUTF8=1`（启用 Python UTF-8 模式）和 `PYTHONIOENCODING=utf-8`（明确重定向日志编码），避免 Windows runner 输出中文时出现 `charmap` 编码异常。
+
+构建工作流使用基于 Node.js 24 运行的官方 Actions v6（checkout、setup-go、setup-node、setup-python、upload-artifact）。Action 自身的运行时与 `setup-node` 安装的应用构建工具是独立的；项目仍使用工作流中固定的 Node/Go/Python 版本。
+
 ```powershell
 # 维护者先准备真实版本工具材料及摘要清单，再构建Windows完整包。
 python scripts/release.py --target windows-amd64 --tools-manifest 'D:\release-inputs\windows-amd64.json'

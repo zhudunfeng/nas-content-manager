@@ -44,6 +44,8 @@ Applies to `cmd/nas-desktop`, `internal/desktop`, application lifecycle/static a
 - Source and packaged tool manifests share strict field/group validation. Required `tools/ffmpeg[.exe]` and `tools/ffprobe[.exe]` names are exact lowercase; case aliases cannot satisfy architecture checks. The generated `licenses/ffmpeg/tools-manifest.json` destination is reserved and cannot be supplied as input material. Package paths reject control characters and Windows device/trailing-dot/space aliases on every target.
 - Archive verification rejects duplicate/non-object JSON and mutable image references, checks every runtime/license/source record against actual member hashes, and inspects the packaged PE/ELF architecture without executing or extracting tools. A recomputed outer checksum alone does not bypass package structure validation.
 - Development package names and `release.json.developmentWithoutTools=true` clearly state missing tools. Build matrix covers Windows amd64 and Linux amd64/arm64; cross-build and actual execution are reported separately. No automatic publishing/signing/updating.
+- Release-tool CLI entry points (`release.py`, `verify_release.py`, `package_desktop_images.py`) configure both standard streams as UTF-8 before argument parsing, including Chinese help and failure diagnostics. Share the initializer without reconfiguring the importing process at module import time; tolerate replacement streams without `reconfigure`. CI sets documented `PYTHONUTF8=1` and `PYTHONIOENCODING=utf-8`; scripts must also work when directly invoked with legacy redirected stream encodings. Changing the Windows code page or removing Chinese text is not the fix.
+- The build workflow uses Node 24 action runtimes (`checkout`, `setup-go`, `setup-node`, `setup-python`, `upload-artifact` v6, verified from their official `action.yml`). The JavaScript runtime executing an action is separate from the pinned `node-version` used to build the application; do not change application toolchain versions just to suppress an action-runtime deprecation warning.
 
 ## 4. Validation & Error Matrix
 
@@ -64,6 +66,7 @@ Applies to `cmd/nas-desktop`, `internal/desktop`, application lifecycle/static a
 | CLI whole-stack stop while same-profile launcher runs | Explicitly require tray stop or launcher exit; never open instead |
 | Formal release without tool manifest | Fail; only explicit development mode may omit tools |
 | Wrong tool architecture / repeated JSON/path traversal / existing archive | Refuse packaging |
+| Redirected stdout/stderr start as cp1252 or ASCII | Chinese help, progress, success and errors remain valid UTF-8; preserve success/failure exit codes |
 
 ## 5. Good / Base / Bad Cases
 
@@ -77,6 +80,7 @@ Applies to `cmd/nas-desktop`, `internal/desktop`, application lifecycle/static a
 - Saved-profile regression tests omit and null each of all nine keys and reject empty/relative saved data/media paths while preserving malformed source bytes. Desktop preflight tests accept actual offline normalized Compose JSON and reject mutations of image platform, fixed fields/resources/privileges and the final selected port.
 - Real Linux `/tmp` tests via Linux host/WSL for flock, symlink aliases, POSIX UID/mode and cancellation; do not use NTFS mount mode results as Linux permission evidence.
 - `scripts/verify_release.py --self-test` for traversal, duplicate JSON, mutable images, wrong architectures, deterministic archives and tampered/unlisted members. Verify actual target packages and run moved embedded binaries. `scripts/verify_desktop.py` records isolated launcher checks when available.
+- Release-console regression must launch fresh Python subprocesses with `PYTHONUTF8=0` and `PYTHONIOENCODING=cp1252` / `ascii`, capture bytes, then strictly decode UTF-8 and assert Chinese output plus exit codes. Cover all three release CLI help paths and release progress/error paths; a UTF-8 parent process alone does not reproduce the Windows Actions failure.
 - Go vet/test/build, strict Vue typecheck/production build, Linux amd64/arm64 cross-build, existing five-media + 5 GiB offset/auth/download/search/bootstrap regression harnesses. Empty retained Go test suite is compilation evidence only.
 - Docker `compose config --quiet` is offline structure validation. Actual image pulls, Desktop volumes, real qB/Jackett initialization, readiness and exact stop are separate manual deployment acceptance; do not start the daemon to obtain evidence when user reserved it for manual validation.
 
@@ -96,3 +100,18 @@ err := app.RunWithOptions(ctx, config, logger, app.RunOptions{
 ```
 
 Do not call `os.Setenv` to merge profile configuration. Use a snapshot lookup so native and Docker profiles, inherited environment and validation all agree without global mutation.
+
+Release CLI encoding must be configured before argparse can print Chinese help:
+
+```python
+# 错误：依赖宿主默认编码，Windows 重定向输出可能无法编码中文。
+parser.parse_args()
+print("执行发布构建")
+
+# 正确：仅在 CLI 入口初始化两个标准流，保留中文与真实错误。
+def main() -> int:
+    """解析参数前统一发布日志编码。"""
+    configure_console()
+    parser = argparse.ArgumentParser(description=__doc__)
+    # 按现有发布契约继续解析参数与构建。
+```

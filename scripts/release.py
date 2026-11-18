@@ -28,6 +28,15 @@ TOOL_GROUPS = ("runtimeFiles", "licenseFiles", "sourceFiles")  # 运行文件、
 TOOL_MANIFEST = "licenses/ffmpeg/tools-manifest.json"  # 由构建器独占生成的脱敏工具清单。
 
 
+def configure_console() -> None:
+    """统一发布入口的中文输出编码，并兼容没有重配置接口的内存替代流。"""
+    # Windows CI 重定向输出可能采用西文代码页，必须在中文帮助或日志写入前切换。
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
 def digest(path: Path) -> str:
     """分块计算文件摘要，不将工具或镜像归档整体读入内存。"""
     result = hashlib.sha256()
@@ -316,6 +325,7 @@ def build(args: argparse.Namespace) -> Path:
 
 def main() -> int:
     """解析有中文解释的维护者构建参数并输出真实归档位置。"""
+    configure_console()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", choices=TARGETS, required=True, help="发布目标操作系统与CPU架构")
     parser.add_argument("--tools-manifest", help="含固定工具版本、每文件摘要、许可证和对应源码材料的JSON清单")

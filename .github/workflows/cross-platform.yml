@@ -16,6 +16,12 @@ jobs:
   build:
     # 使用矩阵中的宿主系统。
     runs-on: ${{ matrix.host }}
+    # 统一 Python 的默认文本编码和重定向输出，保留跨平台中文日志。
+    env:
+      # 让 Python 默认文本处理采用 UTF-8，不依赖 Windows 系统代码页。
+      PYTHONUTF8: '1'
+      # 明确管道中的标准输入输出编码，防止中文构建日志触发 charmap 异常。
+      PYTHONIOENCODING: 'utf-8'
     # 失败不取消其他平台的证据。
     strategy:
       # 保留全部目标结果。
@@ -38,22 +44,22 @@ jobs:
             target: linux-arm64
     # 所有平台使用同一发布脚本。
     steps:
-      # 获取待检查源码。
-      - uses: actions/checkout@v4
+      # 获取待检查源码；v6 使用 Node.js 24 运行 Action。
+      - uses: actions/checkout@v6
       # 固定与Dockerfile一致的Go工具链。
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         # 构建工具参数。
         with:
           # 项目已验证的Go版本。
           go-version: '1.27.4'
       # 固定前端构建主版本与当前镜像一致。
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         # Node参数。
         with:
           # 与Dockerfile一致的版本。
           node-version: '22.14.0'
       # Python仅供构建机打包，不是终端用户依赖。
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         # Python参数。
         with:
           # 使用稳定的Python 3.12。
@@ -73,7 +79,7 @@ jobs:
         # 不启动Docker或修改宿主设置。
         run: python scripts/verify_release.py --self-test
       # CI附件用于人工测试，不自动发布正式版本。
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         # 附件参数。
         with:
           # 名称明确含开发验证标识。

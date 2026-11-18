@@ -5,14 +5,17 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
+import subprocess
+import sys
 import tarfile
 import tempfile
 import zipfile
 from pathlib import Path
 from typing import Any, BinaryIO, Callable
 
-from release import SHA256, TARGETS, TOOL_GROUPS, TOOL_MANIFEST, archive_tree, digest, install_images, install_tools, read_json, relative_path, unique_object, validate_binary, validate_binary_stream, validate_images_manifest, validate_tools_manifest
+from release import SHA256, TARGETS, TOOL_GROUPS, TOOL_MANIFEST, archive_tree, configure_console, digest, install_images, install_tools, read_json, relative_path, unique_object, validate_binary, validate_binary_stream, validate_images_manifest, validate_tools_manifest
 
 
 def metadata_object(data: bytes) -> dict[str, Any]:
@@ -168,6 +171,31 @@ def self_test() -> int:
         archive_tree(stage, destination, windows)
         destination.with_name(destination.name + ".sha256").write_text(f"{digest(destination)}  {destination.name}\n", encoding="ascii")
 
+    def console_case(arguments: list[str], encoding: str, expected_code: int, expected_stdout: str = "", expected_stderr: str = "") -> None:
+        """在真实非 UTF-8 重定向子进程中检查中文输出与原始退出码。"""
+        nonlocal count
+        environment = dict(os.environ, PYTHONIOENCODING=encoding, PYTHONUTF8="0")
+        result = subprocess.run([sys.executable, *arguments], cwd=Path(__file__).resolve().parent, env=environment, capture_output=True, check=False, timeout=30)
+        stdout, stderr = result.stdout.decode("utf-8"), result.stderr.decode("utf-8")
+        if result.returncode != expected_code or expected_stdout not in stdout or expected_stderr not in stderr:
+            raise AssertionError(f"发布入口未保持 UTF-8 中文输出或退出码：{encoding}，{arguments[0]}")
+        if "UnicodeEncodeError" in stderr or "charmap" in stderr:
+            raise AssertionError("发布入口仍存在控制台编码异常")
+        count += 1
+
+    # 显式覆盖 CI 环境，防止父进程已启用 UTF-8 导致回归虚假通过。
+    for encoding in ("cp1252", "ascii"):
+        console_case(["-c", "import sys; before = (sys.stdout.encoding, sys.stderr.encoding); import release, verify_release, package_desktop_images; assert before == (sys.stdout.encoding, sys.stderr.encoding)"], encoding, 0)
+        memory_streams = "import contextlib, io, release\noutput, errors = io.StringIO(), io.StringIO()\nwith contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):\n    release.configure_console()\n    print('中文输出')\nassert output.getvalue() == '中文输出\\n' and errors.getvalue() == ''"
+        console_case(["-c", memory_streams], encoding, 0)
+        for script, description in (("release.py", "发布目标操作系统与CPU架构"), ("verify_release.py", "归档"), ("package_desktop_images.py", "本机Docker")):
+            console_case([script, "--help"], encoding, 0, expected_stdout=description)
+        console_case(["-c", "import release, sys; release.configure_console(); release.run([sys.executable, '-c', 'pass'])"], encoding, 0, expected_stdout="执行发布构建：")
+        # 仅替换耗时构建函数，真实执行 main 的成功输出，不下载依赖或制造发布包。
+        success = "from pathlib import Path\nfrom unittest.mock import patch\nimport release\nwith patch.object(release, 'build', return_value=Path('发布 输出.zip')):\n    raise SystemExit(release.main())"
+        console_case(["-c", success, "--target", "windows-amd64"], encoding, 0, expected_stdout="发布归档已生成：发布 输出.zip")
+        console_case(["release.py", "--target", "windows-amd64"], encoding, 1, expected_stderr="发布构建失败：完整发布需要 --tools-manifest")
+
     for name in ("../escape", "/absolute", "C:/drive", "a\\b", "a//b", "a/./b", "a/../b", "a/line\nb", "a/line\rb", "a/tab\tb", "a/\x7fb", "a/name.", "a/name ", "a/CON", "a/nul.txt", "a/COM1", "a/LPT9.txt", "a/a?b", 'a/a"b'):
         rejected(lambda: relative_path(name), "接受了不安全的包内路径")
     for value in (b"[]", b"null", b'{"version":1,"version":2}'):
@@ -279,6 +307,7 @@ def self_test() -> int:
 
 def main() -> int:
     """解析归档校验或构建边界回归模式。"""
+    configure_console()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("archive", nargs="?", type=Path, help="release.py生成的ZIP或tar.gz及同目录.sha256")
     parser.add_argument("--self-test", action="store_true", help="验证路径、重复字段、固定镜像、架构及归档一致性")
