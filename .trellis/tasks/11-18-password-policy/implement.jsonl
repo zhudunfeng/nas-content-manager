@@ -1,0 +1,5 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "密码输入与账户兼容边界"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "首次设置与登录分开校验"}

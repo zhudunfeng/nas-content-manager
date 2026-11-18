@@ -15,8 +15,8 @@ This contract is shared by the Go service and Vue application. JSON uses camelCa
 ## Authentication
 
 - `GET /api/status` → `{ setupRequired: boolean, user: User | null, version: string }`.
-- `POST /api/setup` body `{ username: string, password: string }` → `{ user: User }`; first admin only, sets session cookie.
-- `POST /api/login` same body/result; `POST /api/logout` → `{ ok: true }`.
+- `POST /api/setup` body `{ username: string, password: string }` →201 `{ user: User }`; first admin only, sets session cookie. New passwords must be 10–72 characters from U+0021–U+007E (the same count in UTF-8 bytes) and contain all four ASCII categories: uppercase `A–Z`, lowercase `a–z`, digits `0–9`, and printable punctuation (for example `!@#$%`). Reject Chinese, fullwidth characters, whitespace, control characters and emoji even when all four required classes are otherwise present. Passwords are never trimmed or truncated. Invalid passwords return400 `{ error: string }` with the Chinese rule hint and do not create an account.
+- `POST /api/login` same body/result; matches the stored password without applying the new setup complexity rule, preserving existing account access. `POST /api/logout` → `{ ok: true }`.
 - Mutations reject foreign origins, use HttpOnly SameSite cookies, and never embed credentials into media URLs.
 
 ## Libraries and background jobs

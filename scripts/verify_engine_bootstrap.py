@@ -14,7 +14,7 @@ import time
 from typing import Any
 import urllib.parse
 
-from verify import Client
+from verify import Client, generate_password
 from verify_downloads import Harness
 
 
@@ -118,7 +118,7 @@ class BootstrapHarness(Harness):
         routes = [('/api/engines', 'GET'), ('/api/engines/probe', 'POST'), ('/api/engines/initializations', 'POST'), ('/api/engines/initializations/fixture-task', 'GET'), ('/api/engines/initializations/fixture-task/retry', 'POST'), ('/api/engines/qbittorrent/start', 'POST'), ('/api/engines/search/sync-sources', 'POST')]
         for route, method in routes:
             client.check(anonymous.request(route, method, {} if method == 'POST' else None)[0] == 401, f'{method} {route} 要求管理员会话')
-        client.json('/api/setup', 'POST', {'username': 'bootstrap-verify', 'password': secrets.token_urlsafe(24)})
+        client.json('/api/setup', 'POST', {'username': 'bootstrap-verify', 'password': generate_password()})
         for route, method in routes:
             if method == 'POST':
                 client.check(client.request(route, method, {}, {'Origin': 'https://foreign.invalid'})[0] == 403, f'{route} 拒绝跨源修改')

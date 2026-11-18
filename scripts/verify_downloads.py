@@ -24,7 +24,7 @@ import urllib.parse
 import urllib.request
 import wave
 
-from verify import Client, make_png
+from verify import Client, generate_password, make_png
 
 
 def bencode(value: Any) -> bytes:
@@ -501,7 +501,7 @@ class Harness:
         self.start()
         anonymous = Client(self.base)
         client.check(anonymous.request('/api/downloads/status')[0] == 401, '下载状态沿用管理员认证')
-        client.json('/api/setup', 'POST', {'username': 'downloads-verify', 'password': secrets.token_urlsafe(24)})
+        client.json('/api/setup', 'POST', {'username': 'downloads-verify', 'password': generate_password()})
         client.check(client.request('/api/downloads', 'POST', {}, {'Origin': 'https://foreign.invalid'})[0] == 403, '跨站添加下载被拒绝')
         status = client.json('/api/downloads/connection-test', 'POST', {})
         client.check(status['state'] == 'ready' and status['version'] == 'v5.2.4', '探测固定引擎版本且接受空正文SID登录')
@@ -637,7 +637,7 @@ class Harness:
     def serve(self) -> None:
         """保留隔离浏览器联调实例，收到停止文件后释放进程。"""
         self.start()
-        credentials = {'username': 'downloads-browser', 'password': secrets.token_urlsafe(24)}
+        credentials = {'username': 'downloads-browser', 'password': generate_password()}
         self.client.json('/api/setup', 'POST', credentials)
         credential_file = self.root / 'app-credentials.json'
         credential_file.write_text(json.dumps(credentials), encoding='utf-8')

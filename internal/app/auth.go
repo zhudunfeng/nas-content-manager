@@ -13,10 +13,37 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// newPasswordHint 说明首次创建管理员时的密码长度与字符类别要求。
+const newPasswordHint = "密码需为 10–72 位，同时包含大写字母、小写字母、数字和英文特殊字符（如 !@#$%），不允许中文、空格或表情"
+
 // credentials 定义登录和首次设置的输入。
 type credentials struct {
 	Username string `json:"username"` // 长度为 2–40 字符的登录名。
-	Password string `json:"password"` // 10–72 字节的密码，不记录日志。
+	Password string `json:"password"` // 新密码仅允许 10–72 位 ASCII 英文字母、数字和标点且包含四类；登录保留原密码匹配，不记录日志。
+}
+
+// validNewPassword 校验新密码长度及四类 ASCII 字符，拒绝中文、空白和其他非允许字符。
+func validNewPassword(password string) bool {
+	if len(password) < 10 || len(password) > 72 || !utf8.ValidString(password) {
+		return false
+	}
+	var upper, lower, digit, special bool
+	for _, character := range password {
+		switch {
+		case character >= 'A' && character <= 'Z':
+			upper = true
+		case character >= 'a' && character <= 'z':
+			lower = true
+		case character >= '0' && character <= '9':
+			digit = true
+		case character >= '!' && character <= '/' || character >= ':' && character <= '@' || character >= '[' && character <= '`' || character >= '{' && character <= '~':
+			special = true
+		default:
+			// 白名单以外的字符直接拒绝，不删除或替换用户输入。
+			return false
+		}
+	}
+	return upper && lower && digit && special
 }
 
 // status 返回首次设置状态与当前会话。
@@ -36,8 +63,14 @@ func (a *App) setup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	input.Username = strings.TrimSpace(input.Username)
-	if utf8.RuneCountInString(input.Username) < 2 || utf8.RuneCountInString(input.Username) > 40 || len(input.Password) < 10 || len(input.Password) > 72 {
-		fail(w, 400, "用户名需为 2–40 字，密码需为 10–72 字节")
+	if utf8.RuneCountInString(input.Username) < 2 || utf8.RuneCountInString(input.Username) > 40 {
+		fail(w, 400, "用户名需为 2–40 字")
+		return
+	}
+	// 复杂度只约束新建密码，不改变已有账户的登录与原始密码内容。
+	if !validNewPassword(input.Password) {
+		a.logger.Warn("首次管理员设置未通过密码规则校验")
+		fail(w, 400, newPasswordHint)
 		return
 	}
 	var count int

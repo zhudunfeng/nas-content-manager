@@ -7,7 +7,6 @@ import http.cookiejar
 import json
 import os
 from pathlib import Path
-import secrets
 import socket
 import subprocess
 import tempfile
@@ -15,6 +14,8 @@ import time
 from typing import Any
 import urllib.parse
 import urllib.request
+
+from verify import generate_password
 
 
 def execute(binary: Path, arguments: list[str], environment: dict[str, str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -98,7 +99,7 @@ def main() -> None:
                 assert status == 200 and b"<html" in html.lower() and b"/assets/" in html
                 _, payload = request(opener, address, "/api/status")
                 assert json.loads(payload)["setupRequired"] is True
-                _, payload = request(opener, address, "/api/setup", {"username": "desktop_check", "password": secrets.token_urlsafe(20)})
+                _, payload = request(opener, address, "/api/setup", {"username": "desktop_check", "password": generate_password()})
                 assert json.loads(payload)["user"]["username"] == "desktop_check"
                 _, payload = request(opener, address, "/api/browse")
                 assert [Path(item) for item in json.loads(payload)["roots"]] == [media], "分号目录授权被路径列表拆分"

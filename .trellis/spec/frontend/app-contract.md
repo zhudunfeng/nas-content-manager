@@ -8,6 +8,7 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 
 - `api<T>(path: string, method: string = 'GET', body?: unknown, signal?: AbortSignal): Promise<T>` in `src/api.ts` prefixes `/api`, sends same-origin credentials, and raises `ApiError`.
 - `errorMessage(error: unknown): string` supplies readable errors; `isAbort(error: unknown): boolean` distinguishes intentional cancellation.
+- `validNewPassword(password: string): boolean` and `newPasswordHint: string` in `src/password.ts` define setup-only validation and its Chinese accessible hint; keep them consistent with Go `auth.go`.
 - DTOs are defined in `src/types.ts` and follow `docs/api.md`.
 - Download views use `DownloadCenter.vue`, `AddDownloadDialog.vue`, `DownloadDetailDialog.vue` and the typed multipart helper in `api.ts`; see the backend download contract for upload/selection budgets and publication behavior.
 - `ReaderDialog.vue` owns media/reading sessions. `LibraryDialog.vue` selects already mounted directories. `DialogShell.vue` owns the native modal lifecycle and focus restoration.
@@ -17,6 +18,7 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 
 - Use Vue composition state and computed values; no extra global state framework in v1. Keep server state authoritative, requery after mutation, and persist personal state through APIs.
 - `ApiError.status === 401` dispatches `session-expired`. Auth failure returns to login; never silently keep a dead session displayed as active.
+- Only when `status.setupRequired` is true, validate the new password as 10–72 characters exclusively from U+0021–U+007E (equivalent UTF-8 byte count via `TextEncoder`) with all four ASCII classes `A–Z`, `a–z`, `0–9`, and printable punctuation (U+0021–002F / U+003A–0040 / U+005B–0060 / U+007B–007E). Reject Chinese, fullwidth characters, whitespace, controls and emoji even alongside all required classes. Do not trim/truncate passwords or change confirmation matching. Link the visible `newPasswordHint` to the setup input with `aria-describedby`; keep this rule and hint off the login flow so existing accounts, including Chinese passwords, remain usable. The backend remains authoritative.
 - Abort superseded list/reader requests, debounce search, preserve the list position when closing a reader, and clear timers/observers/media on unmount.
 - Native video/audio use `/api/items/{id}/file`, `preload=metadata`, and direct browser byte requests. Never fetch full audio/video into Blob/ArrayBuffer. Music uses the shared Item `duration` and optional cover; format support is determined by the browser.
 - Video/music use seconds, comics zero-based pages, TXT zero-based paragraphs, and EPUB CFI in `Progress.locator`. Preserve these units across UI/API. Media progress must not be written before metadata restoration is complete; early close/error cannot overwrite a saved position with zero. Closing must pause, clear src, and release the player.
@@ -45,6 +47,8 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 | Condition | Behavior |
 | --- | --- |
 | setupRequired | Create first administrator; then offer directory selection |
+| New password missing any required class, outside length limits or containing anything outside U+0021–U+007E | Show `newPasswordHint`; do not submit setup |
+| Existing-account login with a password that fails new complexity | Send original password to login; let stored-hash matching decide |
 | Request failure | Chinese error and retry/action; do not silently show empty success |
 | Obsolete aborted request | Ignore its error, do not overwrite current data |
 | Native media error | Explain format/codec limits; no invented transcode promise |
@@ -57,11 +61,13 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 
 - Good: create account, add real directory, open scanned comic, switch direction/mode, close, reopen at saved page.
 - Base: browse/search/filter/favorite/tag in either theme at all target widths without horizontal overflow.
+- Password cases: `Aa1!abcdef` meets the 10-byte minimum; `Aa1!中文` fails even though it is 10 UTF-8 bytes and contains all classes; an existing weak or Chinese password must reach `/api/login` without a setup-policy error.
 - Bad: book contains scripts/forms/external URLs, malformed ZIP central directory, or a video lacks supported codecs. Reject or explain within the reader; never execute content or silently claim success.
 
 ## 6. Tests Required
 
 - Strict vue-tsc and production Vite build.
+- Password rules use the same boundary/category matrix as Go, including all ASCII punctuation and invalid Chinese/supplementary Han/fullwidth/whitespace/control/emoji additions, especially trailing LF and CRLF. Browser checks must show weak and Chinese setup blocked without a POST, valid ASCII setup returning201, logout/login preserving input, no setup hint on login, accessible hint association and no hint overflow at all target widths/themes.
 - Browser workflow for initial setup/login, directory browser, all five content types, favorites/tags, jobs, settings/backup, logout.
 - Save/reopen progress for video/music/comic/TXT/EPUB; check request errors and console output. Music additionally needs early-close/error without losing progress, direct byte requests, no audio src after close, and reachable mobile More entries. Delay progress responses to assert one normal in-flight write, coalescing to the latest seek position, immediate source release on close, and immediate keepalive dispatch during pagehide.
 - EPUB regressions cover a valid book, 5001 actual entries with EOCD counts forged to 1, truncated directory records, ZIP64/split/encrypted archives, invalid local offsets, declared/actual expansion budgets, abort, and download HTTP 401. JSZip tolerates mismatched directory counts, so a successful library parse is not sufficient validation.
@@ -84,3 +90,7 @@ video.preload = 'metadata'
 ```
 
 Use explicit parameter/return types and Chinese doc comments for named functions; comment entity fields and configuration entries. Avoid `any` and type-safety suppression. Do not erase errors with empty catches; cleanup-only catches must explain their narrow purpose.
+
+Password rule example: wrong — `password.length` as a UTF-8 byte count, `\W` as the punctuation rule, or complexity validation on every authentication; correct — `TextEncoder().encode(password).byteLength`, explicit ASCII classes and setup-only validation, sending the original password unchanged.
+
+For the character whitelist, reject any match of `/[^\x21-\x7e]/`. JavaScript `$` can match before a final line terminator, so a positive `^[\x21-\x7e]+$` test alone can accept an otherwise valid password followed by LF; keep explicit trailing-LF/CRLF regression cases.

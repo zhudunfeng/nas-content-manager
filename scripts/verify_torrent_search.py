@@ -15,7 +15,7 @@ from typing import Any
 import urllib.parse
 from xml.sax.saxutils import escape, quoteattr
 
-from verify import Client
+from verify import Client, generate_password
 from verify_downloads import Fixture, Harness
 
 
@@ -206,7 +206,7 @@ class SearchHarness(Harness):
         client = self.client
         anonymous = Client(self.base)
         client.check(anonymous.request('/api/torrent-search/status')[0] == 401 and anonymous.request('/api/torrent-search', 'POST', {'query': '示例'})[0] == 401, '状态与搜索均要求已有管理员会话')
-        client.json('/api/setup', 'POST', {'username': 'search-verify', 'password': secrets.token_urlsafe(24)})
+        client.json('/api/setup', 'POST', {'username': 'search-verify', 'password': generate_password()})
         client.json('/api/downloads/connection-test', 'POST', {})
         status = client.json('/api/torrent-search/status')
         public = json.dumps(status)
@@ -301,7 +301,7 @@ class SearchHarness(Harness):
     def serve(self) -> None:
         """为浏览器检查保留真实应用和受控来源，停止文件触发清理。"""
         self.start()
-        credentials = {'username': 'search-browser', 'password': secrets.token_urlsafe(24)}
+        credentials = {'username': 'search-browser', 'password': generate_password()}
         self.client.json('/api/setup', 'POST', credentials)
         credential_file = self.root / 'app-credentials.json'
         credential_file.write_text(json.dumps(credentials), encoding='utf-8')

@@ -22,6 +22,11 @@ from pathlib import Path
 from typing import Any
 
 
+def generate_password() -> str:
+    """生成满足四类字符要求的隔离应用验证密码，不用于真实账户或日志输出。"""
+    return 'Aa1!' + secrets.token_urlsafe(24)
+
+
 def make_png(path: Path, seed: int, width: int = 600, height: int = 800) -> None:
     """生成受控大小的渐变 PNG，供图片与漫画读取验证使用。"""
     def chunk(kind: bytes, data: bytes) -> bytes:
@@ -305,7 +310,7 @@ def main() -> None:
     if not password and password_file.exists():
         password = json.loads(password_file.read_text(encoding='utf-8'))['password']
     if not password:
-        password = secrets.token_urlsafe(24)
+        password = generate_password()
         password_file.parent.mkdir(parents=True, exist_ok=True)
         password_file.write_text(json.dumps({'password': password}), encoding='utf-8')
         if os.name != 'nt':
