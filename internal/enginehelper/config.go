@@ -5,15 +5,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
 // Config 是只能由受信任部署环境指定的助手参数。
 type Config struct {
-	HostRoot     string // ENGINE_HOST_ROOT：Docker宿主专用绝对根，必须对应 /managed bind source。
-	Root         string // ENGINE_MANAGED_ROOT：助手内部专用挂载点，默认 /managed。
-	Socket       string // ENGINE_HELPER_SOCKET：私有HTTP Unix socket，默认 /ipc/helper.sock。
+	StorageMode  string // ENGINE_STORAGE_MODE：bind保留Linux宿主目录，volume使用固定角色命名卷，默认bind。
+	VolumePrefix string // ENGINE_VOLUME_PREFIX：volume模式的可信部署前缀，仅允许小写字母、数字和短横线。
+	HostRoot     string // ENGINE_HOST_ROOT：仅bind模式的Docker宿主专用绝对根；volume模式必须为空。
+	Root         string // ENGINE_MANAGED_ROOT：助手内部专用根，默认/managed；volume模式不可覆盖。
+	Socket       string // ENGINE_HELPER_SOCKET：私有HTTP Unix socket，默认/ipc/helper.sock；volume模式不可覆盖。
 	DockerSocket string // ENGINE_DOCKER_SOCKET：本机Docker Unix socket，默认 /var/run/docker.sock。
 	Network      string // ENGINE_NETWORK：已存在的应用专用可出站bridge网络。
 	UID          int    // ENGINE_UID：专用文件及下载进程用户ID，默认1000。
@@ -24,8 +27,22 @@ type Config struct {
 
 // LoadConfig 读取并拒绝不受支持或相互覆盖的部署路径。
 func LoadConfig() (Config, error) {
-	c := Config{HostRoot: os.Getenv("ENGINE_HOST_ROOT"), Root: setting("ENGINE_MANAGED_ROOT", "/managed"), Socket: setting("ENGINE_HELPER_SOCKET", "/ipc/helper.sock"), DockerSocket: setting("ENGINE_DOCKER_SOCKET", "/var/run/docker.sock"), Network: os.Getenv("ENGINE_NETWORK")}
-	for _, p := range []string{c.HostRoot, c.Root, c.Socket, c.DockerSocket} {
+	c := Config{StorageMode: setting("ENGINE_STORAGE_MODE", "bind"), VolumePrefix: os.Getenv("ENGINE_VOLUME_PREFIX"), HostRoot: os.Getenv("ENGINE_HOST_ROOT"), Root: setting("ENGINE_MANAGED_ROOT", "/managed"), Socket: setting("ENGINE_HELPER_SOCKET", "/ipc/helper.sock"), DockerSocket: setting("ENGINE_DOCKER_SOCKET", "/var/run/docker.sock"), Network: os.Getenv("ENGINE_NETWORK")}
+	paths := []string{c.Root, c.Socket, c.DockerSocket}
+	switch c.StorageMode {
+	case "bind":
+		if c.VolumePrefix != "" {
+			return c, fmt.Errorf("bind模式不能指定命名卷前缀")
+		}
+		paths = append(paths, c.HostRoot)
+	case "volume":
+		if c.HostRoot != "" || !regexp.MustCompile(`^[a-z0-9][a-z0-9-]{2,62}[a-z0-9]$`).MatchString(c.VolumePrefix) || c.Root != "/managed" || c.Socket != "/ipc/helper.sock" {
+			return c, fmt.Errorf("volume模式需要安全部署前缀、固定Linux路径且不能指定宿主根")
+		}
+	default:
+		return c, fmt.Errorf("ENGINE_STORAGE_MODE 仅支持bind或volume")
+	}
+	for _, p := range paths {
 		if !filepath.IsAbs(p) || filepath.Clean(p) != p || p == string(filepath.Separator) {
 			return c, fmt.Errorf("助手配置需要规范的专用绝对路径")
 		}

@@ -9,6 +9,7 @@ media
 bin
 **/node_modules
 web/dist
+internal/webassets/dist
 .trellis
 .codegraph
 .agents

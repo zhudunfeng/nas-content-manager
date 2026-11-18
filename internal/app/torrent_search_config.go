@@ -29,9 +29,15 @@ type TorrentSearchSource struct {
 
 // loadTorrentSearchConfig 有界读取并严格验证来源文件；禁用时不读取文件或连接网络。
 func loadTorrentSearchConfig() (TorrentSearchConfig, error) {
+	return loadTorrentSearchConfigWithLookup(os.Getenv)
+}
+
+// loadTorrentSearchConfigWithLookup 以与主配置相同的来源读取模式和私密来源文件。
+func loadTorrentSearchConfigWithLookup(lookup func(string) string) (TorrentSearchConfig, error) {
+	source := newConfigSource(lookup)
 	c := TorrentSearchConfig{Sources: []TorrentSearchSource{}}
 	var err error
-	c.Mode, err = loadEngineMode("NAS_TORRENT_SEARCH_MODE", "NAS_TORRENT_SEARCH_ENABLED")
+	c.Mode, err = loadEngineModeWithLookup("NAS_TORRENT_SEARCH_MODE", "NAS_TORRENT_SEARCH_ENABLED", source.lookup)
 	c.Enabled = c.Mode == "external"
 	if err != nil {
 		return c, err
@@ -39,7 +45,7 @@ func loadTorrentSearchConfig() (TorrentSearchConfig, error) {
 	if !c.Enabled {
 		return c, nil
 	}
-	file, err := os.Open(os.Getenv("NAS_TORRENT_SEARCH_SOURCES_FILE"))
+	file, err := os.Open(source.lookup("NAS_TORRENT_SEARCH_SOURCES_FILE"))
 	if err != nil {
 		return c, fmt.Errorf("搜种来源文件不可读取，请设置 NAS_TORRENT_SEARCH_SOURCES_FILE")
 	}

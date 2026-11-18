@@ -137,6 +137,10 @@ func readPrivate(path string) ([]byte, error) {
 
 // ownedConfig 只接受当前安装的配置目录；空目录先原子落盘归属标记。
 func (s *Service) ownedConfig(component string, claim bool) error {
+	if s.config.StorageMode == "volume" {
+		_, err := claimVolume(s.config, component, s.store.installation, claim)
+		return err
+	}
 	dir := filepath.Join(s.config.Root, component)
 	if !claim {
 		info, err := os.Lstat(dir)

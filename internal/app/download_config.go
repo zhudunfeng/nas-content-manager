@@ -24,9 +24,15 @@ type DownloadConfig struct {
 
 // loadDownloadConfig 读取下载参数；禁用时仍保留根路径供历史发布门禁使用。
 func loadDownloadConfig(config Config) (DownloadConfig, error) {
-	c := DownloadConfig{Root: env("NAS_DOWNLOAD_ROOT", "/downloads"), EngineRoot: env("NAS_DOWNLOAD_ENGINE_ROOT", "/downloads"), URL: strings.TrimRight(os.Getenv("NAS_DOWNLOAD_QB_URL"), "/"), Username: os.Getenv("NAS_DOWNLOAD_QB_USERNAME"), PasswordFile: os.Getenv("NAS_DOWNLOAD_QB_PASSWORD_FILE")}
+	return loadDownloadConfigWithLookup(config, os.Getenv)
+}
+
+// loadDownloadConfigWithLookup 用最终参数验证下载隔离，避免桌面目录覆盖绕过已有校验。
+func loadDownloadConfigWithLookup(config Config, lookup func(string) string) (DownloadConfig, error) {
+	source := newConfigSource(lookup)
+	c := DownloadConfig{Root: source.value("NAS_DOWNLOAD_ROOT", "/downloads"), EngineRoot: source.value("NAS_DOWNLOAD_ENGINE_ROOT", "/downloads"), URL: strings.TrimRight(source.lookup("NAS_DOWNLOAD_QB_URL"), "/"), Username: source.lookup("NAS_DOWNLOAD_QB_USERNAME"), PasswordFile: source.lookup("NAS_DOWNLOAD_QB_PASSWORD_FILE")}
 	var err error
-	c.Mode, err = loadEngineMode("NAS_DOWNLOAD_MODE", "NAS_DOWNLOAD_ENABLED")
+	c.Mode, err = loadEngineModeWithLookup("NAS_DOWNLOAD_MODE", "NAS_DOWNLOAD_ENABLED", source.lookup)
 	c.Enabled = c.Mode == "external"
 	if err != nil {
 		return c, err
@@ -40,7 +46,7 @@ func loadDownloadConfig(config Config) (DownloadConfig, error) {
 	if err != nil {
 		return c, fmt.Errorf("NAS_DOWNLOAD_ENGINE_ROOT 必须为绝对目录")
 	}
-	freeGB, err := envInt("NAS_DOWNLOAD_MIN_FREE_GB", 2, 0, 1048576)
+	freeGB, err := source.integer("NAS_DOWNLOAD_MIN_FREE_GB", 2, 0, 1048576)
 	if err != nil {
 		return c, err
 	}

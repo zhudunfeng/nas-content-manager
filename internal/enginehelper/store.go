@@ -33,6 +33,11 @@ func randomID() (string, error) {
 
 // openStore 在独立SQLite建立单连接短事务状态与幂等绑定。
 func openStore(ctx context.Context, path string) (*store, error) {
+	return openBoundStore(ctx, path, "")
+}
+
+// openBoundStore 在命名卷绑定落盘后打开状态库，崩溃恢复仍复用同一安装身份。
+func openBoundStore(ctx context.Context, path string, installation string) (*store, error) {
 	info, statErr := os.Lstat(path)
 	newDatabase := errors.Is(statErr, os.ErrNotExist) || statErr == nil && info.Mode().IsRegular() && info.Size() == 0
 	if !newDatabase && (statErr != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0) {
@@ -63,12 +68,17 @@ PRAGMA application_id=1312904005;PRAGMA user_version=1;`)
 	}
 	err = db.QueryRowContext(ctx, "SELECT value FROM meta WHERE key='installation'").Scan(&s.installation)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.installation, err = randomID()
+		s.installation = installation
+		if installation == "" {
+			s.installation, err = randomID()
+		} else {
+			err = nil
+		}
 		if err == nil {
 			_, err = db.ExecContext(ctx, "INSERT INTO meta(key,value) VALUES('installation',?)", s.installation)
 		}
 	}
-	if err != nil || len(s.installation) != 32 {
+	if err != nil || !validInstallation(s.installation) || installation != "" && s.installation != installation {
 		db.Close()
 		return nil, errors.New("助手安装身份无效，请恢复完整助手备份")
 	}

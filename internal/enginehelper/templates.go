@@ -49,6 +49,7 @@ type containerSpec struct {
 	ExposedPorts map[string]struct{} // 模板公开的容器端口。
 	HostConfig   struct {
 		Binds         []string                 // 固定宿主根派生的专用bind集合。
+		Mounts        []volumeMount            `json:",omitempty"` // volume模式的完整固定挂载集合。
 		NetworkMode   string                   // 预检通过的专用bridge名称。
 		PortBindings  map[string][]portBinding // 固定peer或回环管理端口。
 		RestartPolicy struct {
@@ -72,7 +73,14 @@ type containerSpec struct {
 func makeSpec(c Config, installation string, t template) containerSpec {
 	name := containerName(installation, t.Component)
 	s := containerSpec{Image: t.Image, Labels: map[string]string{"nas.engines.installation": installation, "nas.engines.component": t.Component, "nas.engines.template": enginecontract.TemplateVersion}, ExposedPorts: map[string]struct{}{fmt.Sprintf("%d/tcp", t.Port): {}}}
-	s.HostConfig.Binds = []string{filepath.Join(c.HostRoot, t.Component) + ":/config:rw"}
+	if c.StorageMode == "volume" {
+		s.Labels["nas.engines.storage"] = "volume"
+		s.Labels["nas.engines.deployment"] = c.VolumePrefix
+		s.HostConfig.Mounts = []volumeMount{{Type: "volume", Source: volumeName(c, t.Component), Target: "/config"}}
+		s.HostConfig.Mounts[0].VolumeOptions.NoCopy = true
+	} else {
+		s.HostConfig.Binds = []string{filepath.Join(c.HostRoot, t.Component) + ":/config:rw"}
+	}
 	s.HostConfig.NetworkMode = c.Network
 	s.HostConfig.RestartPolicy.Name = "unless-stopped"
 	s.HostConfig.SecurityOpt = []string{"no-new-privileges:true"}
@@ -82,7 +90,12 @@ func makeSpec(c Config, installation string, t template) containerSpec {
 	s.Env = []string{"PUID=" + strconv.Itoa(c.UID), "PGID=" + strconv.Itoa(c.GID), "TZ=Asia/Shanghai"}
 	if t.Component == enginecontract.QBittorrent {
 		s.Env = append(s.Env, "QBT_LEGAL_NOTICE=confirm", "QBT_WEBUI_PORT=8080", "QBT_TORRENTING_PORT="+strconv.Itoa(c.PeerPort), "UMASK=022")
-		s.HostConfig.Binds = append(s.HostConfig.Binds, filepath.Join(c.HostRoot, "downloads")+":/downloads:rw")
+		if c.StorageMode == "volume" {
+			s.HostConfig.Mounts = append(s.HostConfig.Mounts, volumeMount{Type: "volume", Source: volumeName(c, "downloads"), Target: "/downloads"})
+			s.HostConfig.Mounts[1].VolumeOptions.NoCopy = true
+		} else {
+			s.HostConfig.Binds = append(s.HostConfig.Binds, filepath.Join(c.HostRoot, "downloads")+":/downloads:rw")
+		}
 		s.HostConfig.Tmpfs = map[string]string{"/tmp": "rw,noexec,nosuid,size=64m"}
 		for _, proto := range []string{"tcp", "udp"} {
 			key := strconv.Itoa(c.PeerPort) + "/" + proto
@@ -103,16 +116,35 @@ func validateContainer(info *containerInfo, c Config, installation string, t tem
 		return errors.New("容器归属或固定模板冲突，请人工核对；不会接管或覆盖")
 	}
 	want := map[string]string{"/config": filepath.Join(c.HostRoot, t.Component)}
+	if c.StorageMode == "volume" {
+		if info.Config.Labels["nas.engines.storage"] != "volume" || info.Config.Labels["nas.engines.deployment"] != c.VolumePrefix {
+			return errors.New("受管容器命名卷部署身份冲突")
+		}
+		want["/config"] = volumeName(c, t.Component)
+	}
 	if t.Component == enginecontract.QBittorrent {
 		want["/downloads"] = filepath.Join(c.HostRoot, "downloads")
+		if c.StorageMode == "volume" {
+			want["/downloads"] = volumeName(c, "downloads")
+		}
 	}
 	if len(info.Mounts) != len(want) {
 		return errors.New("受管容器挂载集合冲突，不会修改已有资源")
 	}
 	for _, m := range info.Mounts {
-		if m.Type != "bind" || !m.RW || want[m.Destination] != m.Source {
+		source := m.Source
+		mountType := "bind"
+		if c.StorageMode == "volume" {
+			mountType = "volume"
+			source = m.Name
+			if m.Driver != "local" {
+				return errors.New("受管容器命名卷驱动冲突")
+			}
+		}
+		if m.Type != mountType || !m.RW || want[m.Destination] == "" || want[m.Destination] != source {
 			return errors.New("受管容器挂载身份冲突，不会修改已有资源")
 		}
+		delete(want, m.Destination)
 	}
 	if len(info.NetworkSettings.Networks) != 1 || info.NetworkSettings.Networks[c.Network] == nil {
 		return errors.New("受管容器网络冲突，不会修改已有资源")

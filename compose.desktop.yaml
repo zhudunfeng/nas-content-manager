@@ -1,0 +1,244 @@
+# 桌面完整模式专用；应用和助手镜像必须由 release-images.json 提供固定摘要。
+services:
+  # 共享媒体业务内核，只读访问媒体、完成区和助手连接。
+  nas:
+    # 启动器只接受仓库摘要或精确本地镜像ID，不使用latest。
+    image: ${NAS_APP_IMAGE:?缺少经过核验的应用镜像}
+    # 启动器核对容器归属后才允许复用或停止。
+    labels:
+      # 与固定Compose项目实例一致。
+      nas.engines.deployment: ${NAS_DESKTOP_PREFIX:?缺少实例前缀}
+      # 主应用固定角色。
+      nas.desktop.role: app
+    # 手动停止后不随Docker重启自动恢复。
+    restart: unless-stopped
+    # 默认只允许本机访问；开启局域网由本机配置显式决定。
+    ports:
+      - "${WEB_BIND_IP:-127.0.0.1}:${WEB_PORT:-8090}:8090"
+    # SQLite与下载都在Docker Linux数据盘，媒体授权目录只读绑定。
+    volumes:
+      # 应用数据库与缓存；保留卷即保留用户和媒体索引。
+      - app_data:/data
+      # Windows目录使用长语法，盘符和空格不会被冒号拆分。
+      - type: bind
+        # 启动器规范化并校验的唯一媒体根。
+        source: ${MEDIA_PATH:?请选择一个媒体目录}
+        # 容器媒体根固定，不接收网页提供的宿主路径。
+        target: /media
+        # 扫描和播放不修改原始媒体。
+        read_only: true
+        # 路径丢失时失败，避免自动建立空目录冒充原媒体盘。
+        bind:
+          # 禁止Compose静默创建宿主目录。
+          create_host_path: false
+      # 仅complete子树可入库，应用对下载根仍只读。
+      - downloads:/downloads:ro
+      # 原子更新连接清单必须挂载整个目录。
+      - connections:/run/nas-engines:ro
+      # 只有私有Unix socket，无TCP控制端口。
+      - ipc:/run/nas-engine-helper:ro
+    # 固定内部路径，与Linux托管模式共享协议。
+    environment:
+      # 应用监听容器网卡，宿主暴露由ports约束。
+      NAS_ADDR: 0.0.0.0:8090
+      # 应用本地SQLite与可再生缓存。
+      NAS_DATA_DIR: /data
+      # 未发布的下载选集不能通过登记整个根绕过门禁。
+      NAS_MEDIA_ROOTS: /media:/downloads/complete
+      # 托管模式允许尚未初始化引擎时使用媒体功能。
+      NAS_DOWNLOAD_MODE: managed
+      # 搜索引擎安装和搜索来源配置独立判断。
+      NAS_TORRENT_SEARCH_MODE: managed
+      # 应用只读检查下载发布状态。
+      NAS_DOWNLOAD_ROOT: /downloads
+      # qB容器下载路径与应用路径保持一致。
+      NAS_DOWNLOAD_ENGINE_ROOT: /downloads
+      # 助手私有连接目录。
+      NAS_ENGINE_CONNECTION_DIR: /run/nas-engines
+      # 助手私有控制socket。
+      NAS_ENGINE_HELPER_SOCKET: /run/nas-engine-helper/helper.sock
+      # 下载前保留空间，单位GiB。
+      NAS_DOWNLOAD_MIN_FREE_GB: 2
+    # 等待助手容器创建卷和私有目录，业务仍自行探测实际就绪。
+    depends_on:
+      - nas-engine-helper
+    # 唯一受控bridge网络。
+    networks:
+      - engines
+    # 阻止setuid提升权限。
+    security_opt:
+      - no-new-privileges:true
+    # 给扫描、数据库和HTTP正常退出留时间。
+    stop_grace_period: 30s
+    # 限制日志磁盘占用。
+    logging:
+      # Docker本地轮转日志。
+      driver: local
+      # 单份大小与保留数量。
+      options:
+        # 每份最多10MiB。
+        max-size: "10m"
+        # 最多保留三份。
+        max-file: "3"
+  # 助手持有本机Docker权限，只部署固定模板。
+  nas-engine-helper:
+    # 固定助手镜像摘要或精确本地ID。
+    image: ${NAS_HELPER_IMAGE:?缺少经过核验的助手镜像}
+    # 停止助手前必须核对精确部署身份。
+    labels:
+      # 与主应用使用同一实例前缀。
+      nas.engines.deployment: ${NAS_DESKTOP_PREFIX:?缺少实例前缀}
+      # 助手固定角色。
+      nas.desktop.role: helper
+    # 宿主重启可恢复，但显式停止保持停止。
+    restart: unless-stopped
+    # 角色卷分别挂载，禁止把Docker内部Mountpoint当成宿主bind。
+    volumes:
+      # 受信任daemon socket；主应用不持有。
+      - /var/run/docker.sock:/var/run/docker.sock
+      # 安装身份、租约及任务SQLite。
+      - state:/managed/state
+      # qB配置与安装标记。
+      - qbittorrent:/managed/qbittorrent
+      # Jackett配置与安装标记。
+      - jackett:/managed/jackett
+      # Linux权限语义下的下载数据。
+      - downloads:/managed/downloads
+      # 私有凭据原子发布目录。
+      - connections:/managed/connections
+      # 私有控制socket。
+      - ipc:/ipc
+    # 只由启动器提供的可信部署参数。
+    environment:
+      # 保留旧Linux bind驱动，此文件显式选择命名卷。
+      ENGINE_STORAGE_MODE: volume
+      # 安全实例前缀，与所有卷标签、实际卷名一致。
+      ENGINE_VOLUME_PREFIX: ${ENGINE_VOLUME_PREFIX:?缺少实例卷前缀}
+      # 助手固定Linux根。
+      ENGINE_MANAGED_ROOT: /managed
+      # 助手固定私有socket。
+      ENGINE_HELPER_SOCKET: /ipc/helper.sock
+      # 固定本机daemon socket。
+      ENGINE_DOCKER_SOCKET: /var/run/docker.sock
+      # 初始化引擎加入的实际Docker网络名称。
+      ENGINE_NETWORK: ${ENGINE_NETWORK:?缺少实例网络名}
+      # 下载与配置文件用户ID。
+      ENGINE_UID: 1000
+      # 应用读取连接和socket的组ID。
+      ENGINE_GID: 1000
+      # 固定模板对外BT TCP/UDP端口。
+      QBT_PEER_PORT: ${QBT_PEER_PORT:-6881}
+      # Jackett管理端口只由模板绑定宿主回环。
+      JACKETT_SETUP_PORT: ${JACKETT_SETUP_PORT:-19117}
+    # 助手需要出站访问引擎，网络不能设internal。
+    networks:
+      - engines
+    # 保留默认seccomp，不为兼容性自动放松。
+    security_opt:
+      - no-new-privileges:true
+    # 等待活动任务有序取消。
+    stop_grace_period: 30s
+    # 控制助手日志占用。
+    logging:
+      # Docker本地轮转日志。
+      driver: local
+      # 单份大小与数量。
+      options:
+        # 每份最多10MiB。
+        max-size: "10m"
+        # 最多保留三份。
+        max-file: "3"
+# 每个桌面配置有独立可出站bridge。
+networks:
+  # 服务中的逻辑网络键。
+  engines:
+    # 必须与助手ENGINE_NETWORK一致。
+    name: ${ENGINE_NETWORK:?缺少实例网络名}
+    # 只支持标准Linux bridge。
+    driver: bridge
+# 标签是助手首次认领的必要条件，非空未知卷仍拒绝接管。
+volumes:
+  # 主应用持久数据，不与原生数据目录混用。
+  app_data:
+    # 启动器持久实例名。
+    name: ${NAS_DESKTOP_PREFIX:?缺少实例前缀}-app-data
+    # 只用本机Docker卷。
+    driver: local
+    # 部署归属与角色。
+    labels:
+      # 稳定部署身份。
+      nas.engines.deployment: ${ENGINE_VOLUME_PREFIX}
+      # 此卷不属于helper角色集合。
+      nas.engines.role: app-data
+  # 助手安装状态。
+  state:
+    # 固定角色卷名。
+    name: ${ENGINE_VOLUME_PREFIX}-state
+    # 仅本地卷。
+    driver: local
+    # 可信初次认领标签。
+    labels:
+      # 实例部署归属。
+      nas.engines.deployment: ${ENGINE_VOLUME_PREFIX}
+      # 固定角色。
+      nas.engines.role: state
+  # qB持久配置。
+  qbittorrent:
+    # 固定角色卷名。
+    name: ${ENGINE_VOLUME_PREFIX}-qbittorrent
+    # 仅本地卷。
+    driver: local
+    # 可信初次认领标签。
+    labels:
+      # 实例部署归属。
+      nas.engines.deployment: ${ENGINE_VOLUME_PREFIX}
+      # 固定角色。
+      nas.engines.role: qbittorrent
+  # Jackett持久配置。
+  jackett:
+    # 固定角色卷名。
+    name: ${ENGINE_VOLUME_PREFIX}-jackett
+    # 仅本地卷。
+    driver: local
+    # 可信初次认领标签。
+    labels:
+      # 实例部署归属。
+      nas.engines.deployment: ${ENGINE_VOLUME_PREFIX}
+      # 固定角色。
+      nas.engines.role: jackett
+  # 下载默认位于Docker Linux数据盘。
+  downloads:
+    # 固定角色卷名。
+    name: ${ENGINE_VOLUME_PREFIX}-downloads
+    # 仅本地卷。
+    driver: local
+    # 可信初次认领标签。
+    labels:
+      # 实例部署归属。
+      nas.engines.deployment: ${ENGINE_VOLUME_PREFIX}
+      # 固定角色。
+      nas.engines.role: downloads
+  # 私有连接目录。
+  connections:
+    # 固定角色卷名。
+    name: ${ENGINE_VOLUME_PREFIX}-connections
+    # 仅本地卷。
+    driver: local
+    # 可信初次认领标签。
+    labels:
+      # 实例部署归属。
+      nas.engines.deployment: ${ENGINE_VOLUME_PREFIX}
+      # 固定角色。
+      nas.engines.role: connections
+  # 私有socket卷。
+  ipc:
+    # 固定角色卷名。
+    name: ${ENGINE_VOLUME_PREFIX}-ipc
+    # 仅本地卷。
+    driver: local
+    # 可信初次认领标签。
+    labels:
+      # 实例部署归属。
+      nas.engines.deployment: ${ENGINE_VOLUME_PREFIX}
+      # 固定角色。
+      nas.engines.role: ipc

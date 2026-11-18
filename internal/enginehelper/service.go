@@ -31,16 +31,17 @@ var (
 
 // Service 持有独立助手状态、单执行器和受控Docker客户端。
 type Service struct {
-	config  Config          // 不可变受信任部署配置。
-	store   *store          // 独立SQLite状态库。
-	docker  *dockerClient   // 本机Docker专用客户端。
-	logger  *slog.Logger    // 仅记录受控中文业务日志。
-	ctx     context.Context // 独立于浏览器请求的生命周期。
-	queue   chan string     // 全局唯一执行器的有界任务通道。
-	opMu    sync.Mutex      // 只保护短幂等提交，不跨网络调用。
-	wg      sync.WaitGroup  // 等待任务在退出时停止。
-	running string          // opMu保护的执行器当前任务，防止旧worker未退出时retry。
-	lease   *os.File        // 在打开状态库和恢复任务前取得的跨进程独占锁。
+	config    Config          // 不可变受信任部署配置。
+	store     *store          // 独立SQLite状态库。
+	docker    *dockerClient   // 本机Docker专用客户端。
+	logger    *slog.Logger    // 仅记录受控中文业务日志。
+	ctx       context.Context // 独立于浏览器请求的生命周期。
+	queue     chan string     // 全局唯一执行器的有界任务通道。
+	opMu      sync.Mutex      // 只保护短幂等提交，不跨网络调用。
+	wg        sync.WaitGroup  // 等待任务在退出时停止。
+	running   string          // opMu保护的执行器当前任务，防止旧worker未退出时retry。
+	quiescing bool            // opMu保护的停止闸门；本进程开始完整停止后不再接受启动副作用。
+	lease     *os.File        // 在打开状态库和恢复任务前取得的跨进程独占锁。
 }
 
 // New 创建助手私有状态，恢复已授权的未完成任务；不自动启动已完成引擎。
@@ -51,14 +52,29 @@ func New(ctx context.Context, c Config, logger *slog.Logger) (*Service, error) {
 	if err := checkDirectoryTree(c.Root); err != nil {
 		return nil, err
 	}
-	for _, dir := range []struct {
-		name string
-		mode os.FileMode
-		uid  int
-		gid  int
-	}{{"state", 0700, 0, 0}, {"connections", 0750, c.UID, c.GID}} {
-		if err := ensureDirectory(filepath.Join(c.Root, dir.name), dir.mode, dir.uid, dir.gid); err != nil {
+	docker := newDocker(c.DockerSocket)
+	if c.StorageMode == "volume" {
+		// 卷标签及实际挂载先只读验证；状态锁之后才读取和建立安装身份。
+		probe := &Service{config: c, docker: docker}
+		if err := docker.preflight(ctx, c); err != nil {
 			return nil, err
+		}
+		if err := probe.verifyMount(ctx); err != nil {
+			return nil, err
+		}
+		if err := prepareStateVolume(c); err != nil {
+			return nil, err
+		}
+	} else {
+		for _, dir := range []struct {
+			name string
+			mode os.FileMode
+			uid  int
+			gid  int
+		}{{"state", 0700, 0, 0}, {"connections", 0750, c.UID, c.GID}} {
+			if err := ensureDirectory(filepath.Join(c.Root, dir.name), dir.mode, dir.uid, dir.gid); err != nil {
+				return nil, err
+			}
 		}
 	}
 	// Unix监听检查晚于状态恢复，必须先以持久目录锁阻止第二个进程重复执行。
@@ -72,7 +88,14 @@ func New(ctx context.Context, c Config, logger *slog.Logger) (*Service, error) {
 			_ = lease.Close()
 		}
 	}()
-	db, err := openStore(ctx, filepath.Join(c.Root, "state", "state.db"))
+	installation := ""
+	if c.StorageMode == "volume" {
+		installation, err = claimVolume(c, "state", "", true)
+		if err != nil {
+			return nil, err
+		}
+	}
+	db, err := openBoundStore(ctx, filepath.Join(c.Root, "state", "state.db"), installation)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +103,18 @@ func New(ctx context.Context, c Config, logger *slog.Logger) (*Service, error) {
 		db.db.Close()
 		return nil, errors.New("助手状态库权限设置失败")
 	}
-	s := &Service{config: c, store: db, docker: newDocker(c.DockerSocket), logger: logger, ctx: ctx, queue: make(chan string, 1), lease: lease}
+	s := &Service{config: c, store: db, docker: docker, logger: logger, ctx: ctx, queue: make(chan string, 1), lease: lease}
+	if c.StorageMode == "volume" {
+		// IPC是助手本身的启动资源；配置、下载和连接卷仅在授权初始化中绑定。
+		if _, err = claimVolume(c, "ipc", db.installation, true); err == nil {
+			err = s.verifyVolumeBindings()
+		}
+		if err != nil {
+			db.db.Close()
+			return nil, err
+		}
+		logger.Info("已核验命名卷部署与私有状态身份，BT数据保留在Docker Linux数据盘")
+	}
 	active, err := db.activeTask(ctx)
 	if err != nil {
 		db.db.Close()
@@ -89,6 +123,7 @@ func New(ctx context.Context, c Config, logger *slog.Logger) (*Service, error) {
 	s.wg.Add(1)
 	go s.worker()
 	if active != nil {
+		s.quiescing = active.Action == "stop"
 		s.queue <- active.ID
 		logger.Info("恢复未完成的引擎初始化任务", "task", active.ID)
 	}
@@ -179,6 +214,7 @@ func (s *Service) Handler() http.Handler {
 	mux.HandleFunc("GET /api/engines/initializations/{id}", s.handleTask)
 	mux.HandleFunc("POST /api/engines/initializations/{id}/retry", s.handleRetry)
 	mux.HandleFunc("POST /api/engines/{component}/start", s.handleStart)
+	mux.HandleFunc("POST /api/engines/stop-all", s.handleStopAll)
 	return mux
 }
 
@@ -191,6 +227,9 @@ func (s *Service) verifyMount(ctx context.Context) error {
 	self, err := s.docker.inspect(ctx, hostname)
 	if err != nil || self == nil {
 		return errors.New("助手必须在本机Docker容器内运行，且使用默认容器hostname")
+	}
+	if s.config.StorageMode == "volume" {
+		return s.verifyVolumeMounts(ctx, self)
 	}
 	found := false
 	for _, m := range self.Mounts {
@@ -215,6 +254,11 @@ func (s *Service) preflight(ctx context.Context) error {
 	if err := s.verifyMount(ctx); err != nil {
 		return err
 	}
+	if s.config.StorageMode == "volume" {
+		if err := s.verifyVolumeBindings(); err != nil {
+			return err
+		}
+	}
 	return checkDirectoryTree(s.config.Root)
 }
 
@@ -230,6 +274,9 @@ func (s *Service) status(ctx context.Context) enginecontract.Status {
 		result.Message = preErr.Error()
 	}
 	active, activeErr := s.store.activeTask(ctx)
+	s.opMu.Lock()
+	quiescing := s.quiescing
+	s.opMu.Unlock()
 	if activeErr == nil && active != nil {
 		result.ActiveTaskID = active.ID
 	}
@@ -253,7 +300,7 @@ func (s *Service) status(ctx context.Context) enginecontract.Status {
 				} else {
 					item.Presence = "missing"
 					item.Message = "引擎未安装，等待用户初始化"
-					item.CanInitialize = active == nil
+					item.CanInitialize = active == nil && !quiescing
 				}
 			} else if err = validateContainer(info, s.config, s.store.installation, t); err != nil {
 				item.Presence = "conflict"
@@ -264,7 +311,7 @@ func (s *Service) status(ctx context.Context) enginecontract.Status {
 				item.Runtime = "stopped"
 				item.Readiness = "connecting"
 				item.Message = "引擎已停止，可启动原容器"
-				item.CanStart = active == nil
+				item.CanStart = active == nil && !quiescing
 				if info.State.Running {
 					item.Runtime = "running"
 					item.CanStart = false
@@ -313,6 +360,9 @@ func (s *Service) submit(ctx context.Context, requestID string, signature string
 	} else if old != nil {
 		return *old, nil
 	}
+	if s.quiescing && strings.Split(signature, "|")[0] != "stop" {
+		return enginecontract.Task{}, errConflict
+	}
 	active, err := s.store.activeTask(ctx)
 	if err != nil {
 		return enginecontract.Task{}, err
@@ -329,6 +379,9 @@ func (s *Service) submit(ctx context.Context, requestID string, signature string
 	task, err := s.store.insertTask(ctx, requestID, signature, components)
 	if err != nil {
 		return task, err
+	}
+	if task.Action == "stop" {
+		s.quiescing = true
 	}
 	select {
 	case s.queue <- task.ID:
@@ -406,7 +459,7 @@ func (s *Service) handleRetry(w http.ResponseWriter, r *http.Request) {
 		var task enginecontract.Task
 		task, err = s.store.getTask(r.Context(), id)
 		if err == nil {
-			if task.Revision != request.Revision || task.State != "failed" && task.State != "interrupted" || s.running == id {
+			if task.Revision != request.Revision || task.State != "failed" && task.State != "interrupted" || s.running == id || s.quiescing && task.Action != "stop" {
 				err = errConflict
 			} else if active, activeErr := s.store.activeTask(r.Context()); activeErr != nil {
 				err = activeErr

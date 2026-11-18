@@ -70,9 +70,10 @@ func verifyTargetAccess(path string, uid int, gid int) error {
 			panic("助手文件身份恢复失败")
 		}
 	}()
-	actualUID, _ := unix.SetfsuidRetUid(-1)
-	actualGID, _ := unix.SetfsgidRetGid(-1)
-	if actualUID != uid || actualGID != gid {
+	// 重设相同目标并核对旧值，避免部分兼容层把-1查询哨兵当成真实身份。
+	actualUID, uidErr := unix.SetfsuidRetUid(uid)
+	actualGID, gidErr := unix.SetfsgidRetGid(gid)
+	if uidErr != nil || gidErr != nil || actualUID != uid || actualGID != gid {
 		return errors.New("目标目录身份切换未生效")
 	}
 	f, err := os.CreateTemp(path, ".nas-permission-")

@@ -78,6 +78,9 @@ func (s *Service) execute(id string) {
 			t.Steps[index].State = "completed"
 			t.Steps[index].Phase = "completed"
 			t.Steps[index].Message = "部署与私有连接发布完成，等待应用接入"
+			if t.Action == "stop" {
+				t.Steps[index].Message = "本安装引擎已停止或原本不存在，数据完整保留"
+			}
 			if err = s.store.saveTask(s.ctx, &t); err != nil {
 				return
 			}
@@ -86,10 +89,16 @@ func (s *Service) execute(id string) {
 	}
 	t.State = "completed"
 	t.Message = "引擎部署完成，应用将自动验证接入；搜索仍需配置站点来源"
+	if t.Action == "stop" {
+		t.Message = "本安装全部受管引擎已停止，容器和数据卷完整保留"
+	}
 	for _, step := range t.Steps {
 		if step.State != "completed" {
 			t.State = "failed"
 			t.Message = "部分引擎初始化失败，成功组件已保留，可重试失败部分"
+			if t.Action == "stop" {
+				t.Message = "部分引擎停止未完成，请检查实例归属后重试；所有数据已保留"
+			}
 		}
 	}
 	if err = s.store.saveTask(s.ctx, &t); err != nil {
@@ -103,6 +112,9 @@ func (s *Service) execute(id string) {
 
 // executeComponent 核对固定资源并恢复不确定create/start结果，不盲目重复创建。
 func (s *Service) executeComponent(task *enginecontract.Task, index int) error {
+	if task.Action == "stop" {
+		return s.stopComponent(task, index)
+	}
 	t, err := engineTemplate(task.Steps[index].Component)
 	if err != nil {
 		return err
@@ -112,6 +124,12 @@ func (s *Service) executeComponent(task *enginecontract.Task, index int) error {
 	}
 	if err = s.preflight(s.ctx); err != nil {
 		return err
+	}
+	if s.config.StorageMode == "volume" {
+		// 仅持久化授权任务可认领连接角色卷，GET检测始终无认领副作用。
+		if _, err = claimVolume(s.config, "connections", s.store.installation, true); err != nil {
+			return err
+		}
 	}
 	if t.Component == enginecontract.Jackett {
 		if err = verifyJackettWrite(filepath.Join(s.config.Root, "connections")); err != nil {
@@ -180,6 +198,11 @@ func (s *Service) executeComponent(task *enginecontract.Task, index int) error {
 	}
 	var password string
 	if t.Component == enginecontract.QBittorrent {
+		if s.config.StorageMode == "volume" {
+			if _, err = claimVolume(s.config, "downloads", s.store.installation, true); err != nil {
+				return err
+			}
+		}
 		for _, path := range []string{"downloads", "downloads/staging", "downloads/complete"} {
 			dir := filepath.Join(s.config.Root, filepath.FromSlash(path))
 			if err = ensureDirectory(dir, 0755, s.config.UID, s.config.GID); err != nil {

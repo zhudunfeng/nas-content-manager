@@ -14,7 +14,6 @@ import (
 	"math"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -298,7 +297,10 @@ func (a *App) enrichVideo(ctx context.Context, item Item) error {
 	probeCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 	output := &limitedBuffer{Limit: 64 << 10}
-	command := exec.CommandContext(probeCtx, "ffprobe", "-v", "error", "-max_alloc", "67108864", "-protocol_whitelist", "file,pipe", "-format_whitelist", "mov,matroska,webm,avi,mpegts,mpeg", "-probesize", "8388608", "-analyzeduration", "5000000", "-show_entries", "stream=width,height:format=duration", "-of", "json", safe)
+	command, err := a.mediaCommand(probeCtx, "ffprobe", "-v", "error", "-max_alloc", "67108864", "-protocol_whitelist", "file,pipe", "-format_whitelist", "mov,matroska,webm,avi,mpegts,mpeg", "-probesize", "8388608", "-analyzeduration", "5000000", "-show_entries", "stream=width,height:format=duration", "-of", "json", safe)
+	if err != nil {
+		return err
+	}
 	command.Stdout = output
 	command.Stderr = io.Discard
 	if err = command.Run(); err != nil {
@@ -342,7 +344,10 @@ func (a *App) enrichVideo(ctx context.Context, item Item) error {
 	if duration > 30 {
 		seek = "10"
 	}
-	command = exec.CommandContext(thumbCtx, "ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-max_alloc", "67108864", "-threads", "1", "-protocol_whitelist", "file,pipe", "-format_whitelist", "mov,matroska,webm,avi,mpegts,mpeg", "-probesize", "8388608", "-analyzeduration", "5000000", "-ss", seek, "-i", safe, "-map", "0:v:0", "-frames:v", "1", "-an", "-sn", "-vf", "scale=480:480:force_original_aspect_ratio=decrease", "-threads", "1", "-q:v", "4", "-fs", "2097152", target)
+	command, err = a.mediaCommand(thumbCtx, "ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-max_alloc", "67108864", "-threads", "1", "-protocol_whitelist", "file,pipe", "-format_whitelist", "mov,matroska,webm,avi,mpegts,mpeg", "-probesize", "8388608", "-analyzeduration", "5000000", "-ss", seek, "-i", safe, "-map", "0:v:0", "-frames:v", "1", "-an", "-sn", "-vf", "scale=480:480:force_original_aspect_ratio=decrease", "-threads", "1", "-q:v", "4", "-fs", "2097152", target)
+	if err != nil {
+		return err
+	}
 	command.Stdout = io.Discard
 	command.Stderr = io.Discard
 	if err = command.Run(); err != nil {

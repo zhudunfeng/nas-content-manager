@@ -7,7 +7,6 @@ import (
 	"html"
 	"io"
 	"math"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -80,7 +79,10 @@ func (a *App) enrichMusic(ctx context.Context, item Item) (bool, error) {
 	probeCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 	output := &limitedBuffer{Limit: 64 << 10}
-	command := exec.CommandContext(probeCtx, "ffprobe", "-v", "error", "-max_alloc", "67108864", "-protocol_whitelist", "file,pipe", "-format_whitelist", formats, "-probesize", "8388608", "-analyzeduration", "5000000", "-show_entries", "stream=index,codec_type,width,height:stream_disposition=attached_pic:format=duration", "-of", "json", source)
+	command, err := a.mediaCommand(probeCtx, "ffprobe", "-v", "error", "-max_alloc", "67108864", "-protocol_whitelist", "file,pipe", "-format_whitelist", formats, "-probesize", "8388608", "-analyzeduration", "5000000", "-show_entries", "stream=index,codec_type,width,height:stream_disposition=attached_pic:format=duration", "-of", "json", source)
+	if err != nil {
+		return false, err
+	}
 	command.Stdout = output
 	command.Stderr = io.Discard
 	if err = command.Run(); err != nil {
@@ -130,7 +132,10 @@ func (a *App) enrichMusic(ctx context.Context, item Item) (bool, error) {
 	coverCtx, stop := context.WithTimeout(ctx, 25*time.Second)
 	defer stop()
 	cover := &limitedBuffer{Limit: 2 << 20}
-	command = exec.CommandContext(coverCtx, "ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-max_alloc", "67108864", "-threads", "1", "-protocol_whitelist", "file,pipe", "-format_whitelist", formats, "-probesize", "8388608", "-analyzeduration", "5000000", "-i", source, "-map", "0:"+strconv.Itoa(coverIndex), "-frames:v", "1", "-an", "-sn", "-vf", "scale=480:480:force_original_aspect_ratio=decrease", "-threads", "1", "-q:v", "4", "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1")
+	command, err = a.mediaCommand(coverCtx, "ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-max_alloc", "67108864", "-threads", "1", "-protocol_whitelist", "file,pipe", "-format_whitelist", formats, "-probesize", "8388608", "-analyzeduration", "5000000", "-i", source, "-map", "0:"+strconv.Itoa(coverIndex), "-frames:v", "1", "-an", "-sn", "-vf", "scale=480:480:force_original_aspect_ratio=decrease", "-threads", "1", "-q:v", "4", "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1")
+	if err != nil {
+		return false, err
+	}
 	command.Stdout = cover
 	command.Stderr = io.Discard
 	if err = command.Run(); err != nil {

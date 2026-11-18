@@ -1,0 +1,10 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/backend/engine-bootstrap-contract.md", "reason": "保留Linux助手权限、目录身份及私有连接协议"}
+{"file": ".trellis/spec/backend/download-contract.md", "reason": "保留路径映射与未发布下载的读取门禁"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "双平台服务生命周期和现有API兼容"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "复用现有界面和浏览器业务"}
+{"file": ".trellis/tasks/11-18-windows-one-click/info.md", "reason": "双平台修改阶段与实现边界"}
+{"file": ".trellis/tasks/11-18-windows-one-click/research/windows-deployment-options.md", "reason": "官方调研与命名卷适配依据"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "共享内核、桌面生命周期、严格发布与本机Docker契约"}

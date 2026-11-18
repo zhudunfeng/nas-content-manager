@@ -16,6 +16,7 @@ The first release is a standard-library Go HTTP service with pure-Go SQLite. Its
 4. For downloads or scan/read/storage changes, also read [Download contract](./download-contract.md).
 5. For source search, secret configuration or search-origin additions, also read [Torrent search contract](./torrent-search-contract.md).
 6. For engine setup, helper/Docker integration or managed connection changes, read [Engine bootstrap contract](./engine-bootstrap-contract.md).
+7. For native launchers, lifecycle, tool resolution, embedded assets or packaging, read [Cross-platform contract](./cross-platform-contract.md).
 
 ## Quality Check
 
@@ -31,6 +32,7 @@ Run `go vet ./...`, `go test ./...`, `go build ./cmd/nas`, and the isolated `scr
 | [Download contract](./download-contract.md) | Optional qB coordinator, v2 migration, selected publication gate and deployment boundaries | Implemented |
 | [Torrent search contract](./torrent-search-contract.md) | Optional bounded Torznab aggregation, private result cache and original managed-download handoff | Implemented |
 | [Engine bootstrap contract](./engine-bootstrap-contract.md) | Optional private helper, fixed Docker templates, durable recovery and managed runtime activation | Implemented |
+| [Cross-platform contract](./cross-platform-contract.md) | Shared lifecycle, Windows launcher, embedded assets, immutable desktop deployments and releases | Implemented |
 | [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
 | [Database Guidelines](./database-guidelines.md) | ORM patterns, queries, migrations | To fill |
 | [Error Handling](./error-handling.md) | Error types, handling strategies | To fill |

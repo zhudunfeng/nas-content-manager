@@ -52,6 +52,8 @@ ssh -N -L 19117:127.0.0.1:19117 nas-user@nas-host
 | `NAS_ENGINE_HELPER_SOCKET` | 空值 | 应用的私有Unix socket路径；托管Compose设为`/run/nas-engine-helper/helper.sock` |
 | `NAS_ENGINE_CONNECTION_DIR` | `/run/nas-engines` | 应用只读的版本化连接目录，原子替换整个目录中的文件可见 |
 | `ENGINE_HOST_ROOT` | 必填 | Docker宿主专用绝对根，必须精确对应助手`/managed`的bind源，不得为根目录或媒体目录 |
+| `ENGINE_STORAGE_MODE` | `bind` | 存储驱动；现有Linux部署保持bind，Desktop专用配置使用volume |
+| `ENGINE_VOLUME_PREFIX` | bind模式为空 | volume模式的受信任实例前缀，派生六个固定角色命名卷；不可从网页提交 |
 | `ENGINE_NETWORK` | Compose为`nas_engine_bridge` | 应用、助手和引擎共享的真实bridge名称，需允许必要出站 |
 | `ENGINE_UID` / `ENGINE_GID` | `1000` / `1000` | 下载与搜索进程的目标身份；GID也控制应用读取连接文件和socket的权限 |
 | `QBT_PEER_PORT` | `6881` | qB的TCP/UDP传输端口，须未被其他容器占用，不是WebUI端口 |
@@ -102,4 +104,21 @@ qB在新空配置上离线生成并持久保存随机永久密码，使用固定
 
 恢复时先停止相关服务，保留当前现场，再还原相互匹配的整套目录、权限和安装身份，确认卷、网络、端口相同后启动并对账。不要删除安装ID或`helper.lock`来强行接管容器；锁文件持久存在是正常现象，实际锁由进程退出释放。已发布媒体仍受原选集与版本门禁约束。
 
-停用控制面可移除托管覆盖文件并显式改回disabled或原external配置，但Compose停止助手不会自动删除其创建的引擎容器。引擎的停止由管理员核实所有权后执行。首版没有一键卸载、自动删数据、全局prune或自动升级。
+停用控制面可移除托管覆盖文件并显式改回disabled或原external配置。Compose停止助手不会自动停止其动态创建的引擎容器；可先调用固定的私有停止命令，再停止Compose服务：
+
+```sh
+# 使用与启动时相同的参数文件和覆盖文件，等待本实例两引擎停止成功。
+docker compose --env-file .env.engines -f compose.yaml -f compose.engines.yaml exec -T nas-engine-helper /nas-engine-helper stop-all
+# 仅在前一命令成功后停止应用与助手；保留全部配置和下载数据。
+docker compose --env-file .env.engines -f compose.yaml -f compose.engines.yaml stop
+```
+
+停止命令复用运行中助手的Unix socket，最长等待90秒，失败返回非零状态。初始化/启动正在执行时会拒绝停止；核实任务结果后重试。停止前检查实际容器、镜像和挂载身份，不停止同名外来容器，不拉取、创建或删除资源。接受停止后，本次助手进程拒绝新初始化/启动，避免关机竞态；重新启动助手后可恢复管理，再使用页面上的“启动”启动已停引擎。首版没有一键卸载、自动删数据、全局prune或自动升级。
+
+## Windows Docker Desktop 命名卷
+
+Windows完整模式使用独立的`compose.desktop.yaml`，由本机启动器核验固定镜像清单、实例和Compose配置。不要将它与Linux bind覆盖文件混用。使用方法见[Windows启动说明](windows.md)。
+
+此模式将`state`、`qbittorrent`、`jackett`、`downloads`、`connections`、`ipc`放入六个具有固定角色和实例标签的Linux命名卷。卷驱动必须为不带设备/NFS/bind选项的`local`。助手还核验卷内持久安装标记与SQLite身份；未知非空卷或身份不一致时保留现场并拒绝接管。媒体根仍只读，应用数据库另用独立卷。
+
+下载位于Docker Desktop Linux数据盘，不是Windows普通下载目录。完整备份应停写并同时保存上述相关卷、应用数据卷和本机`desktop.json`；不要只恢复助手数据库或复制其他实例的标记。启动器的“停止完整模式”会先执行上述固定停止协议，成功后再停止应用和助手。单纯退出托盘保留容器运行。

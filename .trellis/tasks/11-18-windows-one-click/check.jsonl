@@ -1,0 +1,6 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/spec/backend/engine-bootstrap-contract.md", "reason": "核对Windows启动方案不会放宽原助手安全及恢复契约"}
+{"file": ".trellis/spec/backend/download-contract.md", "reason": "回归下载发布隔离与既有路径数据"}
+{"file": ".trellis/tasks/11-18-windows-one-click/info.md", "reason": "双平台验收矩阵、真实运行与编译证据区分"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "复核双平台锁与真实就绪、严格配置、三目标发布边界"}

@@ -4,6 +4,8 @@
 
 当前为 `0.1.0` 首版源码。建议先在局域网和少量样本上试用，再接入完整媒体目录。当前没有已发布的公共镜像，Compose 会从本仓库构建。
 
+已增加 Linux/Windows 共用内核的发布与启动入口：Windows 原生包使用 `栖库.exe` 双击/托盘管理，Linux 归档使用 `start.sh` 或原 CLI；可选 Docker Desktop 完整模式使用独立配置和 Linux 命名卷。使用与升级见 [Windows 与双平台说明](docs/windows.md)，维护者构建见 [发布流程](docs/release.md)。仓库不会把缺少 FFmpeg 的开发验证包当作完整离线发行，也没有虚构公共应用/助手镜像。
+
 ## 首版能力
 
 - 网页创建管理员、登录、选择已挂载目录、创建五类媒体库。
@@ -152,7 +154,7 @@ PowerShell 快捷命令：
 ./scripts/dev.ps1 -Mode build
 ```
 
-本机构建的 Go 程序从 `NAS_WEB_DIR` 读取网页；移动程序时应连同 `web/dist` 部署。容器镜像已包含所有前端构建产物。
+普通 `go build` 开发产物从 `NAS_WEB_DIR` 读取网页，移动时应带上 `web/dist`。发布脚本和容器构建使用 `webembed` 内嵌网页；显式设置 `NAS_WEB_DIR` 时仍优先使用该目录。完整原生包还携带经核验的媒体工具，运行时不依赖开发环境。
 
 ## 环境参数
 
@@ -164,6 +166,8 @@ PowerShell 快捷命令：
 | `NAS_DATA_DIR` | `data` | 可写应用目录，SQLite、缓存与临时备份所在位置 |
 | `NAS_MEDIA_ROOTS` | `media` | 可访问的媒体根；Linux 用冒号分隔，Windows 用分号分隔 |
 | `NAS_WEB_DIR` | `web/dist` | 已构建网页目录 |
+| `NAS_FFMPEG_PATH` | 自动定位 | 可选 FFmpeg 绝对路径；否则优先可执行文件旁 `tools`，其次安全 PATH |
+| `NAS_FFPROBE_PATH` | 自动定位 | 可选 ffprobe 绝对路径；封面、探测和诊断共用解析结果 |
 | `NAS_SCAN_INTERVAL_MINUTES` | `60` | 周期扫描间隔，单位分钟 |
 | `NAS_CACHE_MAX_MB` | `1024` | 可重建封面缓存上限，单位 MiB |
 | `NAS_MIN_FREE_MB` | `512` | 新增缓存所需最低可用空间，单位 MiB |

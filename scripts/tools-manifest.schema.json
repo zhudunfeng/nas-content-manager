@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "固定媒体工具发布清单",
+  "description": "由维护者审核真实构建来源与许可后填写；不自动下载未知工具。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "target", "version", "sourceUrl", "runtimeFiles", "licenseFiles", "sourceFiles"],
+  "properties": {
+    "schemaVersion": {"description": "清单格式版本，固定为1。", "const": 1},
+    "target": {"description": "目标操作系统与架构，必须匹配构建参数。", "enum": ["windows-amd64", "linux-amd64", "linux-arm64"]},
+    "version": {"description": "审核过的实际固定工具版本，不能写latest。", "type": "string", "minLength": 1},
+    "sourceUrl": {"description": "实际工具构建的HTTPS来源及版本说明地址。", "type": "string", "pattern": "^https://"},
+    "runtimeFiles": {"description": "ffmpeg、ffprobe及该构建所需DLL/共享库，目标必须在tools下。", "type": "array", "minItems": 2, "maxItems": 512, "items": {"$ref": "#/$defs/file"}},
+    "licenseFiles": {"description": "此工具构建实际适用的许可证及第三方声明，目标位于licenses/ffmpeg。", "type": "array", "minItems": 1, "maxItems": 512, "items": {"$ref": "#/$defs/file"}},
+    "sourceFiles": {"description": "与二进制准确对应的源码及必要构建材料，目标位于licenses/ffmpeg。", "type": "array", "minItems": 1, "maxItems": 512, "items": {"$ref": "#/$defs/file"}}
+  },
+  "$defs": {
+    "file": {
+      "description": "每个文件均先校验源摘要再复制，复制后再次校验。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "destination", "sha256"],
+      "properties": {
+        "source": {"description": "构建机绝对路径或相对清单文件的路径。", "type": "string", "minLength": 1},
+        "destination": {"description": "两端可解压的正斜杠相对路径；禁止控制字符、Windows设备名、尾点/空格、盘符及目录穿越。ffmpeg/ffprobe必须使用固定小写名称；licenses/ffmpeg/tools-manifest.json由构建器保留生成。", "type": "string", "minLength": 1},
+        "sha256": {"description": "真实文件的小写SHA-256摘要，恰好64位。", "type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

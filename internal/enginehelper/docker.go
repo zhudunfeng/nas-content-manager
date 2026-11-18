@@ -60,13 +60,18 @@ func (e dockerError) Error() string { return fmt.Sprintf("Docker调用失败（H
 func newDocker(socket string) *dockerClient {
 	t := &http.Transport{DialContext: func(ctx context.Context, _ string, _ string) (net.Conn, error) {
 		return (&net.Dialer{Timeout: 5 * time.Second}).DialContext(ctx, "unix", socket)
-	}, ResponseHeaderTimeout: 10 * time.Second, MaxIdleConns: 4, MaxIdleConnsPerHost: 4, IdleConnTimeout: 30 * time.Second}
+	}, ResponseHeaderTimeout: 30 * time.Second, MaxIdleConns: 4, MaxIdleConnsPerHost: 4, IdleConnTimeout: 30 * time.Second}
 	return &dockerClient{http: &http.Client{Transport: t, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}}
 }
 
 // call 有界执行普通Docker请求，绝不回传原始错误体。
 func (d *dockerClient) call(ctx context.Context, method string, path string, input any, output any) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	return d.callWithin(ctx, method, path, input, output, 10*time.Second)
+}
+
+// callWithin 为固定停止动作提供额外有界宽限，其余请求继续使用十秒预算。
+func (d *dockerClient) callWithin(ctx context.Context, method string, path string, input any, output any, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	var body io.Reader
 	if input != nil {
@@ -173,7 +178,9 @@ type containerInfo struct {
 		Status  string // daemon生命周期状态。
 	} // 实际运行状态。
 	Mounts []struct {
-		Type        string // 只允许固定bind挂载。
+		Type        string // 只允许所选存储驱动的固定挂载。
+		Name        string // volume模式的daemon逻辑卷名，不使用Mountpoint作bind来源。
+		Driver      string // 命名卷必须使用本地驱动。
 		Source      string // daemon侧宿主绝对来源。
 		Destination string // 固定容器目标。
 		RW          bool   // 引擎专用数据挂载必须可写。

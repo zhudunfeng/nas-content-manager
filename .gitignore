@@ -2,6 +2,7 @@
 .tools/
 node_modules/
 web/dist/
+internal/webassets/dist/
 bin/
 # 本机配置与运行数据可能包含密码、媒体和数据库。
 .env

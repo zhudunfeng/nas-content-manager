@@ -2,22 +2,27 @@ package app
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log/slog"
 	"mime"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"nas-content-manager/internal/webassets"
 )
 
 // App 持有服务资源和有限后台任务，不保存媒体文件内容。
@@ -38,6 +43,7 @@ type App struct {
 	readerSlots   chan struct{}                // 限制同时解压漫画或解析文本的请求数。
 	downloads     *downloadManager             // 独立下载协调器，不占用媒体扫描执行器。
 	torrentSearch *torrentSearchManager        // 只保存有限搜索快照和独立网络限额的搜种适配器。
+	frontend      fs.FS                        // 本实例固定的前端资源根，发布嵌入与显式目录共用同一路由。
 }
 
 // loginAttempt 保存单个来源的短期失败次数。
@@ -51,6 +57,51 @@ type userContextKey struct{}
 
 // Run 启动 HTTP 与后台执行器，并执行有序关闭。
 func Run(ctx context.Context, config Config, logger *slog.Logger) error {
+	return RunWithOptions(ctx, config, logger, RunOptions{})
+}
+
+// RunOptions 提供平台入口已保留的监听器和一次性真实就绪回调。
+type RunOptions struct {
+	Listener net.Listener         // 可选的已绑定监听器；交给运行时后所有成功或失败路径均由运行时关闭。
+	Ready    func(address string) // 数据库、网页入口和本实例 HTTP 均可用后回调一次，参数为真实监听地址。
+}
+
+// RunWithOptions 在数据库恢复前取得数据锁，并统一管理 HTTP、工作线程与平台入口生命周期。
+func RunWithOptions(ctx context.Context, config Config, logger *slog.Logger, options RunOptions) error {
+	listener := options.Listener
+	defer func() {
+		if listener != nil {
+			_ = listener.Close()
+		}
+	}()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if logger == nil {
+		logger = slog.Default()
+	}
+	lease, dataDir, err := acquireInstance(config.DataDir)
+	if err != nil {
+		return err
+	}
+	defer lease.Close()
+	config.DataDir = dataDir
+	// 先保留真实 listener，绑定失败不能触发数据库迁移或后台任务恢复。
+	if listener == nil {
+		listener, err = net.Listen("tcp", config.Addr)
+		if err != nil {
+			return fmt.Errorf("媒体库监听地址不可用：%w", err)
+		}
+	}
+	frontend, err := frontendFiles(config)
+	if err != nil {
+		return err
+	}
+	if options.Ready != nil {
+		if err = checkFrontend(frontend); err != nil {
+			return err
+		}
+	}
 	db, err := openDatabase(ctx, config.DataDir)
 	if err != nil {
 		return err
@@ -58,35 +109,120 @@ func Run(ctx context.Context, config Config, logger *slog.Logger) error {
 	defer db.Close()
 	workCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	a := &App{config: config, db: db, logger: logger, ctx: workCtx, cancels: make(map[int64]context.CancelFunc), loginAttempts: make(map[string]loginAttempt), wake: make(chan struct{}, 1), streams: make(chan struct{}, 16), readerSlots: make(chan struct{}, 4)}
+	a := &App{config: config, db: db, logger: logger, ctx: workCtx, cancels: make(map[int64]context.CancelFunc), loginAttempts: make(map[string]loginAttempt), wake: make(chan struct{}, 1), streams: make(chan struct{}, 16), readerSlots: make(chan struct{}, 4), frontend: frontend}
 	a.torrentSearch = newTorrentSearchManager(config.TorrentSearch)
 	defer a.torrentSearch.http.CloseIdleConnections()
 	a.startDownloads()
 	a.startEngineRuntime()
 	a.startWorkers()
-	server := &http.Server{Addr: config.Addr, Handler: a.routes(), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, IdleTimeout: 90 * time.Second, MaxHeaderBytes: 32 << 10}
+	readyToken := rand.Text()
+	routes := a.routes()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 仅回显本实例启动探针的随机标识，避免地址被意外复用后把第三方健康页判为就绪。
+		if r.URL.Path == "/healthz" && r.Header.Get("X-Qiku-Ready") == readyToken {
+			w.Header().Set("X-Qiku-Ready", readyToken)
+		}
+		routes.ServeHTTP(w, r)
+	})
+	server := &http.Server{Addr: config.Addr, Handler: handler, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, IdleTimeout: 90 * time.Second, MaxHeaderBytes: 32 << 10}
 	// 不设置全局 WriteTimeout，避免长视频被短响应超时截断。
-	errorsCh := make(chan error, 1)
-	go func() { errorsCh <- server.ListenAndServe() }()
-	logger.Info("媒体库服务已启动", "addr", config.Addr, "version", Version, "workers", config.Workers)
-	select {
-	case <-ctx.Done():
-	case err = <-errorsCh:
-		if !errors.Is(err, http.ErrServerClosed) {
-			cancel()
-			a.wg.Wait()
+	serveDone := make(chan struct{})
+	var serveErr error
+	go func() {
+		serveErr = server.Serve(listener)
+		close(serveDone)
+	}()
+	defer func() {
+		cancel()
+		shutdownCtx, stop := context.WithTimeout(context.Background(), 10*time.Second)
+		defer stop()
+		if shutdownErr := server.Shutdown(shutdownCtx); shutdownErr != nil {
+			logger.Warn("媒体库连接关闭超过等待预算，正在终止连接")
+			_ = server.Close()
+		}
+		<-serveDone
+		a.wg.Wait()
+		logger.Info("媒体库服务已安全停止")
+	}()
+	address := listener.Addr().String()
+	if options.Ready != nil {
+		if err = waitRuntimeReady(ctx, address, readyToken, serveDone); err != nil {
+			select {
+			case <-serveDone:
+				if serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
+					return serveErr
+				}
+			default:
+			}
 			return err
 		}
 	}
-	cancel()
-	shutdownCtx, stop := context.WithTimeout(context.Background(), 10*time.Second)
-	defer stop()
-	if err = server.Shutdown(shutdownCtx); err != nil {
-		_ = server.Close()
+	logger.Info("媒体库服务已启动", "addr", address, "version", Version, "workers", config.Workers)
+	if options.Ready != nil {
+		if err = ctx.Err(); err != nil {
+			return err
+		}
+		options.Ready(address)
 	}
-	a.wg.Wait()
-	logger.Info("媒体库服务已安全停止")
+	select {
+	case <-ctx.Done():
+	case <-serveDone:
+		if !errors.Is(serveErr, http.ErrServerClosed) {
+			return serveErr
+		}
+	}
 	return nil
+}
+
+// waitRuntimeReady 使用无代理的本机探针验证真实服务与数据库，失败不会通知桌面打开网页。
+func waitRuntimeReady(ctx context.Context, address string, token string, serveDone <-chan struct{}) error {
+	host, port, err := net.SplitHostPort(address)
+	if err != nil {
+		return fmt.Errorf("媒体库就绪探针需要 TCP 监听地址")
+	}
+	if ip := net.ParseIP(host); host == "" || (ip != nil && ip.IsUnspecified()) {
+		host = "127.0.0.1"
+		if ip != nil && ip.To4() == nil {
+			host = "::1"
+		}
+	}
+	probeCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	transport := &http.Transport{Proxy: nil, DisableKeepAlives: true}
+	defer transport.CloseIdleConnections()
+	client := &http.Client{Transport: transport, Timeout: time.Second}
+	ticker := time.NewTicker(25 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-serveDone:
+			return fmt.Errorf("媒体库 HTTP 服务未能启动")
+		case <-probeCtx.Done():
+			return fmt.Errorf("媒体库未在启动预算内就绪：%w", probeCtx.Err())
+		default:
+		}
+		request, requestErr := http.NewRequestWithContext(probeCtx, http.MethodGet, "http://"+net.JoinHostPort(host, port)+"/healthz", nil)
+		if requestErr != nil {
+			return fmt.Errorf("媒体库就绪地址无效")
+		}
+		request.Header.Set("X-Qiku-Ready", token)
+		response, probeErr := client.Do(request)
+		if probeErr == nil {
+			ready := response.StatusCode == http.StatusOK && response.Header.Get("X-Qiku-Ready") == token
+			_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 1024))
+			_ = response.Body.Close()
+			if ready {
+				return nil
+			}
+		}
+		select {
+		case <-serveDone:
+			return fmt.Errorf("媒体库 HTTP 服务未能启动")
+		case <-probeCtx.Done():
+			return fmt.Errorf("媒体库未在启动预算内就绪：%w", probeCtx.Err())
+		case <-ticker.C:
+		}
+	}
 }
 
 // routes 注册原生 HTTP 路由，所有媒体接口均经过统一鉴权。
@@ -239,38 +375,83 @@ func (a *App) health(w http.ResponseWriter, r *http.Request) {
 	respond(w, 200, map[string]string{"status": "ok"})
 }
 
-// static 在已构建前端目录中提供资源及客户端路由入口。
+// frontendFiles 使显式资源目录优先，发布包默认使用与工作目录无关的嵌入资源。
+func frontendFiles(config Config) (fs.FS, error) {
+	if !config.WebDirExplicit {
+		if embedded := webassets.Files(); embedded != nil {
+			return embedded, nil
+		}
+	}
+	directory := config.WebDir
+	if directory == "" {
+		directory = "web/dist"
+	}
+	root, err := filepath.Abs(directory)
+	if err != nil {
+		return nil, fmt.Errorf("前端资源目录无效")
+	}
+	return os.DirFS(root), nil
+}
+
+// checkFrontend 在桌面报告就绪前确认本地网页入口是可读取的普通文件。
+func checkFrontend(files fs.FS) error {
+	entry, err := files.Open("index.html")
+	if err != nil {
+		return fmt.Errorf("前端资源尚未构建或安装包缺少网页入口")
+	}
+	defer entry.Close()
+	info, err := entry.Stat()
+	if err != nil || !info.Mode().IsRegular() || info.Size() == 0 {
+		return fmt.Errorf("前端网页入口无效，请修复安装包")
+	}
+	return nil
+}
+
+// static 统一提供嵌入或目录资源、HEAD 与 SPA 入口，缺失脚本不会伪装为 HTML。
 func (a *App) static(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		fail(w, 405, "不支持的请求方法")
 		return
 	}
-	clean := filepath.Clean(filepath.FromSlash(r.URL.Path))
-	root, err := filepath.Abs(a.config.WebDir)
-	if err != nil {
-		fail(w, 503, "前端资源尚未构建")
-		return
+	name := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/"), "/")
+	if name == "" {
+		name = "index.html"
 	}
-	file := filepath.Join(root, strings.TrimLeft(clean, "/\\"))
-	rel, err := filepath.Rel(root, file)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+	if !fs.ValidPath(name) || strings.ContainsAny(name, "\\\x00") {
 		fail(w, 404, "页面不存在")
 		return
 	}
-	info, err := os.Stat(file)
-	if err != nil || info.IsDir() {
-		file = filepath.Join(root, "index.html")
+	files := a.frontend
+	if files == nil {
+		var err error
+		files, err = frontendFiles(a.config)
+		if err != nil {
+			fail(w, 503, "前端资源尚未构建")
+			return
+		}
 	}
-	if _, err = os.Stat(file); err != nil {
-		fail(w, 503, "前端资源尚未构建，请先执行 npm run build")
+	info, err := fs.Stat(files, name)
+	if err != nil || info.IsDir() {
+		if strings.HasPrefix(name, "assets/") || path.Ext(name) != "" {
+			if name == "index.html" && r.URL.Path == "/" {
+				fail(w, 503, "前端资源尚未构建，请先构建前端或修复安装包")
+				return
+			}
+			fail(w, 404, "页面资源不存在")
+			return
+		}
+		name = "index.html"
+	}
+	if info, err = fs.Stat(files, name); err != nil || !info.Mode().IsRegular() {
+		fail(w, 503, "前端资源尚未构建，请先构建前端或修复安装包")
 		return
 	}
-	http.ServeFile(w, r, file)
+	http.ServeFileFS(w, r, files, name)
 }
 
 // settings 返回非敏感运行信息，便于诊断目录和媒体处理能力。
 func (a *App) settings(w http.ResponseWriter, r *http.Request) {
-	_, ffmpegErr := exec.LookPath("ffmpeg")
-	_, ffprobeErr := exec.LookPath("ffprobe")
+	_, ffmpegErr := a.mediaTool("ffmpeg")
+	_, ffprobeErr := a.mediaTool("ffprobe")
 	respond(w, 200, map[string]any{"version": Version, "dataDir": a.config.DataDir, "mediaRoots": a.config.MediaRoots, "scanIntervalMinutes": a.config.ScanIntervalMinutes, "cacheMaxBytes": a.config.CacheMaxBytes, "ffmpegAvailable": ffmpegErr == nil, "ffprobeAvailable": ffprobeErr == nil})
 }

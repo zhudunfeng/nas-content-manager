@@ -14,7 +14,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/nas ./cmd/nas
+COPY --from=frontend /src/web/dist ./internal/webassets/dist
+RUN CGO_ENABLED=0 go build -trimpath -tags webembed -ldflags="-s -w" -o /out/nas ./cmd/nas
 
 # 运行镜像：FFmpeg 和 ffprobe 随应用发布；tini 负责子进程回收。
 FROM debian:bookworm-slim AS runtime
