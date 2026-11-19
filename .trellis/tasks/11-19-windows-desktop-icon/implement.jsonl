@@ -1,0 +1,4 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "Windows native icon and release build boundaries"}
+{"file": ".trellis/tasks/11-19-windows-desktop-icon/prd.md", "reason": "Approved user scope and acceptance"}

@@ -1,0 +1,3 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist for this Codex project"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check skill available in this project"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "Verify embedded icons, Windows exit and Linux compatibility"}

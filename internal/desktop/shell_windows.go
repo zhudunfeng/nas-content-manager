@@ -187,11 +187,36 @@ func addTrayIcon() error {
 	return nil
 }
 
+// loadApplicationIcon 按系统尺寸加载内嵌品牌图标，返回的独立句柄由托盘线程释放。
+func loadApplicationIcon(instance uintptr, small bool) (uintptr, error) {
+	widthMetric, heightMetric := uintptr(11), uintptr(12) // SM_CXICON/SM_CYICON：常规窗口图标尺寸。
+	if small {
+		widthMetric, heightMetric = 49, 50 // SM_CXSMICON/SM_CYSMICON：托盘和小窗口图标尺寸。
+	}
+	width, _, _ := user32.NewProc("GetSystemMetrics").Call(widthMetric)
+	height, _, _ := user32.NewProc("GetSystemMetrics").Call(heightMetric)
+	// 资源组 ID 1 由桌面入口的 .syso 提供；不使用 LR_SHARED，避免不同尺寸命中同一缓存句柄。
+	icon, _, err := user32.NewProc("LoadImageW").Call(instance, 1, 1, width, height, 0)
+	if icon == 0 {
+		return 0, fmt.Errorf("无法加载内嵌应用图标（%d×%d），请重新构建完整桌面入口：%w", width, height, err)
+	}
+	return icon, nil
+}
+
 // runTray 在锁定的系统线程中运行原生消息循环，关闭网页不关闭服务。
 func runTray(ctx context.Context, c *controller) error {
 	instance, _, _ := kernel32.NewProc("GetModuleHandleW").Call(0)
-	icon, _, _ := user32.NewProc("LoadIconW").Call(0, 32512)
-	class := windowClass{Instance: instance, Name: wide("QikuDesktopLauncher"), Icon: icon, Procedure: syscall.NewCallback(windowProcedure)}
+	icon, err := loadApplicationIcon(instance, false)
+	if err != nil {
+		return err
+	}
+	defer user32.NewProc("DestroyIcon").Call(icon)
+	smallIcon, err := loadApplicationIcon(instance, true)
+	if err != nil {
+		return err
+	}
+	defer user32.NewProc("DestroyIcon").Call(smallIcon)
+	class := windowClass{Instance: instance, Name: wide("QikuDesktopLauncher"), Icon: icon, SmallIcon: smallIcon, Procedure: syscall.NewCallback(windowProcedure)}
 	class.Size = uint32(unsafe.Sizeof(class))
 	registered, _, _ := user32.NewProc("RegisterClassExW").Call(uintptr(unsafe.Pointer(&class)))
 	if registered == 0 {
@@ -203,10 +228,17 @@ func runTray(ctx context.Context, c *controller) error {
 		return errors.New("无法创建 Windows 托盘窗口")
 	}
 	trayWindow, trayController = window, c
-	defer func() { trayWindow = 0; trayController = nil }()
+	defer func() {
+		// 异常退出消息循环时也先销毁窗口，再注销窗口类并释放大小图标。
+		if alive, _, _ := user32.NewProc("IsWindow").Call(window); alive != 0 {
+			user32.NewProc("DestroyWindow").Call(window)
+		}
+		trayWindow = 0
+		trayController = nil
+	}()
 	taskbar, _, _ := user32.NewProc("RegisterWindowMessageW").Call(uintptr(unsafe.Pointer(wide("TaskbarCreated"))))
 	taskbarCreated = uint32(taskbar)
-	trayData = notifyIconData{Window: window, ID: 1, Flags: 1 | 2 | 4, Callback: 0x8001, Icon: icon}
+	trayData = notifyIconData{Window: window, ID: 1, Flags: 1 | 2 | 4, Callback: 0x8001, Icon: smallIcon}
 	trayData.Size = uint32(unsafe.Sizeof(trayData))
 	cfg, _ := c.snapshot()
 	tip := "栖库 · 原生媒体模式"

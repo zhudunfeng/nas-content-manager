@@ -341,3 +341,21 @@ WSL1会报告fsuid切换成功但拒绝目标身份写入，不能作为Docker L
 修复前故障、中间失败、fixture 本身的 PID 发布/启动预算修正和最终通过记录均保留在 `.trellis/tasks/11-18-windows-complete-exit/research/`；最终集成命令及边界见 `integration-validation.md`。本轮没有物理鼠标点击系统托盘，也未用完整发行包验证第三方共享 DLL 加载/卸载；普通附加文件和工具 fixture 不能替代这一验收。稀疏文件不代表真实超大影片解码或吞吐性能。
 
 只读枚举确认本轮隔离应用进程为 0，桌面脚本临时目录正常回收，新增临时 Go 测试源已清除。样本目录 `E:\vscodeProjects\nas-content-manager\.runtime\windows-exit\verify` 的递归删除被工具自动审批策略拒绝，未改用其他方式重试；该忽略目录仍含本轮自建样本、数据库/profile 和随机测试凭据，不能记为清理完成。脱敏日志和 JSON 结果已另存至其父目录。
+
+## 2026-11-19 Windows desktop 品牌图标验收
+
+桌面 EXE 预置十尺寸 ICO 对应的 Windows amd64 资源，托盘和窗口加载独立大小品牌图标。普通构建与原有 Windows 发布脚本自动内嵌；图标源和再生说明在 `assets/windows/`。
+
+- `generate_windows_icon.py --check` 与 `go generate ./cmd/nas-desktop` 一致性检查通过。
+- 普通 GUI 构建和使用原有发布脚本生成的内嵌网页开发包，均运行 `scripts/verify_desktop.py --with-tray` 通过。新增检查将 EXE 内十帧资源与源 ICO 逐字节比较，检查真实托盘窗口的独立大小图标句柄，并在原位覆盖重启后再次检查。
+- 两次集成保留全部原有文件释放断言；退出后先独占打开并实际覆盖 EXE、校验摘要，再重命名程序目录和同配置立即重启。内嵌开发包本机慢流/空闲退出分别为 0.092/0.030 秒；此为本机实测，不是通用时限承诺。
+- gofmt、Go vet/包编译、Linux amd64/arm64 交叉编译和发布边界 68 项通过。Trellis 上下文、CodeGraph 同步、Python 语法及 Git 空白检查通过。没有新增临时单测源；本轮隔离应用进程与临时 profile/生成目录均无残留。
+
+可复用验证示例（在仓库根运行，二进制路径替换为本轮成品）：
+
+```powershell
+# 发布包已内嵌网页；普通开发构建另加 --web-dir web/dist。
+python -B scripts/project_env.py -- python -B scripts/verify_desktop.py --binary 'path/to/栖库.exe' --with-tray
+```
+
+本轮没有物理鼠标点击或 Explorer 截图验收，没有重启 Explorer/清理图标缓存，没有执行 GitHub 云端 Actions、Docker 或 Linux 实机测试。开发包复用已有网页且不含 FFmpeg，不能称为完整离线工具包。详细命令、产物摘要与边界见 `.trellis/tasks/11-19-windows-desktop-icon/research/implementation-validation.md`；本轮未处理上节记录的旧样本残留。

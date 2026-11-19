@@ -18,6 +18,7 @@ import os
 from pathlib import Path
 import socket
 import shutil
+import struct
 import subprocess
 import tempfile
 import time
@@ -26,6 +27,93 @@ import urllib.parse
 import urllib.request
 
 from verify import generate_password, make_sparse_video
+
+
+def assert_icon_resources(binary: Path) -> list[int]:
+    """只映射 EXE 资源，核对图标组及每个尺寸与仓库 ICO 的真实字节一致。"""
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.LoadLibraryExW.argtypes = [wintypes.LPCWSTR, wintypes.HANDLE, wintypes.DWORD]
+    kernel.LoadLibraryExW.restype = wintypes.HMODULE
+    kernel.FindResourceW.argtypes = [wintypes.HMODULE, ctypes.c_void_p, ctypes.c_void_p]
+    kernel.FindResourceW.restype = wintypes.HANDLE
+    kernel.SizeofResource.argtypes = [wintypes.HMODULE, wintypes.HANDLE]
+    kernel.SizeofResource.restype = wintypes.DWORD
+    kernel.LoadResource.argtypes = [wintypes.HMODULE, wintypes.HANDLE]
+    kernel.LoadResource.restype = wintypes.HANDLE
+    kernel.LockResource.argtypes = [wintypes.HANDLE]
+    kernel.LockResource.restype = ctypes.c_void_p
+    kernel.FreeLibrary.argtypes = [wintypes.HMODULE]
+    kernel.FreeLibrary.restype = wintypes.BOOL
+    # 只按数据/资源加载，不执行入口；所有映射在程序启动和退出占用检查前释放。
+    module = kernel.LoadLibraryExW(str(binary), None, 0x22)
+    assert module, f"无法映射桌面 EXE 资源：Windows 错误 {ctypes.get_last_error()}"
+
+    def resource(kind: int, identity: int) -> bytes:
+        """从本次映射读取一个有界的整数命名资源。"""
+        found = kernel.FindResourceW(module, identity, kind)
+        assert found, f"桌面图标资源缺失：类型 {kind}，ID {identity}"
+        length = kernel.SizeofResource(module, found)
+        assert 0 < length <= 1024 * 1024, "图标资源大小无效"
+        loaded = kernel.LoadResource(module, found)
+        assert loaded, "无法加载桌面图标资源"
+        pointer = kernel.LockResource(loaded)
+        assert pointer, "无法读取桌面图标资源"
+        return ctypes.string_at(pointer, length)
+
+    try:
+        source = (Path(__file__).resolve().parents[1] / "assets/windows/qiku.ico").read_bytes()
+        reserved, kind, count = struct.unpack_from("<HHH", source)
+        assert (reserved, kind, count) == (0, 1, 10), "图标源必须包含十种尺寸"
+        group = resource(14, 1)
+        assert group[:6] == source[:6] and len(group) == 6 + count * 14, "内嵌图标组与 ICO 不匹配"
+        sizes: list[int] = []
+        for index in range(count):
+            entry = group[6 + index * 14:20 + index * 14]
+            original = source[6 + index * 16:22 + index * 16]
+            assert entry[:12] == original[:12], "内嵌图标帧描述与 ICO 不一致"
+            size = entry[0] or 256
+            assert size == (entry[1] or 256), "图标帧必须为正方形"
+            length, offset = struct.unpack_from("<II", original, 8)
+            identity = struct.unpack_from("<H", entry, 12)[0]
+            assert resource(3, identity) == source[offset:offset + length], f"{size}px 内嵌图标内容不一致"
+            sizes.append(size)
+        assert sorted(sizes) == [16, 20, 24, 32, 40, 48, 64, 96, 128, 256], "内嵌图标尺寸不完整"
+        return sorted(sizes)
+    finally:
+        assert kernel.FreeLibrary(module), "桌面资源映射未能释放"
+
+
+def assert_tray_icons(process_id: int) -> None:
+    """定位本轮进程的原生托盘窗口，确认独立大小图标已绑定到窗口类。"""
+    user = ctypes.WinDLL("user32", use_last_error=True)
+    callback_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    user.EnumWindows.argtypes = [callback_type, wintypes.LPARAM]
+    user.EnumWindows.restype = wintypes.BOOL
+    user.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    user.GetWindowThreadProcessId.restype = wintypes.DWORD
+    user.GetClassNameW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+    user.GetClassNameW.restype = ctypes.c_int
+    user.GetClassLongPtrW.argtypes = [wintypes.HWND, ctypes.c_int]
+    user.GetClassLongPtrW.restype = ctypes.c_void_p
+    windows: list[int] = []
+
+    @callback_type
+    def collect(window: int, _extra: int) -> bool:
+        """只记录目标 PID 的栖库窗口，不操作其他桌面应用。"""
+        owner = wintypes.DWORD()
+        user.GetWindowThreadProcessId(window, ctypes.byref(owner))
+        if owner.value == process_id:
+            name = ctypes.create_unicode_buffer(256)
+            user.GetClassNameW(window, name, len(name))
+            if name.value == "QikuDesktopLauncher":
+                windows.append(window)
+        return True
+
+    assert user.EnumWindows(collect, 0), "无法枚举本轮桌面窗口"
+    assert len(windows) == 1, "未找到本轮唯一的原生托盘窗口"
+    large = user.GetClassLongPtrW(windows[0], -14)  # GCLP_HICON：窗口类大图标。
+    small = user.GetClassLongPtrW(windows[0], -34)  # GCLP_HICONSM：窗口类小图标。
+    assert large and small and large != small, "原生窗口没有使用独立的品牌大小图标"
 
 
 def execute(binary: Path, arguments: list[str], environment: dict[str, str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -176,9 +264,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path, required=True, help="已构建的 Windows 桌面 EXE，推荐带内嵌网页的发布产物")
     parser.add_argument("--web-dir", type=Path, help="仅开发构建使用的显式前端目录；省略时验证包内嵌资源")
+    parser.add_argument("--with-tray", action="store_true", help="启用真实原生托盘，并检查 EXE 十尺寸图标资源和窗口图标句柄")
     args = parser.parse_args()
     assert os.name == "nt", "此脚本需要真实 Windows；Linux 使用原有 verify.py"
     source_binary = args.binary.resolve(strict=True)
+    icon_sizes: list[int] = assert_icon_resources(source_binary) if args.with_tray else []
+    desktop_flags: list[str] = [] if args.with_tray else ["--headless"]
     environment = {key: value for key, value in os.environ.items() if not key.upper().startswith(("NAS_", "ENGINE_", "QBT_", "JACKETT_"))}
     if args.web_dir:
         environment["NAS_WEB_DIR"] = str(args.web_dir.resolve(strict=True))
@@ -210,10 +301,12 @@ def main() -> None:
         log_path = root / "process-output.txt"
         with log_path.open("wb") as output:
             try:
-                command = [str(binary), "--headless", "--no-browser", "--profile", str(profile), "--media-root", str(media), "--port", str(preferred)]
+                command = [str(binary), *desktop_flags, "--no-browser", "--profile", str(profile), "--media-root", str(media), "--port", str(preferred)]
                 process = subprocess.Popen(command, cwd=foreign, env=environment, stdout=output, stderr=output)
                 processes.append(process)
                 reply = wait_ready(binary, profile, process, environment, foreign)
+                if args.with_tray:
+                    assert_tray_icons(process.pid)
                 address = reply["url"]
                 assert reply["mode"] == "native"
                 assert urllib.parse.urlparse(address).hostname == "127.0.0.1"
@@ -248,7 +341,7 @@ def main() -> None:
                 assert process.wait(timeout=20) == 0
                 exited = time.monotonic()
                 assert_released(binary, source_binary, expected_digest, profile, Path(config["dataDir"]), stream_file, address, environment, foreign, check_control=False)
-                restored = subprocess.Popen([str(binary), "--headless", "--no-browser", "--profile", str(profile)], cwd=foreign, env=environment, stdout=output, stderr=output)
+                restored = subprocess.Popen([str(binary), *desktop_flags, "--no-browser", "--profile", str(profile)], cwd=foreign, env=environment, stdout=output, stderr=output)
                 processes.append(restored)
                 exit_durations.append(round(exited - started, 3))
                 assert exit_durations[-1] < 8, f"慢读请求导致退出耗尽等待预算：{exit_durations[-1]} 秒"
@@ -256,6 +349,8 @@ def main() -> None:
                 slow_stream = None
                 assert_sparse_source(stream_file, stream_length)
                 restored_reply = wait_ready(binary, profile, restored, environment, foreign)
+                if args.with_tray:
+                    assert_tray_icons(restored.pid)
                 assert restored_reply["url"] == address
                 assert json.loads((profile / "desktop.json").read_bytes())["instanceId"] == config["instanceId"]
                 _, payload = request(opener, address, "/api/status")
@@ -299,6 +394,8 @@ def main() -> None:
                     assert not (invalid_profile / "data" / "library.db").exists(), f"坏配置建立新库：{label}"
                 assert not (foreign / "library.db").exists(), "空数据路径在任意工作目录建立了数据库"
                 assert (media / "只读 原文.txt").read_bytes() == source_before
+                if args.with_tray:
+                    print(json.dumps({"nativeTray": "passed", "iconSizes": icon_sizes, "checks": ["内嵌图标逐帧匹配ICO", "首次启动与原位覆盖后重启的独立大小图标", "真实托盘退出后EXE立即释放"]}, ensure_ascii=False))
                 print(json.dumps({"result": "passed", "platform": "windows", "resourceMode": "explicit-web-dir" if args.web_dir else "embedded", "exitSeconds": exit_durations, "checks": ["中文/空格/分号路径", "任意工作目录", "端口冲突实际避让", "健康与HTML就绪", "真实命名管道", "重复启动", "同数据目录跨profile拒绝", "5GiB稀疏慢流中断与快速退出", "HTTP和IPC关闭", "EXE优先独占打开/原位覆盖/SHA-256校验", "完整程序目录重命名与恢复", "数据库/锁/日志/媒体独占打开与重命名", "空闲退出", "覆盖后立即重启配置与账号保留", "重复JSON键拒绝且不覆盖", "保存配置完整字段/null/空相对路径拒绝", "源文件保持"]}, ensure_ascii=False))
             except BaseException:
                 output.flush()
