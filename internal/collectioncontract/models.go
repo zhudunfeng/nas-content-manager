@@ -1,0 +1,105 @@
+// Package collectioncontract 定义资源获取服务的固定版本协议，不允许任意命令执行。
+package collectioncontract
+
+// Version 是必须显式匹配的获取协议版本。
+const Version = 1
+
+// Capability 描述执行端实际可用的固定能力。
+type Capability struct {
+	Kind      string `json:"kind"`      // 固定类型：web、remote、local。
+	Available bool   `json:"available"` // 工具和执行条件是否满足。
+	Reason    string `json:"reason"`    // 不可用的中文原因。
+	Version   string `json:"version"`   // 已探测工具版本，不包含私密参数。
+}
+
+// Source 是执行端配置的授权输入目录或远程存储。
+type Source struct {
+	ID   string `json:"id"`   // 固定来源标识。
+	Kind string `json:"kind"` // local 或 remote。
+	Name string `json:"name"` // 中文显示名称。
+}
+
+// Capabilities 返回协议和安全执行能力快照。
+type Capabilities struct {
+	Version      int          `json:"version"`      // 获取协议版本。
+	InstanceID   string       `json:"instanceId"`   // 持久执行端身份。
+	Capabilities []Capability `json:"capabilities"` // 有界能力清单。
+	Sources      []Source     `json:"sources"`      // 不含真实路径和凭据的来源清单。
+	MaxBytes     int64        `json:"maxBytes"`     // 单任务字节上限。
+	MaxFiles     int          `json:"maxFiles"`     // 单任务文件上限。
+}
+
+// File 描述相对操作目录的普通文件及观测版本。
+type File struct {
+	Path    string `json:"path"`             // 相对操作目录的安全路径，不能是绝对路径。
+	Size    int64  `json:"size"`             // 文件字节数。
+	ModTime int64  `json:"modTime"`          // 纳秒修改时间，用于发布后版本检查。
+	SHA256  string `json:"sha256,omitempty"` // 复制时流式计算的内容摘要。
+}
+
+// Format 描述允许的网页输出配置。
+type Format struct {
+	ID        string `json:"id"`        // 固定选择值 video 或 audio。
+	Label     string `json:"label"`     // 中文输出说明。
+	Extension string `json:"extension"` // 已知扩展名；不确定时为空。
+}
+
+// PreviewRequest 是无任意命令参数的预览输入。
+type PreviewRequest struct {
+	Kind     string `json:"kind"`               // web、remote 或 local。
+	URL      string `json:"url,omitempty"`      // 仅网页类型的公共 HTTP(S) 链接。
+	Profile  string `json:"profile,omitempty"`  // 网页输出 video 或 audio。
+	SourceID string `json:"sourceId,omitempty"` // 执行端预配置的来源标识。
+	Path     string `json:"path,omitempty"`     // 来源下允许的相对路径。
+	MaxBytes int64  `json:"maxBytes,omitempty"` // 请求字节预算，不能超过执行端上限。
+	MaxFiles int    `json:"maxFiles,omitempty"` // 请求文件预算，不能超过执行端上限。
+}
+
+// Preview 是有时效且绑定输入版本的预览。
+type Preview struct {
+	ID         string   `json:"id"`         // 随机预览标识。
+	Title      string   `json:"title"`      // 安全展示标题。
+	Identity   string   `json:"identity"`   // 不含私密链接的来源身份摘要。
+	Files      []File   `json:"files"`      // 已验证文件清单，网页下载前可为空。
+	Formats    []Format `json:"formats"`    // 固定输出配置。
+	TotalBytes int64    `json:"totalBytes"` // 已知总字节数；未知时为零。
+	ExpiresAt  string   `json:"expiresAt"`  // UTC 预览失效时间。
+}
+
+// OperationRequest 锁定一次不可变获取意图。
+type OperationRequest struct {
+	ID        string `json:"id"`                 // 调用方持久保存的 UUID 幂等标识。
+	Kind      string `json:"kind"`               // 固定获取类型。
+	URL       string `json:"url,omitempty"`      // 仅后台私密请求中的链接，不在响应回显。
+	Profile   string `json:"profile,omitempty"`  // 固定视频/音频配置。
+	SourceID  string `json:"sourceId,omitempty"` // 已授权来源标识。
+	Path      string `json:"path,omitempty"`     // 来源相对路径。
+	MaxBytes  int64  `json:"maxBytes,omitempty"` // 本次字节预算。
+	MaxFiles  int    `json:"maxFiles,omitempty"` // 本次文件预算。
+	PreviewID string `json:"previewId"`          // 绑定的有效预览。
+}
+
+// Operation 是不含秘密的持久操作事实。
+type Operation struct {
+	ID          string `json:"id"`          // 全局幂等操作标识。
+	Kind        string `json:"kind"`        // web、remote 或 local。
+	State       string `json:"state"`       // queued/running/acquired/publishing/published/failed/canceled/recovery_required。
+	Message     string `json:"message"`     // 脱敏中文状态说明。
+	CreatedAt   string `json:"createdAt"`   // UTC 创建时间。
+	UpdatedAt   string `json:"updatedAt"`   // UTC 最后状态时间。
+	RelativeDir string `json:"relativeDir"` // 相对执行端数据根的 staging/complete 目录。
+	Files       []File `json:"files"`       // 相对 RelativeDir 的产物清单。
+	Bytes       int64  `json:"bytes"`       // 已验证产物字节数。
+	RequestHash string `json:"requestHash"` // 不可变意图摘要，用于冲突识别。
+}
+
+// Probe 返回目录映射挑战，不接触用户媒体。
+type Probe struct {
+	RelativePath string `json:"relativePath"` // 专属探针的受限相对路径。
+	Nonce        string `json:"nonce"`        // 调用方给出的随机挑战。
+}
+
+// Error 是固定的脱敏失败格式。
+type Error struct {
+	Error string `json:"error"` // 中文错误，不包含源链接或命令输出。
+}

@@ -1,0 +1,6 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/tasks/11-19-plugin-market-fnos-plan/info.md", "reason": "按能力矩阵、兼容边界与验收项检查后续实现"}
+{"file": ".trellis/spec/backend/engine-bootstrap-contract.md", "reason": "禁止把固定引擎助手扩大为任意脚本执行器"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "桌面部署与退出必须同时保持真实资源校验"}
+{"file": ".trellis/tasks/11-19-plugin-market-fnos-plan/research/fnos-compatibility.md", "reason": "不得将未证实的CLI或市场协议作为实现假设"}

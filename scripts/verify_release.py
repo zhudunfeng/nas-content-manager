@@ -150,6 +150,8 @@ def verify(path: Path) -> int:
     if "release-images.json" in small:
         manifest = metadata_object(small["release-images.json"])
         name = validate_images_manifest(manifest)
+        if manifest["schemaVersion"] == 2 and "compose.desktop.collection.yaml" not in hashes:
+            raise ValueError("三镜像发布包缺少获取服务覆盖模板")
         if name is not None and hashes.get(name) != manifest["archiveSha256"]:
             raise ValueError("离线镜像归档摘要不匹配")
     print(f"发布包校验通过：{metadata['target']}，{len(hashes)}份文件，开发验证包={metadata['developmentWithoutTools']}")
@@ -217,6 +219,12 @@ def self_test() -> int:
         rejected(lambda: install_images(manifest, stage), "可变镜像标签未被拒绝")
         fixed_images = {"schemaVersion": 1, "appImage": "sha256:" + "a" * 64, "helperImage": "sha256:" + "b" * 64}
         rejected(lambda: validate_images_manifest({**fixed_images, "helperImage": fixed_images["appImage"]}), "应用与助手相同入口未被发布校验拒绝")
+        collection_images = {**fixed_images, "schemaVersion": 2, "collectionImage": "sha256:" + "c" * 64}
+        if validate_images_manifest(collection_images) is not None:
+            raise AssertionError("无归档的三镜像清单解析错误")
+        count += 1
+        for replacement in ({**fixed_images, "schemaVersion": 2}, {**collection_images, "schemaVersion": 1}, {**collection_images, "collectionImage": fixed_images["appImage"]}, {**collection_images, "collectionImage": "collection:latest"}, {**collection_images, "collectionImage": None}):
+            rejected(lambda: validate_images_manifest(replacement), "获取执行端版本、镜像身份或不可变引用未被校验")
         for extra in ({"archive": None, "archiveSha256": None}, {"archive": "images/archive.tar"}, {"archive": "other/archive.tar", "archiveSha256": "c" * 64}, {"archive": "images/archive.tar", "archiveSha256": "invalid"}):
             rejected(lambda: validate_images_manifest({**fixed_images, **extra}), "错误镜像归档字段未被拒绝")
         wrong = root / "wrong-tool"
@@ -243,6 +251,13 @@ def self_test() -> int:
         (stage / "release-images.json").write_text(json.dumps({**fixed_images, "appImage": "example/app:latest"}), encoding="utf-8")
         seal(stage, second)
         rejected(lambda: verify(second), "归档校验接受了可变镜像")
+        (stage / "release-images.json").write_text(json.dumps(collection_images), encoding="utf-8")
+        seal(stage, second)
+        rejected(lambda: verify(second), "三镜像归档缺少覆盖模板仍被接受")
+        (stage / "compose.desktop.collection.yaml").write_text("仅用于封装校验", encoding="utf-8")
+        seal(stage, second)
+        verify(second)
+        count += 1
         (stage / "release-images.json").unlink()
 
         # PE头部只是包校验夹具，不能作为真实工具运行或许可审核证据。

@@ -45,6 +45,26 @@ func (a *App) allowedPath(path string) (string, error) {
 			return resolved, nil
 		}
 	}
+	if a.config.Collection.ReadRoot != "" {
+		complete := filepath.Join(a.config.Collection.ReadRoot, "complete")
+		canonical, rootErr := filepath.EvalSymlinks(complete)
+		if rootErr == nil && downloadPathKey(canonical) == downloadPathKey(complete) && within(canonical, resolved) {
+			return resolved, nil
+		}
+	}
+	// 已发布收集记录保留只读授权，关闭执行端配置不会使已入库成品失效。
+	if a.db != nil {
+		historical, queryErr := a.collectionHistoricalRoots(a.ctx)
+		if queryErr == nil {
+			for _, root := range historical {
+				complete := filepath.Join(root, "complete")
+				canonical, rootErr := filepath.EvalSymlinks(complete)
+				if rootErr == nil && downloadPathKey(canonical) == downloadPathKey(complete) && within(canonical, resolved) {
+					return resolved, nil
+				}
+			}
+		}
+	}
 	return "", fmt.Errorf("路径不在允许的媒体挂载目录内")
 }
 
@@ -245,7 +265,13 @@ func (a *App) deleteLibrary(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	a.mu.Unlock()
-	result, err := a.db.ExecContext(r.Context(), "DELETE FROM libraries WHERE id=?", id)
+	tx, err := a.db.BeginTx(r.Context(), nil)
+	if err != nil {
+		fail(w, 500, "删除媒体库失败")
+		return
+	}
+	defer tx.Rollback()
+	result, err := tx.ExecContext(r.Context(), "DELETE FROM libraries WHERE id=?", id)
 	if err != nil {
 		fail(w, 500, "删除媒体库失败")
 		return
@@ -253,6 +279,12 @@ func (a *App) deleteLibrary(w http.ResponseWriter, r *http.Request) {
 	count, _ := result.RowsAffected()
 	if count == 0 {
 		fail(w, 404, "媒体库不存在")
+		return
+	}
+	// 删除索引与撤销入库结果必须同时提交，迟到扫描不能覆盖目标缺失状态。
+	_, err = tx.ExecContext(r.Context(), "UPDATE collection_tasks SET state=CASE WHEN ready=1 OR (kind='bt' AND download_id<>'') THEN 'importing' ELSE 'failed' END,import_state=CASE WHEN ready=1 OR (kind='bt' AND download_id<>'') THEN 'failed' ELSE 'pending' END,message='目标媒体库已删除，文件保留；原绑定不会自动重新建库',item_ids='[]',job_id=0,revision=revision+1,updated_at=? WHERE library_id=? AND state<>'canceled'", now(), id)
+	if err != nil || tx.Commit() != nil {
+		fail(w, 500, "删除媒体库失败")
 		return
 	}
 	a.logger.Info("媒体库索引已删除，源文件保持不变", "libraryId", id)

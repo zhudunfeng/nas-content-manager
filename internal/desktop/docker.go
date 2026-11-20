@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,11 +22,12 @@ import (
 
 // imageManifest 只接受发布方提供的不可变镜像摘要与可选离线归档。
 type imageManifest struct {
-	SchemaVersion int    `json:"schemaVersion"`           // 清单格式版本，当前为 1。
-	AppImage      string `json:"appImage"`                // 应用仓库摘要或精确 sha256 镜像 ID。
-	HelperImage   string `json:"helperImage"`             // Linux helper 仓库摘要或精确镜像 ID。
-	Archive       string `json:"archive,omitempty"`       // 可选包内相对归档路径，不得越过发布目录。
-	ArchiveSHA256 string `json:"archiveSha256,omitempty"` // 归档内容校验，存在归档时必须填写。
+	SchemaVersion   int    `json:"schemaVersion"`             // 清单格式版本，1为应用/助手，2增加获取服务。
+	AppImage        string `json:"appImage"`                  // 应用仓库摘要或精确 sha256 镜像 ID。
+	HelperImage     string `json:"helperImage"`               // Linux helper 仓库摘要或精确镜像 ID。
+	CollectionImage string `json:"collectionImage,omitempty"` // v2 清单的受控获取服务固定镜像；v1 保持原双服务部署。
+	Archive         string `json:"archive,omitempty"`         // 可选包内相对归档路径，不得越过发布目录。
+	ArchiveSHA256   string `json:"archiveSha256,omitempty"`   // 归档内容校验，存在归档时必须填写。
 }
 
 // dockerRuntime 固定本实例 Docker 命令参数，不接受任意命令模板。
@@ -78,12 +80,23 @@ func readManifest(path string) (imageManifest, error) {
 	if decodeStrictJSON(data, &manifest) != nil {
 		return manifest, errors.New("镜像清单格式无效")
 	}
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(data, &fields) != nil {
+		return manifest, errors.New("镜像清单字段无效")
+	}
+	_, hasCollection := fields["collectionImage"]
+	if (manifest.SchemaVersion == 2) != hasCollection {
+		return manifest, errors.New("v2镜像清单必须包含获取镜像，v1不接受该字段")
+	}
 	digest := regexp.MustCompile(`^(?:[a-zA-Z0-9][a-zA-Z0-9._:/-]*@)?sha256:[a-f0-9]{64}$`)
-	if manifest.SchemaVersion != 1 || !digest.MatchString(manifest.AppImage) || !digest.MatchString(manifest.HelperImage) {
+	if (manifest.SchemaVersion != 1 && manifest.SchemaVersion != 2) || !digest.MatchString(manifest.AppImage) || !digest.MatchString(manifest.HelperImage) || (manifest.SchemaVersion == 2 && !digest.MatchString(manifest.CollectionImage)) || (manifest.SchemaVersion == 1 && manifest.CollectionImage != "") {
 		return manifest, errors.New("应用与助手镜像必须使用固定仓库摘要或精确 sha256 镜像 ID，拒绝可变标签")
 	}
 	if manifest.AppImage == manifest.HelperImage {
 		return manifest, errors.New("应用和助手必须使用不同的固定镜像，不能混用相同入口")
+	}
+	if manifest.CollectionImage != "" && (manifest.CollectionImage == manifest.AppImage || manifest.CollectionImage == manifest.HelperImage) {
+		return manifest, errors.New("获取服务必须使用独立的固定镜像入口")
 	}
 	if (manifest.Archive == "") != (manifest.ArchiveSHA256 == "") {
 		return manifest, errors.New("离线镜像归档和 SHA-256 必须同时提供")
@@ -146,7 +159,29 @@ func (d *dockerRuntime) execute(ctx context.Context, stage string, timeout time.
 // composeArgs 为所有 Compose 操作绑定固定文件、环境和 project，禁用默认文件发现。
 func (d *dockerRuntime) composeArgs(args ...string) []string {
 	base := []string{"compose", "--project-name", d.project, "--project-directory", d.packageDir, "--env-file", d.envFile, "--file", d.compose}
+	if d.manifest.CollectionImage != "" {
+		base = append(base, "--file", filepath.Join(d.packageDir, "compose.desktop.collection.yaml"))
+	}
 	return append(base, args...)
+}
+
+// serviceImages 返回本清单允许管理的精确服务和镜像，不接管模板之外的容器。
+func (d *dockerRuntime) serviceImages() map[string]string {
+	images := map[string]string{"nas": d.manifest.AppImage, "nas-engine-helper": d.manifest.HelperImage}
+	if d.manifest.CollectionImage != "" {
+		images["nas-collection-worker"] = d.manifest.CollectionImage
+	}
+	return images
+}
+
+// volumeRoles 返回当前发布模板声明的全部角色，旧清单不隐式认领新增卷。
+func (d *dockerRuntime) volumeRoles() map[string]string {
+	roles := map[string]string{"app_data": "app-data", "state": "state", "qbittorrent": "qbittorrent", "jackett": "jackett", "downloads": "downloads", "connections": "connections", "ipc": "ipc"}
+	if d.manifest.CollectionImage != "" {
+		roles["collection_data"] = "collection-data"
+		roles["collection_secrets"] = "collection-secrets"
+	}
+	return roles
 }
 
 // prepareDocker 仅检查本机环境和静态发布材料，不启动/安装 Docker 或修改 WSL。
@@ -225,6 +260,9 @@ func (c *controller) prepareDocker(ctx context.Context, cfg Config) (*dockerRunt
 		return nil, err
 	}
 	values := map[string]string{"NAS_APP_IMAGE": manifest.AppImage, "NAS_HELPER_IMAGE": manifest.HelperImage, "NAS_DESKTOP_PREFIX": prefix, "ENGINE_VOLUME_PREFIX": prefix, "ENGINE_NETWORK": prefix + "-engines", "MEDIA_PATH": cfg.MediaRoots[0], "WEB_PORT": strconv.Itoa(cfg.Port), "WEB_BIND_IP": "127.0.0.1", "QBT_PEER_PORT": "6881", "JACKETT_SETUP_PORT": "19117"}
+	if manifest.CollectionImage != "" {
+		values["NAS_COLLECTION_IMAGE"] = manifest.CollectionImage
+	}
 	d.environment = dockerEnvironment(values)
 	// 空 env 文件阻止 Compose 隐式读取发布目录中的 .env；值只由经过校验的参数快照提供。
 	if err = os.WriteFile(d.envFile, []byte("# 由栖库启动器管理；插值参数由私密进程环境提供，不保存凭据。\n"), 0600); err != nil {
@@ -281,7 +319,7 @@ func (d *dockerRuntime) importImages(ctx context.Context) error {
 			return err
 		}
 	}
-	for _, image := range []string{d.manifest.AppImage, d.manifest.HelperImage} {
+	for _, image := range d.serviceImages() {
 		if _, err := d.imageIdentity(ctx, image); err == nil {
 			continue
 		}
@@ -306,6 +344,15 @@ func (d *dockerRuntime) importImages(ctx context.Context) error {
 	if app.ID == helper.ID {
 		return errors.New("应用与助手镜像解析为相同内容身份，拒绝混用固定入口")
 	}
+	if d.manifest.CollectionImage != "" {
+		worker, workerErr := d.imageIdentity(ctx, d.manifest.CollectionImage)
+		if workerErr != nil {
+			return workerErr
+		}
+		if worker.ID == app.ID || worker.ID == helper.ID {
+			return errors.New("获取服务与其他角色解析为同一镜像，拒绝混用入口")
+		}
+	}
 	return nil
 }
 
@@ -317,7 +364,9 @@ type dockerImage struct {
 	Config       struct {
 		Entrypoint []string // 发行镜像的固定入口。
 		Cmd        []string // 发行镜像的固定默认参数。
-	} // 不保存镜像环境中的凭据。
+		Env        []string // 仅在内存核对镜像默认环境，禁止输出值。
+		User       string   // 发行镜像默认执行用户。
+	} // 固定镜像运行配置，环境不写入日志或持久记录。
 }
 
 // imageIdentity 解析精确镜像 ID，确保后续核验不是仅检查标签。
@@ -348,7 +397,7 @@ func validateImagePlatform(image dockerImage, architecture string) error {
 	return nil
 }
 
-// dockerContainer 是核验本实例静态 app/helper 资源需要的受限 inspect 视图。
+// dockerContainer 是核验本实例固定应用、助手和可选获取服务需要的受限 inspect 视图。
 type dockerContainer struct {
 	ID     string `json:"Id"` // 实际容器 ID。
 	Image  string // 不可变镜像 ID。
@@ -356,12 +405,15 @@ type dockerContainer struct {
 		Labels     map[string]string // Compose 与实例归属标签。
 		Entrypoint []string          // 实际入口，不允许被未知模板覆盖。
 		Cmd        []string          // 实际默认参数。
+		Env        []string          // 实际环境，仅用于精确核验，禁止输出值。
+		User       string            // 必须保留发行镜像默认执行用户。
 	} // 容器固定配置。
 	HostConfig struct {
 		Privileged  bool     // 必须关闭特权模式。
 		NetworkMode string   // 不能使用 host 或其他实例网络。
 		PidMode     string   // 不允许共享宿主 PID。
 		CapAdd      []string // 不允许附加内核能力。
+		SecurityOpt []string // 必须保留禁止提权设置。
 	} // 受限运行权限。
 	Mounts []struct {
 		Type        string // 仅允许固定 bind/volume。
@@ -387,7 +439,7 @@ func (d *dockerRuntime) ownedContainers(ctx context.Context) ([]dockerContainer,
 		return nil, err
 	}
 	ids := strings.Fields(string(data))
-	if len(ids) > 2 {
+	if len(ids) > len(d.serviceImages()) {
 		return nil, errors.New("当前 Compose project 中存在未知容器，已拒绝接管")
 	}
 	if len(ids) == 0 {
@@ -413,6 +465,8 @@ func (d *dockerRuntime) ownedContainers(ctx context.Context) ([]dockerContainer,
 		reference, role := d.manifest.AppImage, "app"
 		if service == "nas-engine-helper" {
 			reference, role = d.manifest.HelperImage, "helper"
+		} else if service == "nas-collection-worker" && d.manifest.CollectionImage != "" {
+			reference, role = d.manifest.CollectionImage, "collection"
 		} else if service != "nas" {
 			return nil, errors.New("当前实例标签下存在未知服务，拒绝操作")
 		}
@@ -427,6 +481,9 @@ func (d *dockerRuntime) ownedContainers(ctx context.Context) ([]dockerContainer,
 		if container.Image != image.ID || !slices.Equal(container.Config.Entrypoint, image.Config.Entrypoint) || !slices.Equal(container.Config.Cmd, image.Config.Cmd) || container.HostConfig.Privileged || container.HostConfig.PidMode != "" || len(container.HostConfig.CapAdd) > 0 {
 			return nil, errors.New("同名容器的实际镜像、入口或权限不匹配，拒绝操作")
 		}
+		if err = d.validateContainerRuntime(container, image, service); err != nil {
+			return nil, err
+		}
 		if len(container.NetworkSettings.Networks) != 1 || container.NetworkSettings.Networks[d.project+"-engines"] == nil {
 			return nil, errors.New("容器网络不属于当前实例，拒绝操作")
 		}
@@ -439,8 +496,50 @@ func (d *dockerRuntime) ownedContainers(ctx context.Context) ([]dockerContainer,
 				return nil, errors.New("当前应用的宿主端口不是本实例回环绑定")
 			}
 		}
+		if service != "nas" {
+			for _, bindings := range container.NetworkSettings.Ports {
+				if len(bindings) > 0 {
+					return nil, errors.New("私有助手和获取服务不得发布宿主控制端口")
+				}
+			}
+		}
 	}
 	return containers, nil
+}
+
+// validateContainerRuntime 核对实际执行用户、环境和禁止提权，防止同镜像容器覆盖固定工具或来源边界。
+func (d *dockerRuntime) validateContainerRuntime(container dockerContainer, image dockerImage, service string) error {
+	if container.Config.User != image.Config.User || len(container.HostConfig.SecurityOpt) != 1 || (container.HostConfig.SecurityOpt[0] != "no-new-privileges:true" && container.HostConfig.SecurityOpt[0] != "no-new-privileges") {
+		return errors.New("容器实际用户或禁止提权设置与固定模板不匹配")
+	}
+	expected, ok := desktopEnvironmentMap(image.Config.Env)
+	if !ok {
+		return errors.New("固定镜像环境存在重复或无效参数")
+	}
+	for key, value := range d.serviceEnvironment(service) {
+		expected[key] = value
+	}
+	actual, valid := desktopEnvironmentMap(container.Config.Env)
+	if !valid || !maps.Equal(actual, expected) {
+		return errors.New("容器实际环境与固定镜像及模板不匹配，拒绝接管")
+	}
+	return nil
+}
+
+// desktopEnvironmentMap 无损解析环境且拒绝重复参数，不在错误中回显任何值。
+func desktopEnvironmentMap(entries []string) (map[string]string, bool) {
+	values := make(map[string]string, len(entries))
+	for _, entry := range entries {
+		key, value, present := strings.Cut(entry, "=")
+		if !present || key == "" {
+			return nil, false
+		}
+		if _, duplicate := values[key]; duplicate {
+			return nil, false
+		}
+		values[key] = value
+	}
+	return values, true
 }
 
 // validateMounts 逐个比对角色卷与只读授权根，拒绝附加挂载和跨实例卷。
@@ -450,10 +549,19 @@ func (d *dockerRuntime) validateMounts(container dockerContainer, service string
 		Write bool
 	} // 固定卷角色及写权限。
 	expected := map[string]expectedMount{"/data": {"app-data", true}, "/downloads": {"downloads", false}, "/run/nas-engines": {"connections", false}, "/run/nas-engine-helper": {"ipc", false}}
+	if d.manifest.CollectionImage != "" && service == "nas" {
+		expected["/collection"] = expectedMount{"collection-data", false}
+		expected["/run/nas-collection"] = expectedMount{"collection-secrets", false}
+	}
 	if service == "nas-engine-helper" {
 		expected = map[string]expectedMount{"/managed/state": {"state", true}, "/managed/qbittorrent": {"qbittorrent", true}, "/managed/jackett": {"jackett", true}, "/managed/downloads": {"downloads", true}, "/managed/connections": {"connections", true}, "/ipc": {"ipc", true}}
 	}
-	if len(container.Mounts) != len(expected)+1 {
+	extraMounts := 1
+	if service == "nas-collection-worker" && d.manifest.CollectionImage != "" {
+		expected = map[string]expectedMount{"/collection": {"collection-data", true}, "/run/nas-collection": {"collection-secrets", true}}
+		extraMounts = 0
+	}
+	if len(container.Mounts) != len(expected)+extraMounts {
 		return errors.New("容器实际挂载集合与固定模板不匹配")
 	}
 	seen := make(map[string]bool)
@@ -504,7 +612,7 @@ func (d *dockerRuntime) verifyExisting(ctx context.Context, requireRunning bool)
 		return err
 	}
 	names := strings.Fields(string(data))
-	for _, role := range []string{"app-data", "state", "qbittorrent", "jackett", "downloads", "connections", "ipc"} {
+	for _, role := range d.volumeRoles() {
 		name := d.project + "-" + role
 		if !slices.Contains(names, name) {
 			continue
@@ -548,7 +656,7 @@ func (d *dockerRuntime) verifyExisting(ctx context.Context, requireRunning bool)
 		return err
 	}
 	if requireRunning {
-		if len(containers) != 2 {
+		if len(containers) != len(d.serviceImages()) {
 			return errors.New("应用或助手容器尚未就绪")
 		}
 		for _, container := range containers {
@@ -707,7 +815,11 @@ func (d *dockerRuntime) stopAll(ctx context.Context) error {
 	if _, err := d.execute(ctx, "安全停止本实例托管引擎", 105*time.Second, d.composeArgs("exec", "-T", "nas-engine-helper", "/nas-engine-helper", "stop-all")...); err != nil {
 		return errors.New("助手未确认全部引擎安全停止；可能仍有初始化任务或归属冲突，已保留 app/helper，请在网页等待任务完成后重试")
 	}
-	_, err = d.execute(ctx, "停止本实例应用与助手", 60*time.Second, d.composeArgs("stop", "--timeout", "30", "nas", "nas-engine-helper")...)
+	services := []string{"stop", "--timeout", "30", "nas", "nas-engine-helper"}
+	if d.manifest.CollectionImage != "" {
+		services = append(services, "nas-collection-worker")
+	}
+	_, err = d.execute(ctx, "停止本实例应用、助手及受控获取服务", 120*time.Second, d.composeArgs(services...)...)
 	return err
 }
 

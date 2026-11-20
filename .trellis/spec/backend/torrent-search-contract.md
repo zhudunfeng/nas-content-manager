@@ -12,7 +12,7 @@ Design decision: use configured Prowlarr/Jackett Torznab sources. qB's native `s
 - `newTorrentSearchManager(config TorrentSearchConfig) *torrentSearchManager` creates separate, bounded HTTP resources and memory-only result storage.
 - `(*App).torrentSearchRoutes(mux *http.ServeMux)` exposes authenticated `GET /api/torrent-search/status` and authenticated same-origin `POST /api/torrent-search`.
 - `POST /api/downloads` JSON accepts `searchResultId` XOR `magnet`, with the original typed content/library/request fields. Multipart torrent upload remains unchanged.
-- `download_operations(kind='add').payload` binds `{searchResultId}` without URL, key or magnet. SQLite remains schema v2. No search metadata or source configuration is persisted.
+- `download_operations(kind='add').payload` binds `{searchResultId}` without URL, key or magnet. Search adds no migration; the current application uses collection schema v3. No search metadata or source configuration is persisted.
 
 ## 3. Contracts
 

@@ -10,8 +10,8 @@ import (
 // composeDesktopConfig 是固定桌面模板的规范化视图，未知配置一律拒绝。
 type composeDesktopConfig struct {
 	Name     string                           `json:"name"`     // 当前实例 Compose project。
-	Services map[string]composeDesktopService `json:"services"` // 仅允许固定应用和助手服务。
-	Volumes  map[string]composeDesktopVolume  `json:"volumes"`  // 独立实例的七个角色卷。
+	Services map[string]composeDesktopService `json:"services"` // 固定应用、助手和清单可选的获取服务。
+	Volumes  map[string]composeDesktopVolume  `json:"volumes"`  // 独立实例的固定角色卷，获取模式额外两卷。
 	Networks map[string]composeDesktopNetwork `json:"networks"` // 唯一受控 bridge 网络。
 }
 
@@ -91,14 +91,16 @@ type composeDesktopNetwork struct {
 // validateComposeData 在任何部署副作用前验证最终 JSON，也供无 daemon 回归复用。
 func (d *dockerRuntime) validateComposeData(data []byte) error {
 	var config composeDesktopConfig
-	if decodeStrictJSON(data, &config) != nil || config.Name != d.project || len(config.Services) != 2 || len(d.config.MediaRoots) != 1 {
+	if decodeStrictJSON(data, &config) != nil || config.Name != d.project || len(config.Services) != len(d.serviceImages()) || len(d.config.MediaRoots) != 1 {
 		return errors.New("Compose project、服务集合或配置字段与固定桌面模板不匹配")
 	}
-	for service, image := range map[string]string{"nas": d.manifest.AppImage, "nas-engine-helper": d.manifest.HelperImage} {
+	for service, image := range d.serviceImages() {
 		entry, ok := config.Services[service]
 		role := "app"
 		if service == "nas-engine-helper" {
 			role = "helper"
+		} else if service == "nas-collection-worker" {
+			role = "collection"
 		}
 		labels := map[string]string{"nas.engines.deployment": d.project, "nas.desktop.role": role}
 		if !ok || entry.Image != image || !maps.Equal(entry.Labels, labels) || entry.Restart != "unless-stopped" || !slices.Equal(entry.SecurityOpt, []string{"no-new-privileges:true"}) || entry.StopGracePeriod != "30s" {
@@ -126,18 +128,30 @@ func (d *dockerRuntime) validateComposeData(data []byte) error {
 		return errors.New("Compose 应用端口不是本实例固定回环绑定")
 	}
 	dependency, exists := app.DependsOn["nas-engine-helper"]
-	if len(app.DependsOn) != 1 || !exists || dependency.Condition != "service_started" || (dependency.Required != nil && !*dependency.Required) {
+	dependencyCount := 1
+	if d.manifest.CollectionImage != "" {
+		dependencyCount = 2
+		workerDependency, present := app.DependsOn["nas-collection-worker"]
+		if !present || workerDependency.Condition != "service_started" || (workerDependency.Required != nil && !*workerDependency.Required) {
+			return errors.New("Compose 获取服务依赖与本实例不一致")
+		}
+	}
+	if len(app.DependsOn) != dependencyCount || !exists || dependency.Condition != "service_started" || (dependency.Required != nil && !*dependency.Required) {
 		return errors.New("Compose 应用依赖与本实例助手不一致")
 	}
-	appEnvironment := map[string]string{"NAS_ADDR": "0.0.0.0:8090", "NAS_DATA_DIR": "/data", "NAS_MEDIA_ROOTS": "/media:/downloads/complete", "NAS_DOWNLOAD_MODE": "managed", "NAS_TORRENT_SEARCH_MODE": "managed", "NAS_DOWNLOAD_ROOT": "/downloads", "NAS_DOWNLOAD_ENGINE_ROOT": "/downloads", "NAS_ENGINE_CONNECTION_DIR": "/run/nas-engines", "NAS_ENGINE_HELPER_SOCKET": "/run/nas-engine-helper/helper.sock", "NAS_DOWNLOAD_MIN_FREE_GB": "2"}
-	helperEnvironment := map[string]string{"ENGINE_STORAGE_MODE": "volume", "ENGINE_VOLUME_PREFIX": d.project, "ENGINE_MANAGED_ROOT": "/managed", "ENGINE_HELPER_SOCKET": "/ipc/helper.sock", "ENGINE_DOCKER_SOCKET": "/var/run/docker.sock", "ENGINE_NETWORK": d.project + "-engines", "ENGINE_UID": "1000", "ENGINE_GID": "1000", "QBT_PEER_PORT": "6881", "JACKETT_SETUP_PORT": "19117"}
+	if d.manifest.CollectionImage != "" {
+		worker := config.Services["nas-collection-worker"]
+		if !maps.Equal(worker.Environment, d.serviceEnvironment("nas-collection-worker")) || len(worker.Ports) != 0 || len(worker.DependsOn) != 0 {
+			return errors.New("Compose 获取服务参数或端口与固定模板不匹配")
+		}
+	}
 	helper := config.Services["nas-engine-helper"]
-	if !maps.Equal(app.Environment, appEnvironment) || !maps.Equal(helper.Environment, helperEnvironment) || len(helper.Ports) != 0 || len(helper.DependsOn) != 0 {
+	if !maps.Equal(app.Environment, d.serviceEnvironment("nas")) || !maps.Equal(helper.Environment, d.serviceEnvironment("nas-engine-helper")) || len(helper.Ports) != 0 || len(helper.DependsOn) != 0 {
 		return errors.New("Compose 内部路径、引擎参数或助手端口与固定模板不匹配")
 	}
-	roles := map[string]string{"app_data": "app-data", "state": "state", "qbittorrent": "qbittorrent", "jackett": "jackett", "downloads": "downloads", "connections": "connections", "ipc": "ipc"}
+	roles := d.volumeRoles()
 	if len(config.Volumes) != len(roles) {
-		return errors.New("Compose 必须仅声明当前实例的七个角色卷")
+		return errors.New("Compose 必须仅声明当前发布清单的精确角色卷")
 	}
 	for logical, role := range roles {
 		volume, present := config.Volumes[logical]
@@ -152,13 +166,39 @@ func (d *dockerRuntime) validateComposeData(data []byte) error {
 	return nil
 }
 
+// serviceEnvironment 为模板和实际容器核验提供同一份固定环境，避免只核验部署文件却认领被覆盖的容器。
+func (d *dockerRuntime) serviceEnvironment(service string) map[string]string {
+	if service == "nas-collection-worker" {
+		return collectionWorkerEnvironment()
+	}
+	if service == "nas-engine-helper" {
+		return map[string]string{"ENGINE_STORAGE_MODE": "volume", "ENGINE_VOLUME_PREFIX": d.project, "ENGINE_MANAGED_ROOT": "/managed", "ENGINE_HELPER_SOCKET": "/ipc/helper.sock", "ENGINE_DOCKER_SOCKET": "/var/run/docker.sock", "ENGINE_NETWORK": d.project + "-engines", "ENGINE_UID": "1000", "ENGINE_GID": "1000", "QBT_PEER_PORT": "6881", "JACKETT_SETUP_PORT": "19117"}
+	}
+	environment := map[string]string{"NAS_ADDR": "0.0.0.0:8090", "NAS_DATA_DIR": "/data", "NAS_MEDIA_ROOTS": "/media:/downloads/complete", "NAS_DOWNLOAD_MODE": "managed", "NAS_TORRENT_SEARCH_MODE": "managed", "NAS_DOWNLOAD_ROOT": "/downloads", "NAS_DOWNLOAD_ENGINE_ROOT": "/downloads", "NAS_ENGINE_CONNECTION_DIR": "/run/nas-engines", "NAS_ENGINE_HELPER_SOCKET": "/run/nas-engine-helper/helper.sock", "NAS_DOWNLOAD_MIN_FREE_GB": "2"}
+	if d.manifest.CollectionImage != "" {
+		environment["NAS_MEDIA_ROOTS"] = "/media:/downloads/complete:/collection/complete"
+		environment["NAS_COLLECTION_WORKER_URL"] = "http://nas-collection-worker:8092"
+		environment["NAS_COLLECTION_WORKER_TOKEN_FILE"] = "/run/nas-collection/token"
+		environment["NAS_COLLECTION_READ_ROOT"] = "/collection"
+		environment["NAS_COLLECTION_WORKER_ALLOW_HTTP"] = "true"
+	}
+	return environment
+}
+
 // validateComposeMounts 比对每个服务的完整挂载集，保持原始媒体只读和角色卷隔离。
 func (d *dockerRuntime) validateComposeMounts(mounts []composeDesktopMount, service string) error {
 	expected := map[string]composeDesktopMount{
 		"/data": {Type: "volume", Source: "app_data"}, "/downloads": {Type: "volume", Source: "downloads", ReadOnly: true}, "/run/nas-engines": {Type: "volume", Source: "connections", ReadOnly: true}, "/run/nas-engine-helper": {Type: "volume", Source: "ipc", ReadOnly: true}, "/media": {Type: "bind", Source: d.config.MediaRoots[0], ReadOnly: true},
 	}
+	if d.manifest.CollectionImage != "" && service == "nas" {
+		expected["/collection"] = composeDesktopMount{Type: "volume", Source: "collection_data", ReadOnly: true}
+		expected["/run/nas-collection"] = composeDesktopMount{Type: "volume", Source: "collection_secrets", ReadOnly: true}
+	}
 	if service == "nas-engine-helper" {
 		expected = map[string]composeDesktopMount{"/var/run/docker.sock": {Type: "bind", Source: "/var/run/docker.sock"}, "/managed/state": {Type: "volume", Source: "state"}, "/managed/qbittorrent": {Type: "volume", Source: "qbittorrent"}, "/managed/jackett": {Type: "volume", Source: "jackett"}, "/managed/downloads": {Type: "volume", Source: "downloads"}, "/managed/connections": {Type: "volume", Source: "connections"}, "/ipc": {Type: "volume", Source: "ipc"}}
+	}
+	if service == "nas-collection-worker" && d.manifest.CollectionImage != "" {
+		expected = map[string]composeDesktopMount{"/collection": {Type: "volume", Source: "collection_data"}, "/run/nas-collection": {Type: "volume", Source: "collection_secrets"}}
 	}
 	if len(mounts) != len(expected) {
 		return errors.New("Compose 挂载数量与固定服务角色不匹配")
@@ -182,4 +222,22 @@ func (d *dockerRuntime) validateComposeMounts(mounts []composeDesktopMount, serv
 		}
 	}
 	return nil
+}
+
+// collectionWorkerEnvironment 固定获取服务权限和资源预算，不接受页面或继承环境覆盖。
+func collectionWorkerEnvironment() map[string]string {
+	return map[string]string{
+		"NAS_COLLECTION_WORKER_ADDR":               ":8092",
+		"NAS_COLLECTION_WORKER_DATA_DIR":           "/collection",
+		"NAS_COLLECTION_WORKER_TOKEN_FILE":         "/run/nas-collection/token",
+		"NAS_COLLECTION_WORKER_SOURCES_FILE":       "/run/nas-collection/sources.json",
+		"NAS_COLLECTION_WORKER_RCLONE_CONFIG_FILE": "/run/nas-collection/rclone.conf",
+		"NAS_COLLECTION_WORKER_YTDLP":              "/opt/collection/bin/yt-dlp",
+		"NAS_COLLECTION_WORKER_RCLONE":             "/usr/bin/rclone",
+		"NAS_COLLECTION_WORKER_FFMPEG":             "/usr/bin/ffmpeg",
+		"NAS_COLLECTION_WORKER_MIN_FREE_MB":        "512",
+		"NAS_COLLECTION_WORKER_MAX_BYTES":          "21474836480",
+		"NAS_COLLECTION_WORKER_MAX_FILES":          "1000",
+		"NAS_COLLECTION_WORKER_MAX_CONCURRENT":     "2",
+	}
 }

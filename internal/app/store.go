@@ -42,7 +42,7 @@ func openDatabase(ctx context.Context, dataDir string) (*sql.DB, error) {
 		db.Close()
 		return nil, err
 	}
-	if version > 2 {
+	if version > 4 {
 		db.Close()
 		return nil, fmt.Errorf("数据库版本较新，请使用匹配的应用版本")
 	}
@@ -87,6 +87,52 @@ func openDatabase(ctx context.Context, dataDir string) (*sql.DB, error) {
 			db.Close()
 			return nil, fmt.Errorf("升级下载数据库失败: %w", err)
 		}
+	}
+	if version < 3 {
+		tx, txErr := db.BeginTx(ctx, nil)
+		if txErr != nil {
+			db.Close()
+			return nil, txErr
+		}
+		_, err = tx.ExecContext(ctx, schemaV3)
+		if err == nil {
+			_, err = tx.ExecContext(ctx, "PRAGMA user_version=3")
+		}
+		if err == nil {
+			err = tx.Commit()
+		} else {
+			_ = tx.Rollback()
+		}
+		if err != nil {
+			db.Close()
+			return nil, fmt.Errorf("升级资源收集数据库失败: %w", err)
+		}
+	}
+	if version < 4 {
+		tx, txErr := db.BeginTx(ctx, nil)
+		if txErr != nil {
+			db.Close()
+			return nil, txErr
+		}
+		_, err = tx.ExecContext(ctx, schemaV4)
+		if err == nil {
+			_, err = tx.ExecContext(ctx, "PRAGMA user_version=4")
+		}
+		if err == nil {
+			err = tx.Commit()
+		} else {
+			_ = tx.Rollback()
+		}
+		if err != nil {
+			db.Close()
+			return nil, fmt.Errorf("升级外部服务数据库失败: %w", err)
+		}
+	}
+	// 写请求在进程中断后只能读取对账，绝不再次自动提交。
+	_, err = db.ExecContext(ctx, "UPDATE collection_external_actions SET state='uncertain',message='应用已重启，外部提交结果待核对',updated_at=? WHERE state='dispatching'", now())
+	if err != nil {
+		db.Close()
+		return nil, err
 	}
 	_, err = db.ExecContext(ctx, "UPDATE jobs SET status='queued',message='应用重启，等待恢复',updated_at=? WHERE status='running'", now())
 	if err != nil {

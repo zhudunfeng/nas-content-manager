@@ -12,7 +12,7 @@ Applies to all changes in `cmd/nas/`, `internal/app/`, Docker environment wiring
 - `(*App).file(w http.ResponseWriter, r *http.Request)` delegates seekable streaming to `http.ServeContent`.
 - `validNewPassword(password string) bool` in `auth.go` is the new-administrator password policy; `newPasswordHint` supplies the Chinese rejection message.
 - HTTP payloads and paths are defined in `docs/api.md`; Go models are in `models.go`.
-- SQLite schema v1 is `schemaV1` in `store.go`; additive `schemaV2` adds downloads, download_files, download_operations. Current `PRAGMA user_version` is 2, even when downloads are disabled. Preserve users, sessions, libraries, items, user_items, progress and jobs. See [Download contract](./download-contract.md) for all download changes.
+- SQLite schema v1 is `schemaV1` in `store.go`; additive `schemaV2` adds downloads, download_files, download_operations; `schemaV3` adds resource collection tables; `schemaV4` adds private external connection references, durable actions and expiring choices. Current `PRAGMA user_version` is 4 even when optional adapters are unavailable. Preserve users, sessions, libraries, items, user_items, progress and jobs. See [Download contract](./download-contract.md), [Collection contract](./collection-contract.md) and [External collection contract](./external-collection-contract.md).
 - Content types are `video/image/comic/novel/music`. Schema v1 type columns have no four-type CHECK; music reuses `duration`, so preserve existing databases without a migration or rebuild.
 
 ## 3. Contracts

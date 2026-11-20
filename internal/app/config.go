@@ -28,6 +28,7 @@ type Config struct {
 	Workers             int                 // 受控后台任务并发数，NAS_WORKERS，默认 1，范围 1–4。
 	Downloads           DownloadConfig      // 独立下载模块配置；默认关闭，不影响原媒体挂载。
 	TorrentSearch       TorrentSearchConfig // 独立 Torznab 搜种配置；默认关闭，不影响原 BT 和媒体接口。
+	Collection          CollectionConfig    // 可选资源获取执行端、只读映射和任务预算。
 }
 
 // LoadConfig 读取环境参数并验证范围，不修改全局运行环境。
@@ -89,6 +90,10 @@ func LoadConfigWithLookup(lookup func(string) string) (Config, error) {
 		return c, err
 	}
 	c.TorrentSearch, err = loadTorrentSearchConfigWithLookup(source.lookup)
+	if err != nil {
+		return c, err
+	}
+	c.Collection, err = loadCollectionConfig(source)
 	if err != nil {
 		return c, err
 	}

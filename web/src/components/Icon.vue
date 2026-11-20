@@ -42,6 +42,9 @@ const paths: Record<string, string> = {
   zoom: 'M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0 M6 10h8 M10 6v8',
   user: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M4 21v-3a8 8 0 0 1 16 0v3',
   storage: 'M4 3h16v7H4z M4 14h16v7H4z M16 6h.01 M16 17h.01',
+  collection: 'M3 4h7l2 3h9v14H3z M8 12h8 M12 8v8 m-3-3 3 3 3-3',
+  rss: 'M4 11a9 9 0 0 1 9 9 M4 4a16 16 0 0 1 16 16 M4 20h.01',
+  external: 'M14 3h7v7 M21 3 11 13 M10 3H4v17h16v-6',
 }
 </script>
 

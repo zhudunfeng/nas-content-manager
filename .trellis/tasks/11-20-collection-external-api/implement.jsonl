@@ -1,0 +1,5 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/backend/collection-contract.md", "reason": "Keep collection ownership and secret boundaries"}
+{"file": ".trellis/tasks/11-20-collection-external-api/api-contract.md", "reason": "Shared adapter and browser wire contract"}

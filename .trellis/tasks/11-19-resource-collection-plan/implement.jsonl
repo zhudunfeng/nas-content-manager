@@ -1,0 +1,14 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "只读媒体、数据库、生命周期和发布边界"}
+{"file": ".trellis/spec/backend/download-contract.md", "reason": "原BT归属、选文件、发布门禁和独立入库"}
+{"file": ".trellis/spec/backend/torrent-search-contract.md", "reason": "现有手动搜索及秘密边界，新增RSS须修订范围"}
+{"file": ".trellis/spec/backend/engine-bootstrap-contract.md", "reason": "固定引擎助手不能变为任意获取执行器"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "Windows精确部署校验、目录映射和完整退出"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "资源收集管理视图、类型、轮询和手机导航"}
+{"file": ".trellis/spec/backend/collection-contract.md", "reason": "已实施的收集协议、幂等、发布恢复及有界持续核验"}
+{"file": ".trellis/tasks/11-19-resource-collection-plan/info.md", "reason": "统一数据API文件分期与验收设计"}
+{"file": ".trellis/tasks/11-19-resource-collection-plan/research/repository-collection.md", "reason": "CodeGraph和源码核实的复用及修改边界"}
+{"file": ".trellis/tasks/11-19-resource-collection-plan/research/source-integrations.md", "reason": "固定来源适配器及外部官方协议核实"}
+{"file": ".trellis/tasks/11-19-resource-collection-plan/research/pipeline-design.md", "reason": "状态去重恢复与跨平台发布边界"}

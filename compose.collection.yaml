@@ -1,0 +1,68 @@
+# 多来源获取可选覆盖：docker compose -f compose.yaml -f compose.collection.yaml up -d --build。
+services:
+  # 媒体服务仍不持有 Docker socket，所有获取写入交给独立执行端。
+  nas:
+    volumes:
+      # 读取完成产物，staging/状态仍由发布门禁阻止访问。
+      - collection_data:/collection:ro
+      # 只读令牌目录，令牌由执行端创建。
+      - collection_secrets:/run/nas-collection:ro
+    environment:
+      # 只授权原媒体与完成区。
+      NAS_MEDIA_ROOTS: ${COLLECTION_MEDIA_ROOTS:-/media:/collection/complete}
+      # 固定同一 Compose 网络中的获取服务。
+      NAS_COLLECTION_WORKER_URL: http://nas-collection-worker:8092
+      # 当前部署专用秘密引用。
+      NAS_COLLECTION_WORKER_TOKEN_FILE: /run/nas-collection/token
+      # 主应用侧只读数据根映射。
+      NAS_COLLECTION_READ_ROOT: /collection
+      # 仅显式允许本机容器网络 HTTP，跨主机应使用 TLS。
+      NAS_COLLECTION_WORKER_ALLOW_HTTP: "true"
+    # 实际就绪仍由能力探测和映射探针验证。
+    depends_on:
+      - nas-collection-worker
+    # 与引擎覆盖文件叠加时保留各自网络，获取服务只加入自身网络。
+    networks:
+      - collection_bridge
+  # 不挂 Docker socket、宿主根或用户媒体写目录。
+  nas-collection-worker:
+    # 本地构建名称；发布时使用维护者核验的固定摘要。
+    image: nas-collection-worker:0.1.0
+    build:
+      # 仓库根作为构建上下文。
+      context: .
+      # 专用工具和执行服务镜像。
+      dockerfile: Dockerfile.collection-worker
+    # 重启后保留状态对账，手动停止后不自动恢复。
+    restart: unless-stopped
+    volumes:
+      # 获取数据与秘密分离，只有执行端写入。
+      - collection_data:/collection
+      # 管理员可在专用卷配置 sources.json 与 rclone.conf。
+      - collection_secrets:/run/nas-collection
+    # 禁止通过 setuid 获得更多权限。
+    security_opt:
+      - no-new-privileges:true
+    # 给受管进程停止和文件释放留出时间。
+    stop_grace_period: 30s
+    # 不通过宿主端口暴露控制面。
+    networks:
+      - collection_bridge
+    logging:
+      # 获取日志只记录脱敏阶段。
+      driver: local
+      options:
+        # 单日志最多 10 MiB。
+        max-size: "10m"
+        # 最多保留三份。
+        max-file: "3"
+networks:
+  # 允许受控出站获取；不共享 Docker 管理权限。
+  collection_bridge:
+    # 默认由 Compose project 分配独立名称。
+    driver: bridge
+volumes:
+  # Linux 本地持久卷，不应将 SQLite 状态置于网络文件系统。
+  collection_data:
+  # 凭据需独立备份和权限管理。
+  collection_secrets:

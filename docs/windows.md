@@ -1,6 +1,6 @@
 # Windows 双击启动与 Linux 兼容
 
-系统共用 Go/Vue/SQLite 业务内核。Windows 新增原生托盘入口，Linux 保留无桌面 CLI、环境参数和原有 Compose/bind 部署；数据库仍为 schema v2。
+系统共用 Go/Vue/SQLite 业务内核。Windows 提供原生托盘入口，Linux 保留无桌面 CLI、环境参数和原有 Compose/bind 部署；当前数据库为顺序增量迁移后的 schema v3，保留原媒体和v2下载数据。
 
 ## 选择运行方式
 
@@ -88,6 +88,8 @@ GUI 子系统的 EXE 不保证 PowerShell 显示标准输出；诊断结果同�
 ```
 
 包中需要 `compose.desktop.yaml` 和维护者提供的 `release-images.json`。当前仓库没有已发布的公共应用/助手镜像；缺少清单会明确报错，不会拉取虚构镜像。维护者生成方式见 [发布流程](release.md)。镜像只接受精确 SHA-256 ID 或仓库 digest；带离线归档时先流式校验再 `docker load`。在线 registry 认证由本机 Docker 管理，凭据不进入网页和发布清单。
+
+资源收集完整模式使用v2三镜像清单和包内`compose.desktop.collection.yaml`。获取服务不发布控制端口，仅写本实例的`collection-data`/`collection-secrets`卷；主应用只读访问并执行发布门禁。完整停止会包含该服务并保留数据卷。旧v1清单继续按原两服务运行。原生模式可配置独立worker与共享根，参数和恢复步骤见[资源收集](collection.md)。
 
 启动器显式传入本机 context，拒绝 TCP/SSH/远端 daemon，清除可能干扰的 Docker/Compose 环境。Compose 项目、网络和卷前缀由当前配置的稳定实例身份派生。复用与停止前核对实际镜像、标签、挂载和项目身份，拒绝接管同名外来资源。
 

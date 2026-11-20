@@ -132,6 +132,65 @@ Same requestId and same operation signature returns the original durable task ev
 
 Connection manifests, passwords, API Keys, upstream addresses, Cookie headers and raw XML never appear in these responses. The app atomically refreshes managed connections and preserves its last valid runtime if the helper or a new manifest fails. Source changes invalidate unbound old search-result tokens; existing persisted download request bindings remain recoverable.
 
+## Multi-source collection
+
+All `/api/collection` routes require the existing session and same-origin mutation protection. Ordinary JSON remains strict and limited to 64 KiB. IDs are opaque UUIDs; edits and task actions carry the current `revision`. Lists return empty arrays for successful empty results, while failures retain an HTTP error. Detailed DTO fields are maintained in [the collection API contract](../.trellis/tasks/11-19-resource-collection-plan/api-contract.md).
+
+| Endpoint | Input / result |
+| --- | --- |
+| `GET /capabilities` | Actual tool capabilities, safe worker source IDs, authorized registration roots, worker readiness and reason |
+| `GET /sources`, `POST /sources`, `PATCH /sources/{id}` | List, create and revise a fixed RSS/web/local/remote/external source; edits require revision |
+| `POST /sources/{id}/test` | `{}` → connection result; no acquisition |
+| `POST /sources/{id}/refresh` | `{backfill:boolean}` → bounded RSS refresh; first refresh establishes a historical baseline |
+| `GET /subscriptions`, `POST /subscriptions`, `PATCH /subscriptions/{id}` | Rule, target, review/automatic mode and explicit selection policy |
+| `POST /subscriptions/{id}/preview`, `POST /subscriptions/{id}/run` | `{}` → rule dry run or bounded refresh/evaluation |
+| `GET /candidates?sourceId=&page=&pageSize=` | Candidate page with safe title, decision, reason and revision |
+| `POST /candidates/{id}/ignore` | `{revision:number}` |
+| `POST /candidates/{id}/acquire` | `{requestId,revision,contentType,createLibrary,libraryId}` → 202 durable task linked to the original BT workflow |
+| `POST /previews` | `{sourceId,url,path,profile,mode}` → expiring server-bound preview; profile is video/audio, mode register/copy, path relative |
+| `POST /tasks` | `{requestId,previewId,contentType,createLibrary,libraryId}` → 202 durable task |
+| `GET /tasks?page=&pageSize=&state=`, `GET /tasks/{id}` | Safe task state, independent import state and actual item IDs |
+| `GET /tasks/{id}/events` | Bounded persistent Chinese stage events |
+| `POST /tasks/{id}/actions` | `{action:'cancel'|'retry'|'retry_import',revision}` |
+
+All paths above are relative to `/api/collection`. Same accepted request ID and immutable plan returns the original task; conflicting reuse, duplicate resource under a different request ID, or stale revision returns 409. Local registration reads only authorized existing media. Copy/web tasks use the configured worker and shared-root probe, acquire into staging, validate, publish, then scan. `completed` acquisition alone does not mean imported: only actual matching scanner results populate `itemIds`. `retry_import` uses published data without acquiring again. Library deletion clears related non-BT task item IDs and marks import failed, retaining files without silently recreating the library. BT file selection and download actions remain in the original download APIs.
+
+RSS URLs and worker request secrets reside in private files outside ordinary SQLite/DTOs. No endpoint accepts shell commands, executable paths, tool arguments, arbitrary remote definitions or web cookies. External applications expose fixed typed management APIs and independently selected completed-media directories. See [collection deployment and recovery](collection.md) for configuration, backups and supported website formats.
+
+### External automation APIs
+
+Source DTOs add `externalService: ''|'moviepilot'|'autobangumi'|'sonarr'|'radarr'` and `apiConfigured:boolean`. Source input accepts write-only `connection?:{baseUrl:string,apiKey:string}` and `clearConnection?:boolean`. Blank connection fields retain same-service credentials. Completion `rootId` is optional for API-enabled sources; actual import still requires an authorized mapped root.
+
+All following routes are relative to `/api/collection/sources/{id}/external` and require the existing session. Public data never includes the API base URL/key, RSS URL, upstream raw errors, torrent context or absolute storage path.
+
+| Endpoint | Input / result |
+| --- | --- |
+| `POST /test` | `{revision}` → `{info:{service,version,supported,capabilities,message}}` |
+| `GET /items?section=resources\|queue\|history&page=1` | Bounded normalized page with detected capabilities; unavailable sections return errors |
+| `GET /options` | Existing service root/profile choices; no new remote configuration |
+| `GET /lookup?q=` | Servarr metadata choices, no automatic download search |
+| `GET /actions` | Latest 30 safe persistent action records |
+| `POST /actions` | `{requestId,revision,kind,targetId?,externalId?,title?,mediaType?,season?,rootId?,profileId?,enabled?,rssUrl?,selectionId?,confirmOverwrite?}` → `{action}` |
+| `POST /actions/{actionId}/reconcile` | `{}` → read-only evidence, never replays a write |
+| `POST /actions/{actionId}/acknowledge` | `{checkedExternally:true}` → records manual `unconfirmed` and unblocks the source |
+
+Actions use `add|monitor|search`; MoviePilot 3.2.8 additionally uses `download|download_start|download_stop|organize|scrape|refresh_library`. An action records `{id,requestId,sourceId,sourceRevision,kind,targetId,state,message,createdAt,updatedAt}`; state is `dispatching|succeeded|failed|uncertain|unconfirmed`. `succeeded` confirms the specifically described receipt, not local import. Same accepted UUID and intent returns the original action even after source revision changes; different intent is 409. New writes require current revision. Unresolved actions block other writes for that source. Restart changes interrupted `dispatching` to `uncertain`, without reissuing upstream requests.
+
+MoviePilot workflow routes below are relative to `/moviepilot`. Replies are `{choices:Choice[],message:string}`, where `Choice={id,title,kind,status,externalId,mediaType,year,season,organizeAllowed}`. `id` is a server-generated UUID bound to source revision and a 15-minute private snapshot. A snapshot accepted by one action cannot be consumed by a new action. Only already-configured local roots and their observed descendants are accepted; these are remote service choices, not local NAS filesystem grants.
+
+| Endpoint | Input / result |
+| --- | --- |
+| `POST /search` | `{revision,query,mediaType:'movie'|'series'}` → media choices |
+| `POST /releases` | `{revision,selectionId}` → resource choices for the selected metadata |
+| `GET /downloads` | Single-task download control choices |
+| `GET /roots` | Configured download/library root aliases; `organizeAllowed` reflects the no-overwrite policy |
+| `POST /files` | `{revision,rootId,parentId?}` → one bounded directory level |
+| `POST /organize/preview` | `{revision,fileId,targetId,externalId,mediaType}` → fixed-copy organization plan |
+| `POST /scrape/preview` | `{revision,fileId,externalId,mediaType}` → read-only validation, no scraping yet |
+| `GET /library` | Fixed `mediaserver_sync` task and observed state |
+
+Workflow actions accept only the matching `selectionId` and, for scraping, mandatory `confirmOverwrite:true`; they reject unrelated raw arguments. Server-side immutable payloads are persisted outside SQLite. Organization rechecks the source file version and configured target policy; scraping covers only one selected supported video file and overwrites metadata/artwork according to MoviePilot. Library refresh synchronizes **MoviePilot's index from configured media servers**; it is not an Emby/Plex disk scan. Exact schemas and protocol boundaries: [external integration contract](../.trellis/tasks/11-20-collection-external-api/api-contract.md).
+
 ## Release boundary
 
 Deliver five content workflows, including music. Large-file direct playback/Range is required. Remux/HLS, hardware acceleration, audio transcoding, playlists/lyrics, CBR/PDF and AI remain optional later capabilities, and the UI must explain unsupported audio/video formats rather than silently pretend they work. No fabricated demo records appear in real libraries.

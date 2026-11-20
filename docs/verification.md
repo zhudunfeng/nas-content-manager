@@ -359,3 +359,35 @@ python -B scripts/project_env.py -- python -B scripts/verify_desktop.py --binary
 ```
 
 本轮没有物理鼠标点击或 Explorer 截图验收，没有重启 Explorer/清理图标缓存，没有执行 GitHub 云端 Actions、Docker 或 Linux 实机测试。开发包复用已有网页且不含 FFmpeg，不能称为完整离线工具包。详细命令、产物摘要与边界见 `.trellis/tasks/11-19-windows-desktop-icon/research/implementation-validation.md`；本轮未处理上节记录的旧样本残留。
+
+## 2026-11-20 多来源资源收集实施验收
+
+新增来源、RSS订阅与候选、统一获取任务、受控执行端、网页视频/提取音频、本地登记/复制和remote复制；复用原BT选文件、发布与扫描。获取和入库分别持久化，schema v3保留旧数据，秘密独立保存。部署及参数说明见 `docs/collection.md`。
+
+- 最终多来源真实app+worker集成32项通过，使用真实rclone v1.76.0本地alias remote，覆盖RSS/受控qB桥接、登记/复制、精确Range、幂等、新编号重复409、秘密分离、重启、worker离线读取及BT删库关联撤销和文件保留。
+- 真实yt-dlp 2025.12.08与FFmpeg执行隔离1秒HTTP fixture：MP4 9263字节、MP3 2235字节完整获取、发布、实际扫描入库；媒体接口鉴权206逐字节匹配，无会话401。未放宽生产代理策略，不能称为公网站点验证。
+- 真实Edge/Playwright36项通过，375/768/1024/1440及两主题、焦点/Escape、来源与订阅、实际本地入库播放、RSS到原下载选文件、响应丢失原请求重试、批次部分失败和独立列表错误。截图检查后补齐弹窗内边距，再构建复验；预期注入的中断/422/503与未处理脚本错误分别记录。
+- 最终后端累计19项临时行为用例通过（自动规则另含6子场景），覆盖历史窗口、版本/目标冲突、不确定派发对账、独立入库重试、RSS编辑、媒体库删除和256项轮转、已完成BT状态镜像；worker和桌面临时行为矩阵也已通过。新增临时Go测试执行后按要求删除，保留两份可复用集成脚本。
+- 原下载36项、搜种43项、托管接入35项、五媒体/音乐/备份/5GiB稀疏Range52项及发行边界76项通过。Go vet、清理后包编译、严格Vue类型检查和Vite生产构建通过；Linux amd64/arm64、Windows amd64三程序及Windows桌面入口交叉构建通过。稀疏文件只证明协议，不代表媒体性能。
+
+真实Compose CLI规范化、固定v1/v2清单和实际inspect数据校验矩阵通过；当前Docker daemon不可用，没有构建/运行worker镜像、三容器完整停止、目标NAS权限/跨卷/网络卷、真实云盘账号或公网BT载荷验收。公网样例DNS返回`198.18.1.164`保留地址，正确被代理拒绝；固定容器yt-dlp 2026.10.26仍待目标环境验证。Linux是交叉编译证据，未在Linux内核上执行进程组和权限测试。
+
+详细命令、证据路径、最终修订及未覆盖条件保存在 `.trellis/tasks/11-19-resource-collection-plan/research/runtime-validation.md`、`browser-acceptance.md`、`backend-verification.md`、`worker-tool-versions.md`、`quality-review.md`。没有连接真实用户来源、部署、提交或归档任务。
+
+## 2026-11-20 外部自动化与 MoviePilot 六项能力验收
+
+新增 MoviePilot、AutoBangumi、Sonarr/Radarr 的固定 API 适配器、私密连接、持久动作记录及单窗口管理。接入采用“选服务→填地址和凭据→检测连接”三步，高级完成目录按需展开。MoviePilot 3.2.8 支持集成搜索、订阅、下载/暂停/继续、单文件复制整理、元数据刮削及媒体库索引刷新；原外部入口与独立完成目录预览/扫描仍保留。
+
+- 最终真实应用连接四个本地 HTTP 协议服务，`scripts/verify_external.py --workflow` **83 项通过**。覆盖固定鉴权/路径/载荷、schema3→4保留、UUID幂等与冲突、revision、重启、不确定提交/只读对账/人工确认、秘密不进入DTO/主库/备份/日志，以及完整六阶段流程。结果位于 `.runtime/verify/external-complete-20261120/result.json`。
+- MoviePilot 专项覆盖私密资源快照、一次性选择、准确下载器/hash启停、预览无副作用、整理目标实际不覆盖策略及文件版本重读、策略/文件变化拒绝、刮削覆盖确认与部分失败不确定、固定索引同步任务、限制有副作用GET自动重放，以及越界路径、过期与未知版本拒绝。整理只确认外部受理/回执，未冒充实际媒体入库。
+- 最终单次实际浏览器通过真实应用API和适配器调用本地协议服务，搜索下载、订阅、暂停/继续、整理、刮削、索引刷新均保留成功提交回执；真实revision409没有新增动作，真实上游503保留旧快照且可恢复。四尺寸×两主题无横向溢出，独立检查手机明色及桌面暗色截图，无页面脚本错误。证据为 `.runtime/external-app-ui-acceptance-evidence/report.json`，passed=true、errors=[]；不含网络拦截。另有 `.runtime/external-ui-evidence/report.json` 的界面fixture覆盖UUID恢复、人工未确认、焦点/Escape及错误分区，后者仅为呈现证据。
+- 独立复核执行8项临时Go行为测试后清除，修复配置根重叠、空文件版本、路径大小写/盘符根、启停回执身份、未知调度状态及秘密文件失败清理。最终 `go vet ./...`、清理后 `go test ./...`、Windows主程序构建、严格Vue类型检查和Vite生产构建通过。清理后的Go测试仅为包编译证据。Linux amd64/arm64主程序交叉构建通过。
+- 本轮已有收集app+worker回归27项、下载36项、搜种43项、托管接入35项、五媒体/音乐/备份/5GiB稀疏Range52项通过。回归使用本轮前段构建，随后修改局限于新外部工作流并由最终83项和浏览器验证覆盖；此轮收集回归未重跑真实rclone或yt-dlp。
+
+可复用后端验收命令（预先构建主程序，根目录须不存在）：
+
+```powershell
+python -B scripts/project_env.py -- python -B scripts/verify_external.py --binary .runtime/verify/nas-external-final.exe --root .runtime/verify/external-new-run --workflow
+```
+
+本轮没有连接真实用户实例、安装第三方套件或改动真实媒体。MoviePilot六阶段能力限定已核实的精确3.2.8版本，未知版本不会推断开放。索引刷新是从已配置媒体服务器同步到MoviePilot，不代表触发Emby/Plex扫盘；目标媒体服务器、插件和NAS权限仍需真实部署验收。Linux仅交叉构建，未运行Linux/Docker；稀疏Range不证明解码或吞吐性能。详细协议依据和质量记录位于 `.trellis/tasks/11-20-collection-external-api/research/`。

@@ -44,6 +44,7 @@ type App struct {
 	readerSlots   chan struct{}                // 限制同时解压漫画或解析文本的请求数。
 	downloads     *downloadManager             // 独立下载协调器，不占用媒体扫描执行器。
 	torrentSearch *torrentSearchManager        // 只保存有限搜索快照和独立网络限额的搜种适配器。
+	collections   *collectionManager           // 独立资源收集协调器，全部执行受应用生命周期控制。
 	frontend      fs.FS                        // 本实例固定的前端资源根，发布嵌入与显式目录共用同一路由。
 }
 
@@ -116,6 +117,8 @@ func RunWithOptions(ctx context.Context, config Config, logger *slog.Logger, opt
 	a.startDownloads()
 	a.startEngineRuntime()
 	a.startWorkers()
+	a.startCollections()
+	defer a.collections.client.CloseIdleConnections()
 	readyToken := rand.Text()
 	routes := a.routes()
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -254,6 +257,7 @@ func (a *App) routes() http.Handler {
 	}
 	a.downloadRoutes(mux)
 	a.torrentSearchRoutes(mux)
+	a.collectionRoutes(mux)
 	a.engineRoutes(mux)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) { fail(w, http.StatusNotFound, "接口不存在") })
 	mux.HandleFunc("/", a.static)

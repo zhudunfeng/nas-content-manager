@@ -9,7 +9,7 @@ Applies to optional BT downloads, `download*.go`, download mounts/secrets, schem
 - `loadDownloadConfig(config Config) (DownloadConfig, error)` validates server-only configuration.
 - `(*App).startDownloads()` creates the independent coordinator under `App.ctx`/`App.wg`; disabled mode performs no engine calls.
 - `(*App).downloadRoutes(mux *http.ServeMux)` registers authenticated same-origin routes documented in `docs/api.md`.
-- `schemaV2` adds `downloads`, `download_files`, `download_operations` transactionally after v1. Preserve original tables and reject `user_version > 2`.
+- `schemaV2` adds `downloads`, `download_files`, `download_operations` transactionally after v1. Current applications then apply collection schema v3; preserve original tables and reject `user_version > 3`. See [Collection contract](./collection-contract.md).
 - `(*App).loadDownloadGate(ctx context.Context) (*downloadGate,error)`, `(*downloadGate).allow(path string,isDir bool) (bool,error)`, `(*App).checkDownloadPath(path string,isDir bool) error` enforce publication.
 - `checkDownloadMountIsolation(config DownloadConfig,mediaRoots []string) error` rejects Linux mount aliases exposing staging or the entire root through ordinary media mounts.
 

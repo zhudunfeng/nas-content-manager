@@ -11,7 +11,6 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -398,141 +397,12 @@ func (a *App) addDownload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	var identity torrentIdentity
-	if kind == "torrent" {
-		identity, err = parseTorrent(source)
-	} else {
-		if strings.TrimPrefix(a.downloads.connectionStatus().Version, "v") != "5.2.4" {
-			fail(w, 503, "此 qB 版本尚未验证磁力元数据停止行为，请使用 5.2.4 或上传本地种子")
-			return
-		}
-		identity, err = parseMagnet(string(source))
-	}
+	d, err := a.queueDownloadSource(r.Context(), input, source, kind)
 	if err != nil {
-		fail(w, 400, err.Error())
+		collectionFail(w, err)
 		return
 	}
-	m := a.downloads
-	m.commandMu.Lock()
-	defer m.commandMu.Unlock()
-	// 网络解析后再次核对幂等绑定，避免并发重试把迟到结果登记成另一任务。
-	if input.SearchResultID != "" && a.searchDownloadDuplicate(w, r, input) {
-		return
-	}
-	// 来源切换与持久添加共享命令锁，尚未绑定的旧令牌不得穿过新来源快照。
-	if input.SearchResultID != "" {
-		if _, status, message := a.torrentSearch.findResult(input.SearchResultID); status != 0 {
-			fail(w, 409, message)
-			return
-		}
-	}
-
-	if existing, findErr := scanDownload(a.db.QueryRowContext(r.Context(), downloadSelect+" WHERE request_id=? OR id=(SELECT download_id FROM download_operations WHERE request_id=?)", input.RequestID, input.RequestID)); findErr == nil {
-		if (identity.V1 != "" && identity.V1 == existing.IdentityV1) || (identity.V2 != "" && identity.V2 == existing.IdentityV2) {
-			respond(w, 202, map[string]any{"download": m.view(existing)})
-			return
-		}
-		fail(w, 409, "该请求编号已用于另一下载，请重新提交")
-		return
-	} else if !errors.Is(findErr, sql.ErrNoRows) {
-		fail(w, 500, "查询幂等请求失败")
-		return
-	}
-	if existing, findErr := scanDownload(a.db.QueryRowContext(r.Context(), downloadSelect+" WHERE (identity_v1<>'' AND identity_v1=?) OR (identity_v2<>'' AND identity_v2=?)", identity.V1, identity.V2)); findErr == nil {
-		if existing.Archived {
-			fail(w, 409, "该内容已有保留文件的归档记录，请使用原内容或在下载器中处理")
-			return
-		}
-		if err = a.bindDuplicateSearchDownload(r.Context(), input, existing); err != nil {
-			fail(w, 409, err.Error())
-			return
-		}
-		respond(w, 202, map[string]any{"download": m.view(existing)})
-		return
-	} else if !errors.Is(findErr, sql.ErrNoRows) {
-		fail(w, 500, "查询内容身份失败")
-		return
-	}
-	library, bound, err := a.resolveDownloadLibrary(r.Context(), input)
-	if err != nil {
-		fail(w, 400, err.Error())
-		return
-	}
-	probe := downloadRecord{IdentityV1: identity.V1, IdentityV2: identity.V2}
-	m.mu.RLock()
-	conflict := false
-	for _, torrent := range m.engineSnapshot {
-		if identityMatches(probe, torrent) {
-			conflict = true
-			break
-		}
-	}
-	m.mu.RUnlock()
-	if conflict {
-		fail(w, 409, "下载器已有相同内容的外部任务，栖库不会接管或修改它")
-		return
-	}
-	var count int
-	if a.db.QueryRowContext(r.Context(), "SELECT count(*) FROM downloads WHERE archived=0").Scan(&count) != nil || count >= maxDownloadTasks {
-		fail(w, 409, "活跃下载已达到 256 项上限，请先归档旧任务")
-		return
-	}
-	id, err := newDownloadUUID()
-	if err != nil {
-		fail(w, 500, "生成下载任务编号失败")
-		return
-	}
-	spool := filepath.Join(a.config.DataDir, "download-sources")
-	if os.MkdirAll(spool, 0700) != nil {
-		fail(w, 500, "私密种子暂存目录不可写")
-		return
-	}
-	filePath := filepath.Join(spool, id+".source")
-	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-	if err != nil {
-		fail(w, 500, "保存下载源失败")
-		return
-	}
-	_, err = file.Write(source)
-	closeErr := file.Close()
-	if err != nil || closeErr != nil {
-		_ = os.Remove(filePath)
-		fail(w, 500, "保存下载源失败")
-		return
-	}
-	tx, err := a.db.BeginTx(r.Context(), nil)
-	if err != nil {
-		_ = os.Remove(filePath)
-		fail(w, 500, "保存下载任务失败")
-		return
-	}
-	defer tx.Rollback()
-	timestamp := now()
-	_, err = tx.ExecContext(r.Context(), `INSERT INTO downloads(id,request_id,identity_v1,identity_v2,name,content_type,target_library_id,created_at,updated_at,local_root,staging_path,final_path,source_file,source_kind,create_library,library_bound) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, input.RequestID, identity.V1, identity.V2, identity.Name, input.ContentType, library, timestamp, timestamp, a.config.Downloads.Root, filepath.Join(a.config.Downloads.Root, "staging", id), filepath.Join(a.config.Downloads.Root, "complete", input.ContentType, id), filePath, kind, input.CreateLibrary, bound)
-	if err == nil {
-		payload := ""
-		if input.SearchResultID != "" {
-			encoded, _ := json.Marshal(searchDownloadPayload{SearchResultID: input.SearchResultID})
-			payload = string(encoded)
-		}
-		_, err = tx.ExecContext(r.Context(), "INSERT INTO download_operations(request_id,download_id,revision,kind,payload,created_at,updated_at) VALUES(?,?,1,'add',?,?,?)", input.RequestID, id, payload, timestamp, timestamp)
-	}
-	if err == nil {
-		err = tx.Commit()
-	}
-	if err != nil {
-		_ = os.Remove(filePath)
-		fail(w, 409, "下载身份或请求已存在，请刷新任务列表")
-		return
-	}
-	d, err := a.downloadByID(r.Context(), id)
-	if err != nil {
-		fail(w, 500, "读取已保存下载失败，请刷新列表")
-		return
-	}
-	a.logger.Info("下载任务已登记，等待提交引擎", "downloadId", id, "type", input.ContentType, "sourceKind", kind)
-	m.notify()
-	respond(w, 202, map[string]any{"download": d.Download})
+	respond(w, 202, map[string]any{"download": a.downloads.view(d)})
 }
 
 // resolveDownloadLibrary 仅允许 complete/类型 这一受管媒体库，首次创建须有明确授权。

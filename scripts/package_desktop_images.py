@@ -1,4 +1,4 @@
-"""将维护者已构建的Linux应用/助手镜像封装成桌面离线资源，不连接远程Docker。"""
+"""将维护者已构建的Linux应用、助手与可选获取镜像封装成桌面离线资源。"""
 
 from __future__ import annotations
 
@@ -61,15 +61,17 @@ def inspect_image(reference: str, selected: str, environment: dict[str, str]) ->
 
 
 def package(args: argparse.Namespace) -> Path:
-    """保存两份固定镜像及归档摘要，不创建或删除容器、网络及数据卷。"""
+    """保存固定镜像及归档摘要，不创建或删除容器、网络及数据卷。"""
     selected, environment = local_context(args.context)
     server = json.loads(invoke(["--context", selected, "version", "--format", "{{json .Server}}"], environment))
     if not isinstance(server, dict) or server.get("Os") != "linux":
         raise ValueError("需要运行中的本机Linux容器引擎")
     app = inspect_image(args.app_image, selected, environment)
     helper = inspect_image(args.helper_image, selected, environment)
-    if app["Id"] == helper["Id"]:
-        raise ValueError("应用和助手必须为不同镜像")
+    collection = inspect_image(args.collection_image, selected, environment) if args.collection_image else None
+    images = [app, helper, *([collection] if collection else [])]
+    if len({image["Id"] for image in images}) != len(images):
+        raise ValueError("应用、助手与获取执行端必须为不同镜像")
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
     manifest = output / "release-images.json"
@@ -81,10 +83,12 @@ def package(args: argparse.Namespace) -> Path:
     with tempfile.TemporaryDirectory(prefix=".qiku-images-", dir=output) as temporary:
         pending = Path(temporary) / "images.tar"
         print("正在保存本机固定镜像；不会启动容器", flush=True)
-        invoke(["--context", selected, "image", "save", "--output", str(pending), app["Id"], helper["Id"]], environment)
+        invoke(["--context", selected, "image", "save", "--output", str(pending), *[image["Id"] for image in images]], environment)
         checksum = digest(pending)
         pending.replace(archive)
     value = {"schemaVersion": 1, "appImage": app["Id"], "helperImage": helper["Id"], "archive": "images/desktop-linux-amd64.tar", "archiveSha256": checksum}
+    if collection:
+        value.update(schemaVersion=2, collectionImage=collection["Id"])
     try:
         with manifest.open("x", encoding="utf-8", newline="\n") as stream:
             stream.write(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
@@ -102,6 +106,7 @@ def main() -> int:
     parser.add_argument("--context", help="本机Docker context；默认读取当前选择并校验socket")
     parser.add_argument("--app-image", required=True, help="维护者已构建的Linux amd64应用镜像引用")
     parser.add_argument("--helper-image", required=True, help="维护者已构建的Linux amd64助手镜像引用")
+    parser.add_argument("--collection-image", help="可选的Linux amd64获取执行端镜像；提供时生成三镜像v2清单")
     parser.add_argument("--output", required=True, help="资源输出目录，不覆盖已有归档或清单")
     try:
         print(f"镜像清单：{package(parser.parse_args())}")

@@ -1,0 +1,33 @@
+{
+  "id": "plugin-market-fnos-plan",
+  "name": "plugin-market-fnos-plan",
+  "title": "插件系统、可配置市场与飞牛应用兼容改造计划",
+  "description": "仅完成插件核心、多市场地址与飞牛应用兼容的调研、PRD及分阶段修改计划；未实施业务代码。",
+  "status": "planning",
+  "dev_type": "fullstack",
+  "scope": "plugins",
+  "package": null,
+  "priority": "P2",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-19",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "internal/app/server.go",
+    "internal/app/store.go",
+    "internal/enginehelper/service.go",
+    "internal/desktop/docker_compose.go",
+    "web/src/App.vue",
+    "docs/api.md"
+  ],
+  "notes": "本轮仅交付规划；建议方案未视为已确认，保持 planning，不自动进入实现。",
+  "meta": {}
+}

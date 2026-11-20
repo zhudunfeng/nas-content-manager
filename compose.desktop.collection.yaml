@@ -1,0 +1,105 @@
+# 桌面 v2 清单专用覆盖文件；启动器同时严格核验基础模板与本覆盖文件。
+services:
+  # 主应用仅取得发布区和访问令牌的只读视图。
+  nas:
+    # 数据与秘密角色独立，不向主应用授予 Docker 或获取写权限。
+    volumes:
+      # 门禁仍拒绝 staging、状态和未登记的完成文件。
+      - collection_data:/collection:ro
+      # 令牌由本实例获取服务首次创建，整个目录挂载以观察原子替换。
+      - collection_secrets:/run/nas-collection:ro
+    environment:
+      # 仅将完成子树加入可登记媒体根；collection gate 继续逐文件核验。
+      NAS_MEDIA_ROOTS: /media:/downloads/complete:/collection/complete
+      # 仅当前实例内部网络上的受控服务。
+      NAS_COLLECTION_WORKER_URL: http://nas-collection-worker:8092
+      # 私有令牌文件，不在 Compose 或日志中保存令牌值。
+      NAS_COLLECTION_WORKER_TOKEN_FILE: /run/nas-collection/token
+      # 主服务只读映射的执行端数据根。
+      NAS_COLLECTION_READ_ROOT: /collection
+      # 本机 Docker 私有 bridge 显式允许 HTTP；跨主机应使用 TLS。
+      NAS_COLLECTION_WORKER_ALLOW_HTTP: "true"
+    # 服务启动与实际能力就绪分开，由应用验证令牌和随机探针。
+    depends_on:
+      - nas-engine-helper
+      - nas-collection-worker
+  # 固定获取服务只执行受审核的网页获取与文件复制适配器。
+  nas-collection-worker:
+    # 必须为清单核实的不可变摘要，不接受 latest。
+    image: ${NAS_COLLECTION_IMAGE:?缺少经过核验的获取服务镜像}
+    labels:
+      # 与当前桌面 Compose 实例精确一致。
+      nas.engines.deployment: ${NAS_DESKTOP_PREFIX:?缺少实例前缀}
+      # 启动和停止前核验的独立角色。
+      nas.desktop.role: collection
+    # 显式停止后保持停止，重启恢复持久作业。
+    restart: unless-stopped
+    volumes:
+      # 本服务独占写 staging/complete/状态，主应用只读。
+      - collection_data:/collection
+      # 预配置来源、rclone 配置和私有令牌，管理员在专用卷内维护。
+      - collection_secrets:/run/nas-collection
+    environment:
+      # 仅在容器网络监听，不发布宿主端口。
+      NAS_COLLECTION_WORKER_ADDR: :8092
+      # 作业、暂存和完成产物的持久受控根。
+      NAS_COLLECTION_WORKER_DATA_DIR: /collection
+      # 不存在时以受限权限创建随机令牌。
+      NAS_COLLECTION_WORKER_TOKEN_FILE: /run/nas-collection/token
+      # 管理员授权的本地根/remote 列表，缺失时为空。
+      NAS_COLLECTION_WORKER_SOURCES_FILE: /run/nas-collection/sources.json
+      # 远程存储私密配置，缺失时不开放 remote 能力。
+      NAS_COLLECTION_WORKER_RCLONE_CONFIG_FILE: /run/nas-collection/rclone.conf
+      # 固定版本的网页获取工具路径。
+      NAS_COLLECTION_WORKER_YTDLP: /opt/collection/bin/yt-dlp
+      # 镜像发行清单记录的文件复制工具。
+      NAS_COLLECTION_WORKER_RCLONE: /usr/bin/rclone
+      # 合并视频和提取音频所需的后处理工具。
+      NAS_COLLECTION_WORKER_FFMPEG: /usr/bin/ffmpeg
+      # 开始作业前保留的空闲空间，单位 MiB。
+      NAS_COLLECTION_WORKER_MIN_FREE_MB: 512
+      # 单作业最大字节数，默认 20 GiB。
+      NAS_COLLECTION_WORKER_MAX_BYTES: 21474836480
+      # 单作业最大文件数。
+      NAS_COLLECTION_WORKER_MAX_FILES: 1000
+      # 同时执行作业数，防止媒体播放被获取任务挤占。
+      NAS_COLLECTION_WORKER_MAX_CONCURRENT: 2
+    # 仅加入本实例固定 bridge，不能使用 host 网络。
+    networks:
+      - engines
+    # 不授予 Docker socket、特权模式或附加能力。
+    security_opt:
+      - no-new-privileges:true
+    # 子进程必须在服务退出前停止并释放文件。
+    stop_grace_period: 30s
+    logging:
+      # 轮转脱敏中文日志。
+      driver: local
+      options:
+        # 单份最多 10 MiB。
+        max-size: "10m"
+        # 最多保留三份。
+        max-file: "3"
+volumes:
+  # 仅属于此桌面实例的获取数据卷。
+  collection_data:
+    # 与运行资源核验使用相同的精确名字。
+    name: ${NAS_DESKTOP_PREFIX}-collection-data
+    # 只使用本机 Linux 数据盘。
+    driver: local
+    labels:
+      # 稳定部署归属。
+      nas.engines.deployment: ${NAS_DESKTOP_PREFIX}
+      # 固定数据角色。
+      nas.engines.role: collection-data
+  # 秘密配置与产物分开备份，不属于原固定引擎助手。
+  collection_secrets:
+    # 与运行资源核验使用相同的精确名字。
+    name: ${NAS_DESKTOP_PREFIX}-collection-secrets
+    # 禁止驱动选项将其指向外部共享。
+    driver: local
+    labels:
+      # 稳定部署归属。
+      nas.engines.deployment: ${NAS_DESKTOP_PREFIX}
+      # 固定秘密角色。
+      nas.engines.role: collection-secrets

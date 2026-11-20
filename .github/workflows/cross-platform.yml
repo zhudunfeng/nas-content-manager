@@ -1,10 +1,6 @@
 # 构建检查只生成明确标识的开发包；正式离线发行需审核工具材料后单独执行release.py。
 name: Cross-platform build
 on:
-  # 推送时核对三目标共享内核。
-  push:
-  # 合并请求执行同样的检查。
-  pull_request:
   # 维护者可手动运行，不自动发布release。
   workflow_dispatch:
 # CI只读取源码，不写仓库或发布镜像。

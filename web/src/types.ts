@@ -1,7 +1,7 @@
 /** 内容的五种分类。 */
 export type ContentType = 'video' | 'image' | 'comic' | 'novel' | 'music'
 /** 应用的导航页面。 */
-export type ViewName = 'home' | ContentType | 'favorites' | 'libraries' | 'downloads' | 'jobs' | 'settings'
+export type ViewName = 'home' | ContentType | 'favorites' | 'libraries' | 'collection' | 'downloads' | 'jobs' | 'settings'
 /** 当前登录的管理员。 */
 export interface User {
   /** 用户编号。 */ id: number
@@ -298,4 +298,264 @@ export interface EngineSourceSync {
   /** 超过八个来源时必须由用户明确选择。 */ selectionRequired: boolean
   /** 搜索就绪或等待配置的状态。 */ state: string
   /** 不包含站点地址或密钥的说明。 */ message: string
+}
+
+/** 收集来源的固定类型，不增加媒体分类。 */
+export type CollectionKind = 'rss' | 'web' | 'local' | 'remote' | 'external'
+/** 固定外部服务；空值保留仅入口和成品目录模式。 */
+export type CollectionExternalService = '' | 'moviepilot' | 'autobangumi' | 'sonarr' | 'radarr'
+/** 一个可检测的收集能力。 */
+export interface CollectionCapability {
+  /** 固定能力标识。 */ kind: string
+  /** 当前是否实际可用。 */ available: boolean
+  /** 中文能力诊断。 */ reason: string
+  /** 实际工具版本。 */ version: string
+}
+/** 执行端预配置的受控目录或连接。 */
+export interface CollectionWorkerSource {
+  /** 受控来源编号。 */ id: string
+  /** 本地目录或远程连接类型。 */ kind: string
+  /** 安全显示名称。 */ name: string
+}
+/** 收集模块的平台与目录能力。 */
+export interface CollectionCapabilities {
+  /** 各固定适配器的实际能力。 */ capabilities: CollectionCapability[]
+  /** 执行端已经配置的来源。 */ workerSources: CollectionWorkerSource[]
+  /** 可只读登记的授权根目录。 */ roots: { /** 根目录编号。 */ id: string; /** 显示名称。 */ name: string; /** 已授权根路径。 */ path: string }[]
+  /** 执行端是否已连接。 */ workerReady: boolean
+  /** 执行端中文诊断。 */ workerReason: string
+}
+/** 不包含私密来源地址的收集来源。 */
+export interface CollectionSource {
+  /** 来源编号。 */ id: string
+  /** 固定来源类型。 */ kind: CollectionKind
+  /** 显示名称。 */ name: string
+  /** 是否允许新收集。 */ enabled: boolean
+  /** 并发修改版本。 */ revision: number
+  /** 是否保存了私密配置。 */ hasSecret: boolean
+  /** 预配置目录或连接编号。 */ rootId: string
+  /** 根目录以内的相对路径。 */ path: string
+  /** 是否明确允许此来源的私网访问。 */ allowPrivate: boolean
+  /** RSS 刷新间隔，单位分钟。 */ refreshMinutes: number
+  /** 网页输出规格或本地导入模式。 */ outputProfile: string
+  /** 最近成功时间。 */ lastSuccessAt: string
+  /** 已脱敏的最近错误。 */ lastError: string
+  /** 允许公开展示的外部应用入口。 */ externalUrl: string
+  /** 已选择的固定外部服务。 */ externalService: CollectionExternalService
+  /** 是否存在仅写入的 API 连接配置。 */ apiConfigured: boolean
+  /** RSS 首次基线时间。 */ baselineAt: string
+  /** 创建时间。 */ createdAt: string
+  /** 更新时间。 */ updatedAt: string
+}
+/** 创建或完整修订来源的提交体。 */
+export interface CollectionSourceInput {
+  /** 固定来源类型。 */ kind: CollectionKind
+  /** 显示名称。 */ name: string
+  /** 是否启用来源。 */ enabled: boolean
+  /** 仅写入的来源地址，编辑留空保留。 */ url?: string
+  /** 预配置目录或连接编号。 */ rootId: string
+  /** 根目录以内的相对路径。 */ path: string
+  /** 此来源是否允许私网。 */ allowPrivate: boolean
+  /** RSS 刷新间隔分钟数。 */ refreshMinutes: number
+  /** 输出规格或本地导入模式。 */ outputProfile: string
+  /** 无凭据、无查询参数的公开应用入口。 */ externalUrl: string
+  /** 固定外部服务，普通来源不设置。 */ externalService?: CollectionExternalService
+  /** 仅写入的服务地址和凭据；字段留空保留同一服务的已有值。 */ connection?: { /** 私密实例基址。 */ baseUrl: string; /** 已有 API 凭据。 */ apiKey: string }
+  /** 明确断开连接，普通编辑不能隐式清除。 */ clearConnection?: boolean
+  /** 编辑所需的乐观修订号。 */ revision?: number
+}
+/** 外部服务连接与真实能力快照。 */
+export interface CollectionExternalInfo {
+  /** 固定服务标识。 */ service: CollectionExternalService
+  /** 实际检测的产品版本。 */ version: string
+  /** 是否为已确认支持的版本。 */ supported: boolean
+  /** 服务端确认的固定能力。 */ capabilities: string[]
+  /** 脱敏中文说明。 */ message: string
+}
+/** 外部订阅、任务或历史的公开白名单字段。 */
+export interface CollectionExternalItem {
+  /** 明确的上游目标编号。 */ id: string
+  /** TVDB 或 TMDB 元数据编号。 */ externalId: string
+  /** 安全标题。 */ title: string
+  /** movie/series/rss/bangumi 类型。 */ mediaType: string
+  /** 年份，零表示未知。 */ year: number
+  /** 季号，零表示未指定。 */ season: number
+  /** 启用状态，未知时为空。 */ enabled: boolean | null
+  /** 上游状态，不等于本系统入库状态。 */ status: string
+  /** 百分比进度，未知时为空。 */ progress: number | null
+  /** 历史记录时间。 */ date: string
+}
+/** 单个外部业务分区的有界列表。 */
+export interface CollectionExternalPage {
+  /** 当前连接能力。 */ info: CollectionExternalInfo
+  /** 公开条目。 */ items: CollectionExternalItem[]
+  /** 已知总数。 */ total: number
+  /** 页码。 */ page: number
+  /** 每页上限。 */ pageSize: number
+  /** 部分视图等限制说明。 */ message: string
+}
+/** 已有外部目录或画质选项。 */
+export interface CollectionExternalOption {
+  /** 外部选项编号。 */ id: string
+  /** 安全显示名称。 */ name: string
+}
+/** 新增受监控资源时的只读选择，不构成本地目录授权。 */
+export interface CollectionExternalOptions {
+  /** 实例中已有的外部目录。 */ roots: CollectionExternalOption[]
+  /** 实例中已有的画质配置。 */ profiles: CollectionExternalOption[]
+}
+/** 固定外部业务操作，不能传任意路径或原始 JSON。 */
+export interface CollectionExternalMutation {
+  /** 单目标动作。 */ kind: 'add' | 'monitor' | 'search' | 'download' | 'download_start' | 'download_stop' | 'organize' | 'scrape' | 'refresh_library'
+  /** 绑定版本和有效期的私密工作流选择编号。 */ selectionId?: string
+  /** 仅刮削时明确确认覆盖已有元数据。 */ confirmOverwrite?: boolean
+  /** 上游目标编号。 */ targetId?: string
+  /** 明确的元数据身份。 */ externalId?: string
+  /** 用户确认的资源或 RSS 名称。 */ title?: string
+  /** movie/series/rss。 */ mediaType?: string
+  /** MP 电视剧季号。 */ season?: number
+  /** 已有外部目录编号。 */ rootId?: string
+  /** 已有外部画质编号。 */ profileId?: string
+  /** 目标启用状态，不使用相对切换。 */ enabled?: boolean
+  /** AB 仅写入的 RSS 地址。 */ rssUrl?: string
+}
+/** 持久动作的安全公开结果。 */
+export interface CollectionExternalAction {
+  /** 本地动作编号。 */ id: string
+  /** 幂等请求编号。 */ requestId: string
+  /** 来源编号。 */ sourceId: string
+  /** 接受时的来源版本。 */ sourceRevision: number
+  /** 动作种类。 */ kind: string
+  /** 已确认的上游目标。 */ targetId: string
+  /** 已持久化的执行事实；人工解除阻塞不等于成功。 */ state: 'dispatching' | 'succeeded' | 'failed' | 'uncertain' | 'unconfirmed'
+  /** 脱敏中文结果。 */ message: string
+  /** 创建时间。 */ createdAt: string
+  /** 更新时间。 */ updatedAt: string
+}
+/** MoviePilot 受控选择，不包含原始资源、路径或凭据。 */
+export interface CollectionMoviePilotChoice {
+  /** 服务端不透明选择编号。 */ id: string
+  /** 可安全展示的标题。 */ title: string
+  /** 服务端确认的选择种类。 */ kind: 'media' | 'release' | 'download' | 'download_root' | 'library_root' | 'file' | 'dir' | 'organize_plan' | 'scrape_plan' | 'library_job'
+  /** 实际外部状态，仅作说明。 */ status: string
+  /** 已确认的 TMDB 身份。 */ externalId: string
+  /** 电影或电视剧类型。 */ mediaType: string
+  /** 年份，零表示未知。 */ year: number
+  /** 季号，零表示未知。 */ season: number
+  /** 仅已配置为不覆盖的媒体目录允许作为整理目标。 */ organizeAllowed?: boolean
+}
+/** MoviePilot 每一步的有界受控选项。 */
+export interface CollectionMoviePilotChoices {
+  /** 当前版本可执行的选择。 */ choices: CollectionMoviePilotChoice[]
+  /** 中文状态、范围或限制说明。 */ message: string
+}
+/** RSS 的确定性匹配规则。 */
+export interface CollectionRule {
+  /** 必须包含的关键词。 */ include: string
+  /** 排除关键词。 */ exclude: string
+  /** 质量关键词。 */ quality: string
+  /** 最小字节数，零表示不限制。 */ minBytes: number
+  /** 最大字节数，零表示不限制。 */ maxBytes: number
+  /** 明确的剧集匹配表达式。 */ episodePattern: string
+}
+/** 已保存的订阅与授权规则。 */
+export interface CollectionSubscription {
+  /** 订阅编号。 */ id: string
+  /** 所属 RSS 来源。 */ sourceId: string
+  /** 显示名称。 */ name: string
+  /** 是否运行此规则。 */ enabled: boolean
+  /** 并发修改版本。 */ revision: number
+  /** 目标媒体分类。 */ contentType: ContentType
+  /** 待确认或明确授权的自动模式。 */ mode: 'review' | 'automatic'
+  /** 匹配与排除规则。 */ rule: CollectionRule
+  /** 是否独立创建目标库。 */ createLibrary: boolean
+  /** 现有目标库编号。 */ libraryId: number
+  /** 明确的文件选择表达式。 */ selectionPattern: string
+  /** 下次计划运行时间。 */ nextRunAt: string
+  /** 创建时间。 */ createdAt: string
+  /** 更新时间。 */ updatedAt: string
+}
+/** 保存订阅的完整提交体。 */
+export type CollectionSubscriptionInput = Omit<CollectionSubscription, 'id' | 'revision' | 'nextRunAt' | 'createdAt' | 'updatedAt'> & { /** 编辑所需的乐观修订号。 */ revision?: number }
+/** 持久保存的脱敏候选资源。 */
+export interface CollectionCandidate {
+  /** 候选编号。 */ id: string
+  /** 所属来源。 */ sourceId: string
+  /** 来源标题，仅按文本展示。 */ title: string
+  /** 已知字节数，零表示未知。 */ sizeBytes: number
+  /** 发布时间。 */ publishedAt: string
+  /** 匹配和人工决策状态。 */ decision: string
+  /** 脱敏中文决策说明。 */ reason: string
+  /** 并发决策版本。 */ revision: number
+  /** 发现时间。 */ createdAt: string
+  /** 已关联的任务编号。 */ taskId: string
+}
+/** 经过受控预览的文件。 */
+export interface CollectionFile {
+  /** 安全相对路径。 */ path: string
+  /** 字节数。 */ size: number
+  /** 源文件修改时间。 */ modTime: number
+  /** 文件完整性摘要。 */ sha256: string
+}
+/** 网页预览的格式说明。 */
+export interface CollectionFormat {
+  /** 固定适配器格式编号。 */ id: string
+  /** 可显示的格式说明。 */ label: string
+  /** 输出扩展名。 */ extension: string
+}
+/** 有时效且绑定来源计划的预览。 */
+export interface CollectionPreview {
+  /** 服务端预览编号。 */ id: string
+  /** 受控来源编号。 */ sourceId: string
+  /** 预览标题。 */ title: string
+  /** 获取方式。 */ kind: string
+  /** 输出规格或导入模式。 */ profile: string
+  /** 预览文件清单。 */ files: CollectionFile[]
+  /** 可展示的格式信息。 */ formats: CollectionFormat[]
+  /** 已知总字节数。 */ totalBytes: number
+  /** 预览失效时间。 */ expiresAt: string
+  /** 有界中文预览说明。 */ warnings: string[]
+}
+/** 获取与入库分别保存状态的统一任务。 */
+export interface CollectionTask {
+  /** 任务编号。 */ id: string
+  /** 首次提交时的幂等键。 */ requestId: string
+  /** 关联来源编号。 */ sourceId: string
+  /** 关联候选编号。 */ candidateId: string
+  /** 获取方式。 */ kind: string
+  /** 安全显示标题。 */ title: string
+  /** 目标媒体分类。 */ contentType: ContentType
+  /** 获取阶段状态。 */ state: string
+  /** 独立入库状态。 */ importState: string
+  /** 已脱敏的业务说明。 */ message: string
+  /** 操作修订号。 */ revision: number
+  /** 原 BT 下载编号。 */ downloadId: string
+  /** 目标媒体库编号。 */ libraryId: number
+  /** 当前扫描任务编号。 */ jobId: number
+  /** 实际入库媒体编号。 */ itemIds: number[]
+  /** 已知总字节数。 */ bytes: number
+  /** 创建时间。 */ createdAt: string
+  /** 最近更新时间。 */ updatedAt: string
+}
+/** 脱敏的中文任务事件。 */
+export interface CollectionEvent {
+  /** 事件编号。 */ id: number
+  /** 所属任务编号。 */ taskId: string
+  /** 实际执行阶段。 */ stage: string
+  /** 中文事件内容。 */ message: string
+  /** 发生时间。 */ createdAt: string
+}
+/** 统一任务列表的分页结果。 */
+export interface CollectionTaskPage {
+  /** 当前页任务。 */ tasks: CollectionTask[]
+  /** 满足筛选的总数。 */ total: number
+  /** 当前页码。 */ page: number
+  /** 每页大小。 */ pageSize: number
+}
+/** 候选列表的分页结果。 */
+export interface CollectionCandidatePage {
+  /** 当前页候选。 */ candidates: CollectionCandidate[]
+  /** 满足筛选的总数。 */ total: number
+  /** 当前页码。 */ page: number
+  /** 每页大小。 */ pageSize: number
 }

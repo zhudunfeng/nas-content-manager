@@ -96,6 +96,9 @@ func (a *App) loadDownloadGate(ctx context.Context) (*downloadGate, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err = a.addCollectionGate(ctx, gate, roots); err != nil {
+		return nil, err
+	}
 	anchors := make(map[string]bool)
 	for root := range roots {
 		gate.roots = append(gate.roots, root)

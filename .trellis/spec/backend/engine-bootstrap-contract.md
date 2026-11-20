@@ -10,7 +10,7 @@ Applies to `cmd/nas-engine-helper`, `internal/enginehelper`, `internal/enginecon
 - Public API: `GET /api/engines`, `POST /api/engines/probe`, `POST /api/engines/initializations`, `GET /api/engines/initializations/{id}?afterSequence=`, `POST /api/engines/initializations/{id}/retry`, `POST /api/engines/{component}/start`, `POST /api/engines/search/sync-sources`.
 - Helper-only `POST /api/engines/stop-all` takes strict `{"requestId":"<id>"}`, returns the existing `TaskResponse` with HTTP202, and persists action `stop` for exactly `qbittorrent,jackett`. `/nas-engine-helper stop-all` connects to the existing Unix socket and polls up to90s; it never opens a second store or installation lease. This is not a new public app endpoint.
 - Shared safe DTOs are `Status`, `Component`, `TaskResponse`, `Task`, `Step`, `Layer`, `Event`, `InitializationRequest`, `ActionRequest` in `internal/enginecontract/models.go`. Exact public shapes are documented in `docs/api.md`.
-- Helper uses its own SQLite application ID/schema in `state/state.db`; never add helper task/secret tables to the main app database. Main database remains schema v2.
+- Helper uses its own SQLite application ID/schema in `state/state.db`; never add helper task/secret tables to the main app database. Collection upgrades the main database to schema v3 without moving helper tables into it.
 
 ## 3. Contracts
 

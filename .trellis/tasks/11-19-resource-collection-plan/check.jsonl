@@ -1,0 +1,9 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/tasks/11-19-resource-collection-plan/prd.md", "reason": "核对首期全部来源覆盖与实际验证边界"}
+{"file": ".trellis/tasks/11-19-resource-collection-plan/info.md", "reason": "核对阶段出口、目录归属和平台矩阵"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "媒体读取、事务和资源生命周期回归"}
+{"file": ".trellis/spec/backend/download-contract.md", "reason": "不可绕过选文件和发布门禁"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "精确资源归属和完整停止"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "同源类型化API和响应式交互"}
+{"file": ".trellis/spec/backend/collection-contract.md", "reason": "收集任务版本、门禁、worker和BT持续同步的可执行契约"}

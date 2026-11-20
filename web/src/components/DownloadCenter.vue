@@ -17,7 +17,10 @@ interface PendingAction {
   /** 服务端幂等键。 */ requestId: string
   /** 该操作首次提交时看到的修订号。 */ revision: number
 }
-const emit = defineEmits<{ 'open-item': [item: Item] }>()
+/** 收集中心可按已有引用定位到原下载详情。 */
+interface Props { /** 等待打开的原下载编号。 */ initialDownloadId?: string }
+const props = defineProps<Props>()
+const emit = defineEmits<{ 'open-item': [item: Item]; 'opened-download': [] }>()
 /** 下载列表每页展示三十项。 */
 const pageSize: number = 30
 /** 正常状态轮询后端快照的间隔，不直接轮询下载器。 */
@@ -54,6 +57,7 @@ const pendingActions: Map<string, PendingAction> = new Map<string, PendingAction
 const actionControllers: Set<AbortController> = new Set<AbortController>()
 let controller: AbortController | null = null
 let testController: AbortController | null = null
+let requestedController: AbortController | null = null
 let pollTimer: ReturnType<typeof setTimeout> | undefined
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 let disposed: boolean = false
@@ -276,12 +280,30 @@ function canPause(download: Download): boolean {
   return ['downloading', 'queued', 'seeding', 'metadata'].includes(download.state)
 }
 
+/** 读取收集任务关联的原下载，打开前仍复用服务端归属检查。 */
+async function openRequestedDownload(id: string): Promise<void> {
+  requestedController?.abort()
+  if (!id || disposed) return
+  const request: AbortController = new AbortController()
+  requestedController = request
+  try {
+    const result = await api<{ download: Download }>(`/downloads/${encodeURIComponent(id)}`, 'GET', undefined, request.signal)
+    if (request.signal.aborted || requestedController !== request || disposed) return
+    selectedDownload.value = result.download
+    emit('opened-download')
+    restartRefresh(true)
+  } catch (failure: unknown) {
+    if (!isAbort(failure) && requestedController === request) { actionError.value = `关联下载详情暂不可用：${errorMessage(failure)}`; emit('opened-download') }
+  } finally { if (requestedController === request) requestedController = null }
+}
+
 watch(search, (value: string): void => {
   clearTimeout(searchTimer)
   searchTimer = setTimeout((): void => { query.value = value.trim(); page.value = 1 }, searchDelayMilliseconds)
 })
 watch([filter, query], (): void => { if (page.value !== 1) page.value = 1; else restartRefresh() })
 watch(page, (): void => { restartRefresh() })
+watch((): string | undefined => props.initialDownloadId, (id: string | undefined): void => { if (id) void openRequestedDownload(id) }, { immediate: true })
 onMounted((): void => { document.addEventListener('visibilitychange', visibilityChanged); void refresh() })
 onBeforeUnmount((): void => {
   disposed = true
@@ -289,6 +311,7 @@ onBeforeUnmount((): void => {
   clearTimeout(searchTimer)
   controller?.abort()
   testController?.abort()
+  requestedController?.abort()
   for (const request of actionControllers) request.abort()
   document.removeEventListener('visibilitychange', visibilityChanged)
 })

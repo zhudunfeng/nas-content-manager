@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1
+# 使用与主应用相同的 Go 工具链和模块锁定文件构建受控获取服务。
+FROM golang:1.27.4-bookworm AS builder
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY cmd/nas-collection-worker ./cmd/nas-collection-worker
+COPY internal/collectioncontract ./internal/collectioncontract
+COPY internal/collectionworker ./internal/collectionworker
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/nas-collection-worker ./cmd/nas-collection-worker
+
+# 发行镜像的实际摘要和工具版本清单共同锁定系统工具，不在服务启动时升级。
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates python3 python3-venv ffmpeg rclone tini \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/collection \
+    && groupadd --gid 1000 nas && useradd --uid 1000 --gid nas --no-create-home nas \
+    && mkdir -p /collection /run/nas-collection /app \
+    && chown nas:nas /collection /run/nas-collection \
+    && chmod 700 /run/nas-collection
+COPY deploy/collection-requirements.txt /app/collection-requirements.txt
+RUN /opt/collection/bin/pip install --no-cache-dir --no-deps --require-hashes -r /app/collection-requirements.txt \
+    && dpkg-query -W ca-certificates python3 ffmpeg rclone tini > /app/system-tools.txt \
+    && /opt/collection/bin/yt-dlp --version > /app/yt-dlp-version.txt
+COPY --from=builder /out/nas-collection-worker /app/nas-collection-worker
+# 默认仅在容器内监听，Compose 不发布宿主控制端口。
+ENV NAS_COLLECTION_WORKER_ADDR=:8092
+# 私有作业状态、隔离暂存和不可变产物的持久根。
+ENV NAS_COLLECTION_WORKER_DATA_DIR=/collection
+# 私密 token 在首次启动创建，不包含在镜像或 Compose 插值中。
+ENV NAS_COLLECTION_WORKER_TOKEN_FILE=/run/nas-collection/token
+# 授权本地根和 remote 列表，缺失时不开放相关能力。
+ENV NAS_COLLECTION_WORKER_SOURCES_FILE=/run/nas-collection/sources.json
+# 私密远程连接配置，缺失时不开放远程复制。
+ENV NAS_COLLECTION_WORKER_RCLONE_CONFIG_FILE=/run/nas-collection/rclone.conf
+# 网页下载器采用已核验版本与摘要。
+ENV NAS_COLLECTION_WORKER_YTDLP=/opt/collection/bin/yt-dlp
+# 文件复制工具采用镜像固定发行版本。
+ENV NAS_COLLECTION_WORKER_RCLONE=/usr/bin/rclone
+# 视频合并/提取音频使用镜像中的固定工具。
+ENV NAS_COLLECTION_WORKER_FFMPEG=/usr/bin/ffmpeg
+USER 1000:1000
+ENTRYPOINT ["/usr/bin/tini", "--", "/app/nas-collection-worker"]

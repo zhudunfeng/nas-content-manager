@@ -126,15 +126,18 @@ def validate_tools_manifest(manifest: dict[str, Any], target: str, packaged: boo
 def validate_images_manifest(manifest: dict[str, Any]) -> str | None:
     """统一验证镜像元数据与可选归档，拒绝空值、可变标签及非固定摘要。"""
     required = {"schemaVersion", "appImage", "helperImage"}
-    optional = {"archive", "archiveSha256"}
-    if not required.issubset(manifest) or set(manifest) - required - optional or type(manifest["schemaVersion"]) is not int or manifest["schemaVersion"] != 1:
+    optional = {"archive", "archiveSha256", "collectionImage"}
+    if not required.issubset(manifest) or set(manifest) - required - optional or type(manifest["schemaVersion"]) is not int or manifest["schemaVersion"] not in (1, 2):
         raise ValueError("镜像清单字段或版本无效")
-    for key in ("appImage", "helperImage"):
+    if (manifest["schemaVersion"] == 2) != ("collectionImage" in manifest):
+        raise ValueError("v2镜像清单必须包含获取执行端，v1不接受该字段")
+    image_keys = ("appImage", "helperImage", "collectionImage") if manifest["schemaVersion"] == 2 else ("appImage", "helperImage")
+    for key in image_keys:
         value = manifest[key]
         if not isinstance(value, str) or len(value) > 512 or not IMAGE_REFERENCE.fullmatch(value):
             raise ValueError("镜像必须使用固定仓库摘要或精确本地sha256 ID")
-    if manifest["appImage"] == manifest["helperImage"]:
-        raise ValueError("应用与助手必须使用不同的固定镜像，不能混用相同入口")
+    if len({manifest[key] for key in image_keys}) != len(image_keys):
+        raise ValueError("应用、助手与获取执行端必须使用不同的固定镜像")
     if ("archive" in manifest) != ("archiveSha256" in manifest):
         raise ValueError("离线镜像路径和摘要必须同时提供")
     if "archive" not in manifest:
@@ -304,11 +307,11 @@ def build(args: argparse.Namespace) -> Path:
             tools = install_tools(Path(args.tools_manifest).resolve(), args.target, stage) if args.tools_manifest else None
             if args.images_manifest:
                 install_images(Path(args.images_manifest).resolve(), stage)
-            for name in ("compose.desktop.yaml",):
+            for name in ("compose.desktop.yaml", "compose.desktop.collection.yaml"):
                 if not (ROOT / name).is_file():
                     raise ValueError(f"发布文件缺失：{name}")
                 shutil.copyfile(ROOT / name, stage / name)
-            for name in ("windows.md", "release.md"):
+            for name in ("windows.md", "release.md", "collection.md"):
                 source = ROOT / "docs" / name
                 if source.is_file():
                     (stage / "docs").mkdir(exist_ok=True)
