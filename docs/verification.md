@@ -391,3 +391,13 @@ python -B scripts/project_env.py -- python -B scripts/verify_external.py --binar
 ```
 
 本轮没有连接真实用户实例、安装第三方套件或改动真实媒体。MoviePilot六阶段能力限定已核实的精确3.2.8版本，未知版本不会推断开放。索引刷新是从已配置媒体服务器同步到MoviePilot，不代表触发Emby/Plex扫盘；目标媒体服务器、插件和NAS权限仍需真实部署验收。Linux仅交叉构建，未运行Linux/Docker；稀疏Range不证明解码或吞吐性能。详细协议依据和质量记录位于 `.trellis/tasks/11-20-collection-external-api/research/`。
+
+## 2026-11-20 密码显示与隐藏验收
+
+登录、创建账户、确认密码及外部服务API凭据统一使用小眼睛按钮，默认隐藏，各字段独立切换；清空、重新打开及切换外部服务后恢复掩码。
+
+- 真实Vue组件浏览器矩阵24场景通过：三类页面×375/768/1024/1440宽度×明暗主题，覆盖反复切换、原值与原生属性保持、独立状态、键盘和可见焦点、44px按钮、禁用、清空/重挂载、准确标签及提示关联、无溢出与无意外提交。
+- 最终创建账户间距复验8组合通过，规则至确认标签间距均为22px；外部服务空值/非空值切换复验另8组合通过。独立375px登录抽样通过，最终手机浅色及桌面深色截图已目视检查。
+- 最终 `python -B scripts/project_env.py -- npm --prefix web run build` 通过，包含严格Vue类型检查与Vite生产构建。临时测试源码已删除，浏览器已关闭；结果和截图位于 `.runtime/verify/password-visibility/`，详细记录位于 `.trellis/tasks/11-20-password-visibility/research/`。
+
+上述浏览器检查在独立context拦截全部API，仅验证真实前端组件、原密码策略及提交值；没有向用户后端创建账户、登录或保存外部凭据，也不构成真实后端认证通过的证据。

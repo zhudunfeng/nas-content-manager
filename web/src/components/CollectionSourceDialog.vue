@@ -5,6 +5,7 @@ import { collectionKindLabels } from '../collection'
 import type { CollectionCapabilities, CollectionExternalService, CollectionKind, CollectionSource, CollectionSourceInput, CollectionWorkerSource } from '../types'
 import DialogShell from './DialogShell.vue'
 import Icon from './Icon.vue'
+import PasswordInput from './PasswordInput.vue'
 
 /** 来源配置只接收公开字段，秘密永不预填。 */
 interface Props {
@@ -103,7 +104,8 @@ onBeforeUnmount((): void => { controller.abort(); url.value = ''; baseUrl.value 
         <label>选择服务<select v-model="externalService" :disabled="saving" @change="changeService"><option v-for="(label, value) in serviceNames" :key="value" :value="value">{{ label }}</option></select><span class="field-hint">自动检测兼容版本，无需选择 API 版本。</span></label>
         <template v-if="usesAPI">
           <label>服务地址<input v-model="baseUrl" type="url" :required="!keepsConnection && !clearConnection" :disabled="saving || clearConnection" autocomplete="off" spellcheck="false" :placeholder="keepsConnection ? '留空保留已保存地址' : '例如 http://192.168.1.10:8989'" /><span class="field-hint">填写实例首页基址，可保留反向代理子路径，不需要追加 /api。地址保密，不会回显。</span></label>
-          <label>{{ externalService === 'autobangumi' ? 'API Token' : 'API Key / Token' }}<input v-model="apiKey" type="password" :required="!keepsConnection && !clearConnection" :disabled="saving || clearConnection" autocomplete="new-password" spellcheck="false" :placeholder="keepsConnection ? '已保存凭据，留空保留' : '粘贴外部服务中已生成的 API 凭据'" /><span class="field-hint">{{ externalService === 'autobangumi' ? '使用 AutoBangumi 中 scope 为 api 的 Token。' : '在外部应用设置中获取 API 凭据。' }} 凭据仅写入，不在列表和编辑中显示。</span></label>
+          <!-- 切换服务时重建凭据框，即使旧值为空也恢复默认掩码。 -->
+          <div class="collection-secret-field"><label for="source-api-key">{{ externalService === 'autobangumi' ? 'API Token' : 'API Key / Token' }}</label><PasswordInput :key="externalService" id="source-api-key" v-model="apiKey" secret-label="API 凭据" :required="!keepsConnection && !clearConnection" :disabled="saving || clearConnection" autocomplete="new-password" spellcheck="false" aria-describedby="source-api-key-hint" :placeholder="keepsConnection ? '已保存凭据，留空保留' : '粘贴外部服务中已生成的 API 凭据'" /><span id="source-api-key-hint" class="field-hint">{{ externalService === 'autobangumi' ? '使用 AutoBangumi 中 scope 为 api 的 Token。' : '在外部应用设置中获取 API 凭据。' }} 凭据仅写入，不在列表和编辑中显示。</span></div>
           <label class="collection-check"><input v-model="allowPrivate" type="checkbox" :disabled="saving" /><span>允许连接我的 NAS 私网服务<span class="field-hint">内网或本机地址需要明确勾选。保留地址、元数据地址和越界重定向仍会拒绝。</span></span></label>
         </template>
       </template>
@@ -138,3 +140,7 @@ onBeforeUnmount((): void => { controller.abort(); url.value = ''; baseUrl.value 
     </form>
   </DialogShell>
 </template>
+
+<style scoped>
+.collection-secret-field { display: flex; flex-direction: column; gap: 9px; min-width: 0; font-weight: 500; }
+</style>

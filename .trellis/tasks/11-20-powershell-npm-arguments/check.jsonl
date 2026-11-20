@@ -1,0 +1,4 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "真实npm/Vite入口回归"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "前端类型检查和生产构建"}

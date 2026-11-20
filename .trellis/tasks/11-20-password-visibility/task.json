@@ -1,0 +1,33 @@
+{
+  "id": "password-visibility",
+  "name": "password-visibility",
+  "title": "密码输入框增加显示与隐藏切换",
+  "description": "",
+  "status": "completed",
+  "dev_type": "frontend",
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-20",
+  "completedAt": "2026-11-20",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "web/src/components/PasswordInput.vue",
+    "web/src/components/Icon.vue",
+    "web/src/App.vue",
+    "web/src/components/CollectionSourceDialog.vue",
+    ".trellis/spec/frontend/app-contract.md",
+    "docs/verification.md"
+  ],
+  "notes": "共享密码显示切换组件已完成，默认隐藏、各字段独立，清空/重挂载/换服务恢复掩码。最终类型检查与构建、24组浏览器矩阵、独立登录、8组服务切换和8组间距复验及独立质量复核通过；无遗留临时测试源码。详细证据见research/及.runtime/verify/password-visibility/。保持未提交、未归档。",
+  "meta": {}
+}

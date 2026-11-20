@@ -1,0 +1,5 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "npm原生解析与Windows入口"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "Vite和前端质量要求"}

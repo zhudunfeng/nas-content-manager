@@ -12,9 +12,19 @@ export default defineConfig({
     // 保持会话同源，将 API 和健康检查转发到 Go 服务。
     proxy: {
       // 业务接口的本机后端地址。
-      '/api': 'http://127.0.0.1:8090',
+      '/api': {
+        // 业务接口仍转发至本机 Go 服务。
+        target: 'http://127.0.0.1:8090',
+        // 保留浏览器 Host，使后端继续按原始 Origin 校验同源请求。
+        changeOrigin: false,
+      },
       // 存储就绪检查的本机后端地址。
-      '/healthz': 'http://127.0.0.1:8090',
+      '/healthz': {
+        // 健康检查仍转发至本机 Go 服务。
+        target: 'http://127.0.0.1:8090',
+        // 保留浏览器 Host，使健康检查同样遵循原始 Origin 校验。
+        changeOrigin: false,
+      },
     },
   },
   // 构建目标兼容现代 NAS 客户端浏览器。

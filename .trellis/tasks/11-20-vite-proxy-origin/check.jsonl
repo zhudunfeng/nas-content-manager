@@ -1,0 +1,4 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "跨站写入仍拒绝"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "Vite代理契约与头部保留"}

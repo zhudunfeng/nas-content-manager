@@ -1,0 +1,4 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "表单、密码策略和可访问性契约"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "共享密码组件复用"}
