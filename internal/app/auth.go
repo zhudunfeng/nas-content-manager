@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net"
 	"net/http"
 	"strings"
@@ -13,7 +14,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// newPasswordHint 说明首次创建管理员时的密码长度与字符类别要求。
+// newPasswordHint 说明创建管理员或修改新密码时的长度与字符类别要求。
 const newPasswordHint = "密码需为 10–72 位，同时包含大写字母、小写字母、数字和英文特殊字符（如 !@#$%），不允许中文、空格或表情"
 
 // credentials 定义登录和首次设置的输入。
@@ -92,7 +93,7 @@ func (a *App) setup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := &User{ID: 1, Username: input.Username}
-	if !a.createSession(w, r, user.ID) {
+	if !a.createSession(w, r, accountSnapshot{user: *user, passwordHash: string(hash), authRevision: 0}) {
 		return
 	}
 	a.logger.Info("首次管理员设置完成", "userId", user.ID)
@@ -114,22 +115,21 @@ func (a *App) login(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &input) {
 		return
 	}
-	var user User
-	var hash string
-	err = a.db.QueryRowContext(r.Context(), "SELECT id,username,password_hash FROM users WHERE username=?", strings.TrimSpace(input.Username)).Scan(&user.ID, &user.Username, &hash)
-	if err != nil || len(input.Password) > 72 || bcrypt.CompareHashAndPassword([]byte(hash), []byte(input.Password)) != nil {
+	var account accountSnapshot
+	err = a.db.QueryRowContext(r.Context(), "SELECT id,username,password_hash,auth_revision FROM users WHERE username=?", strings.TrimSpace(input.Username)).Scan(&account.user.ID, &account.user.Username, &account.passwordHash, &account.authRevision)
+	if err != nil || len(input.Password) > 72 || bcrypt.CompareHashAndPassword([]byte(account.passwordHash), []byte(input.Password)) != nil {
 		a.logger.Warn("管理员登录验证失败")
 		fail(w, 401, "用户名或密码不正确")
 		return
 	}
-	if !a.createSession(w, r, user.ID) {
+	if !a.createSession(w, r, account) {
 		return
 	}
 	a.mu.Lock()
 	delete(a.loginAttempts, ip)
 	a.mu.Unlock()
-	a.logger.Info("管理员登录成功", "userId", user.ID)
-	respond(w, 200, map[string]any{"user": user})
+	a.logger.Info("管理员登录成功", "userId", account.user.ID)
+	respond(w, 200, map[string]any{"user": account.user})
 }
 
 // allowLogin 在有限内存中限制来源的登录频率。
@@ -162,22 +162,71 @@ func tokenHash(token string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// createSession 创建有效期七天的随机会话，并清除过期会话。
-func (a *App) createSession(w http.ResponseWriter, r *http.Request, userID int64) bool {
+// createSession 以账号快照创建七天随机会话，凭据变化时拒绝设置 Cookie。
+func (a *App) createSession(w http.ResponseWriter, r *http.Request, account accountSnapshot) bool {
 	data := make([]byte, 32)
 	if _, err := rand.Read(data); err != nil {
 		fail(w, 500, "无法创建登录会话")
 		return false
 	}
 	token := hex.EncodeToString(data)
-	expires := time.Now().UTC().Add(7 * 24 * time.Hour)
-	_, _ = a.db.ExecContext(r.Context(), "DELETE FROM sessions WHERE expires_at<?", now())
-	if _, err := a.db.ExecContext(r.Context(), "INSERT INTO sessions(token_hash,user_id,expires_at) VALUES(?,?,?)", tokenHash(token), userID, expires.Format(time.RFC3339Nano)); err != nil {
+	publicID, err := newSessionID()
+	if err != nil {
+		fail(w, 500, "无法创建登录会话")
+		return false
+	}
+	createdAt := time.Now().UTC()
+	expires := createdAt.Add(7 * 24 * time.Hour)
+	browser, operatingSystem := sessionClient(r.UserAgent())
+	session := storedAccountSession{tokenHash: tokenHash(token), sessionID: publicID, createdAt: createdAt, expiresAt: expires, clientBrowser: browser, clientOS: operatingSystem}
+	if err = saveAccountSession(r.Context(), a.db, account, session); errors.Is(err, errAccountChanged) {
+		a.logger.Warn("登录会话创建因账号凭据变化被拒绝", "userId", account.user.ID)
+		fail(w, 409, errAccountChanged.Error())
+		return false
+	} else if err != nil {
 		fail(w, 500, "无法保存登录会话")
 		return false
 	}
+	// 历史时间小数位数不固定，只清理前一日以前的记录，避免误删同秒仍有效会话。
+	if err = deleteExpiredAccountSessions(r.Context(), a.db, createdAt); err != nil {
+		a.logger.Warn("过期登录会话暂未清理，将在后续登录时重试")
+	}
 	http.SetCookie(w, &http.Cookie{Name: "nas_session", Value: token, Path: "/", HttpOnly: true, Secure: a.config.CookieSecure || r.TLS != nil, SameSite: http.SameSiteStrictMode, MaxAge: 7 * 24 * 3600, Expires: expires})
 	return true
+}
+
+// sessionClient 把有界 UA 映射为固定类别，仅作客户端提示而非可信设备身份。
+func sessionClient(userAgent string) (string, string) {
+	if userAgent == "" || len(userAgent) > 1024 {
+		return "unknown", "unknown"
+	}
+	agent := strings.ToLower(userAgent)
+	browser, operatingSystem := "other", "other"
+	switch {
+	case strings.Contains(agent, "edg/") || strings.Contains(agent, "edga/") || strings.Contains(agent, "edgios/") || strings.Contains(agent, "edge/"):
+		browser = "edge"
+	case strings.Contains(agent, "opr/") || strings.Contains(agent, "opera/"):
+		browser = "opera"
+	case strings.Contains(agent, "firefox/") || strings.Contains(agent, "fxios/"):
+		browser = "firefox"
+	case strings.Contains(agent, "chrome/") || strings.Contains(agent, "crios/") || strings.Contains(agent, "chromium/"):
+		browser = "chrome"
+	case strings.Contains(agent, "safari/"):
+		browser = "safari"
+	}
+	switch {
+	case strings.Contains(agent, "iphone") || strings.Contains(agent, "ipad") || strings.Contains(agent, "ipod") || strings.Contains(agent, "macintosh") && strings.Contains(agent, "mobile/"):
+		operatingSystem = "ios"
+	case strings.Contains(agent, "android"):
+		operatingSystem = "android"
+	case strings.Contains(agent, "windows"):
+		operatingSystem = "windows"
+	case strings.Contains(agent, "macintosh") || strings.Contains(agent, "mac os x"):
+		operatingSystem = "macos"
+	case strings.Contains(agent, "linux"):
+		operatingSystem = "linux"
+	}
+	return browser, operatingSystem
 }
 
 // sessionUser 根据 HttpOnly Cookie 查询仍有效的管理员会话。
@@ -186,12 +235,11 @@ func (a *App) sessionUser(r *http.Request) *User {
 	if err != nil || len(cookie.Value) != 64 {
 		return nil
 	}
-	var user User
-	err = a.db.QueryRowContext(r.Context(), "SELECT u.id,u.username FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.expires_at>?", tokenHash(cookie.Value), now()).Scan(&user.ID, &user.Username)
+	session, err := readAccountSession(r.Context(), a.db, tokenHash(cookie.Value), time.Now())
 	if err != nil {
 		return nil
 	}
-	return &user
+	return &session.account.user
 }
 
 // logout 立即撤销当前持久会话并清除浏览器 Cookie。

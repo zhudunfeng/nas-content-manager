@@ -1,6 +1,6 @@
 # 功能验证记录
 
-最新验证日期：**2026-11-20（Asia/Singapore）**。各章节保留相应实施日期和历史结果。本记录区分已经执行的检查与目标设备待验事项，不将编译成功、稀疏文件或短视频样本视为完整 NAS 性能验收。
+最新验证日期：**2026-11-23（Asia/Shanghai）**。各章节保留相应实施日期和历史结果。本记录区分已经执行的检查与目标设备待验事项，不将编译成功、稀疏文件或短视频样本视为完整 NAS 性能验收。
 
 ## 搜种扩展验证（2026-11-18）
 
@@ -415,3 +415,103 @@ python -B scripts/project_env.py -- python -B scripts/verify_external.py --binar
 - 最终审查修复后的Go vet、清理单测后的全包编译、前端严格类型检查与生产构建通过；重新完成Windows amd64应用/桌面/助手，以及Linux amd64、arm64应用/助手交叉构建。CodeGraph同步成功。最终独立审查及补充质量检查见任务的 `research/quality-review.md`，最终协议55项证据为 `.runtime/verify/cmp-final/result.json`。
 
 本轮未拉取或运行四个真实产品镜像、连接用户账号或修改真实媒体。Linux文件权限、Docker Desktop实际卷、首次初始化、目标NAS网络/UID/ACL、真实媒体服务器和掉电恢复仍需目标环境验收；交叉编译和协议fixture不能替代这些证据。详细命令及结果位于 `.trellis/tasks/11-20-collection-component-install/research/runtime-validation.md`。
+
+## 2026-11-23 S01 可重放回归基线
+
+新增有界编排 `scripts/verify_baseline.py`、长期编排自检、脚本矩阵及真实NAS验收档案模板。业务API、数据库和原有验证器在本步骤未改。使用方式见 [基线说明](baseline.md)，实际命令与产物见 `.trellis/tasks/11-23-nas-validation-baseline/implementation.md`。
+
+- Windows本机使用同一构建实际运行两次core，各 **52项**通过，分别使用独立目录和端口；覆盖鉴权、五媒体、扫描/收藏标签进度、SQLite快照与5GiB稀疏Range。证据 `.runtime/verify/s01-core-1/`、`s01-core-2/`。稀疏文件只证明HTTP偏移，不能作为真实解码/吞吐/目标性能成绩。
+- 实际领域组合 `.runtime/verify/s01-domain/run-manifest.json` 全部passed：下载 **36项**、固定外部协议与工作流 **83项**、发布边界 **83项**。前两项是实际应用与本地协议fixture；发布为既有self-test，不能冒充真实BT、第三方产品或正式发行归档验收。本次未选search/engines/components/collection，保留not_run，历史结果不并入本轮计数。
+- 最终独立复核后编排自检 **39项**通过（`s01-review-selftest`），覆盖真实自有进程树/旁观进程、超时、端口冲突、非法/重复/链接及Windows路径别名、脱敏、结果分类。链接清理与证据保存的两次完整故障注入均实际exit1且清单failed/finishedAt正确，证据 `s01-review-finally-failure`、`s01-review-evidence-failure`；另 `s01-review-tool-cleanup` 核验真实工具exit0仍因清理错误整体failed/exit1并保留命令。这些是预期失败断言，不记产品通过。开发中的失败运行保留未覆盖。
+- 本轮 `go vet ./...`、`go test ./...`、Windows主程序/worker构建、前端严格类型检查与生产构建通过。当前Go各包无保留单测，因此go test仅是包编译证据。所有命令经项目环境入口，可控缓存/临时目录位于仓库.runtime；未生成持久临时单测类。
+- target模板实际只完成结构验证：`s01-target`中档案结构passed，M1 blocked、M2/M3 not_run，整体exit2。没有登录设备、导入通过声明或运行真实Docker。Linux实际权限/进程组、NAS卷与UID/ACL、真实媒体/浏览器性能、外部产品及隔离恢复/断电仍需目标证据；不阻塞S02本机实施。
+
+公开证据限清单引用的脱敏日志/证据并需人工复核；不要上传含凭据和数据库的整个运行根。独立复核及调试复盘保存在S01的research目录。
+
+## 2026-11-23 S02.1 账号迁移与凭据快照防线
+
+S02仍在实施。本片增加schema5的账号修订、独立公开会话编号与有限客户端类别，兼容原密码/旧Cookie；登录使用bcrypt验证前的hash/revision快照条件建会话，避免旧验证线程在凭据更新后补建有效会话。在线改密、会话管理页面和离线重置尚未交付。实际设计和证据见 `.trellis/tasks/11-23-nas-account-lifecycle/`。
+
+- 7个顶层临时Go行为测试通过，包含真正schema1/3/4增量迁移保留性、旧Cookie/重启、hash-only/revision-only/both确定性竞态、精确到期/同秒可变小数/纳秒时间、数据库约束、迁移失败回滚、新schema拒绝及单连接事务内会话重验。日志`.runtime/verify/s02-1-go-checks.log`，新增临时单测源已清除。
+- 最终本机产物`.runtime/bin/s02-1-stable/nas.exe`（SHA256 `be86e7447505884e18ebacbc66d6f6fb3a85759e4f1a3970b5d3424e77a742f6`）完成账号 **43项**、受控外部API与真实schema3迁移 **84项**、核心五媒体/SQLite快照/5GiB稀疏Range **52项**回归。证据分别为`s02-1-account-final3`、`s02-1-external-4`、`s02-1-core-4`；外部协议fixture不代表真实产品实例，稀疏文件只证明HTTP偏移。
+- 核心回归曾暴露存量Windows未读小正文连接重置。失败`core-1/core-3`和S01旧产物对照保留；最终统一security收尾覆盖成功202/logout及401/403/429，只在已知不超过64KiB且无Expect时有界消费剩余正文，一秒读取预算，保留原生Close语义和媒体无全局WriteTimeout。10个临时HTTP行为测试通过，覆盖重复真实短连接、部分/全部已读JSON、不完整/慢正文、keep-alive关闭与正常复用，以及大/分块/Expect跳过；日志`http-finish-go`、`http-keepalive-go`位于`.runtime/verify/s02-1-*`。临时源已删除。
+- 本轮gofmt、Go vet、删除临时单测后的全包编译和Windows主程序构建通过；无保留单测的`go test`只记编译证据。集成输出经验证器脱敏，不能反推原始业务stdout不存在秘密；当前新增日志已源码核对。
+
+独立复核另外6个顶层Go行为测试通过并清源，重建产物SHA与stable一致；新根`s02-1-review-account`、`s02-1-review-external`、`s02-1-review-core`分别43/84/52项通过，vet/全包编译/前端严格类型与生产构建通过。原始内存日志专项直接覆盖实际login/createSession路径的固定旧中文密码、bcrypt、bearer及SHA摘要、原始UA与清理错误标记，未使用持久脱敏器；不泛称所有stdout或未来接口均已动态验证。详见任务`research/quality-review.md`。S02.1无剩余确定问题，已进入S02.2；Windows本机结果与Linux/NAS实际锁、终端、权限和媒体性能验收分开记录。未操作真实账号、用户媒体、Docker或第三方工具安装。
+
+## 2026-11-23 S02.2 在线账号安全与会话管理
+
+设置页新增局部账号安全区域，支持原密码改密、实际当前会话与有界分页、指定会话撤销、再认证后退出其他会话。改密原子推进账号修订并撤销全部旧Cookie，要求重新登录；原弱/中文密码仍可作为原密码升级。S02.2本机实施与独立复核完成，S02.3停机离线重置继续实施中。
+
+- 独立fresh产物`.runtime/bin/s02-2-review/nas.exe`，21,334,016字节，SHA256 `2d8c2ed03b85e9b4c1ddbcca87cda119df44f2f17cab726d509abcf056d3873a`。真实账号HTTP **75项**与核心五媒体/用户状态/SQLite快照/5GiB稀疏Range **52项**通过，证据为`s02-2-review-account`、`s02-2-review-core`；稀疏文件只证明HTTP偏移，不代表真实长媒体性能。
+- 实施者9个顶层临时Go测试通过；独立复核另6个顶层行为测试覆盖双改密/CAS、撤销冲突优先级、事务失败/取消/精确到期回滚、修订溢出、原始行有界分页、双预算并发/容量、严格JSON/query与原始内存业务日志秘密检查。独立直接转译执行生产`password.ts` **54项**密码边界及32标点通过。本次生成的临时测试源码已删除；清源后全包`go test`仅是编译证据，不重复记作行为测试。
+- 最终真实Edge/Playwright **138项**通过：**122真实浏览器、14受控呈现、2资产身份**，不将受控429/409/网络响应呈现算作实际后端执行。覆盖两个真实会话、DB独立核对当前身份/完整分页、400保留登录、各撤销与改密、秘密清理、迟到读取与未知写不重发、375/768/1024/1440×明暗、键盘/modal/Esc。结果`s02-2-review-browser-final`的cleanupFailed=false、frontendUnchanged=true；复制后前端资源清单SHA256为`3194b81659ed5e2a4bb045cea3460c243a6c362688c55387a14e2eee9759111a`。手机双主题、桌面暗色及两个确认框已目视检查。
+- 复核真实复现“另一表单空密码框已显示时，同值清空不能恢复掩码”，以局部输入key重建修复，保留`s02-2-review-browser-empty-mask`失败根。另三类真实app+Edge故障注入证明含密码Playwright异常只记录类型、关闭失败整体failed且继续回收其余context/app，原始异常秘密不进入捕获输出/持久文本；预期failed运行不加进138项正常计数。浏览器原始内存秘密检查与已脱敏服务日志分别说明，未泛称扫描全部服务stdout。
+- 账号验证器接入统一baseline的`account`组合；主线实际执行`s02-2-account-baseline` **75项**通过，其余8组not_run，不与上面的同类账号结果叠加计数。编排自检曾因固定单次心跳采样失败，诊断实测到活旁观者文件的暂时空值，改为有界有效心跳等待并保留回收断言；最终`s02-2-account-orchestrator-selftest-3` **41项**通过，历史失败和诊断保留。
+- gofmt、Go vet、清源全包编译、Vue严格类型检查及生产构建、Python AST/导入/类型标注与局部空白检查通过。独立复核未发现剩余S02.2确定缺陷；报告为账号任务`research/quality-review-s02-2.md`、`browser-review.md`，编排记录为`baseline-account-integration.md`，保留S02.1旧报告。
+
+本片没有离线CLI通过声明，未重跑的其它领域不并入本轮。真实Linux/NAS锁、终端、权限、容器及目标性能仍待相应环境独立验收。未操作用户实例/真实账号或媒体，未提交、部署或归档。
+
+## 2026-11-23 S02.3 停机离线重置与账号最终本机验收
+
+新增显式`nas account reset-password --data-dir <已有目录> [--password-stdin]`。维护分派先于正常配置/服务初始化；仅受支持schema5、原数据目录独占锁和唯一有效管理员可进入，短事务只更新hash/revision并删除旧会话。真实终端两次无回显确认，重定向必须显式旗标，错误/取消不启动业务。用法见[账号说明](accounts.md)，完整独立报告为`.trellis/tasks/11-23-nas-account-lifecycle/research/quality-review-s02-3.md`。
+
+- 最终Windows产物`.runtime/bin/s02-3-review-http-final/nas.exe`，21,447,680字节，SHA256 `8bc6a1a144d86bd0a65e38bafc9f1388b21bf2545c9a29168d92ebdf0dbf135a`。同一产物独立账号**157项=在线83+离线74**、核心媒体**52项**通过，根分别为`s02-3-account-review-http-final`与`s02-3-core-review-http-final`。核心含五媒体、真实FFmpeg、状态/SQLite快照和5GiB稀疏Range；稀疏文件仅证明HTTP偏移，进程Job回收不是正常停服证明。
+- 主线最后真实执行统一baseline的account组合，`.runtime/verify/s02-3-baseline-account-review-http-final/run-manifest.json`为passed；实际子结果157=83+74、offline requested/passed与覆盖标记均真、子进程正常exit0、相同产物SHA/大小，其余8组not_run。此轮重复账号不叠加到独立157项。编排自检44项、72个覆盖负例与变异检查见账号任务`research/baseline-account-integration.md`，不把负例重复计入44项。
+- 独立复核修复bcrypt.Cost宽松预检：四个显式兼容版本、精确长度、两位ASCII成本与53字节bcrypt-base64先核对；尾缀/非法salt/digest/未知版本/带符号成本均拒绝且库不变。新增临时Go行为测试三批共九个顶层组通过并删除本轮源，清源全包`go test`只记编译。
+- 保留旧候选57项后WinError10054的真实失败与30次定向29个413/1个RST对照。最终账号局部已知超64KiB分支以最多65,537实际字节、250ms局部deadline经真实MaxBytesReader收尾；共享小体defer、大体/未知/Expect skip和媒体超时不改。新产物100次独立短连接逐次413、逐次health200，无补发；分片、1TiB声明停滞、Expect首状态非100、chunked、提前EOF及精确64KiB通过。Go原生可能另加500ms半关闭等待，不能把局部预算说成整连接期限或任意网络必达保证。
+- 真实Windows Console **11场景**通过，两提示分别覆盖KEY_EVENT Ctrl+C、系统CTRL_C_EVENT、Ctrl+D，另含确认不符、管道未EOF取消、终端加stdin旗标拒绝、32标点/退格和CRLF成功。模式准确503→1008→503；原始双流与可见viewport先扫描再保存安全证据，屏幕范围不扩称全滚动缓冲。真实ACL拒绝写和完整描述符长度/字节恢复通过；目录别名Junction同锁竞争通过，文件symlink实际创建返回WinError1314，仅记录替代覆盖。
+- gofmt、Go vet、清源全包编译、严格Vue类型检查及Windows/Linux双架构构建通过；本片未改前端，不重复汇总历史浏览器138项。实际工具链**Go1.27.4 windows/amd64**，`go.mod`语言声明为**1.26.0**。Linux amd64产物SHA `509c94eabe0b4d166f5f0cf196f986d6ba6cd323ff4aad6d47517b9beead3a10`，arm64为`522c8cc2f71dab710d2c8fac70596f4b40e079b1c521b5b89aeb6166009bc5c2`；两者仅交叉编译，未执行。
+
+S02按`local_complete_target_pending`记录本机完成。真实Linux/NAS锁、终端、权限、目标文件系统和部署门禁仍待验；事件接入由S04后续联调。所有本地命令经项目环境入口，未修改用户级环境、真实账号/媒体或Docker，未提交、部署或归档。
+
+## 2026-11-23 S03.1 共用快照与独立只读检查
+
+旧`GET /api/backup`已复用唯一快照租约：一次带context的VACUUM INTO、受限临时目录、精确成员与文件身份检查、只读SQLite结构/页长/完整性/外键核验及固定64KiB流式摘要，校验后使用同一只读句柄下载。GET/HEAD、原响应头及竞争409保持；schema仍为5，没有交付定时持久备份、恢复CLI或UI。正式契约见`.trellis/spec/backend/backup-contract.md`，完整独立报告为`.trellis/tasks/11-23-nas-backup-recovery/research/quality-review-s03-1.md`。
+
+- 独立复核修复未知目录的无界`ReadDir(-1)`，改成最多读取两项。真实2048未知成员反例检查实测39次分配，清理拒绝后2049成员完整保留、锁释放；39不是跨平台固定承诺。最终临时Go行为测试**8顶层组/22子场景**通过，覆盖并发Close/竞争、身份替换、权限/Sync/Close/删除/空间故障、真实SQLite反例、预算与取消、64MiB真实生成中取消及Windows实际DACL/只读检查。30个pass事件不计为30条独立断言；两份本轮临时源码已精确删除，详细证据`s03-1-review-behavior-final`。
+- 最终新Windows产物`.runtime/bin/s03-1-review-final/nas.exe`为**21,551,616字节**，SHA256 `49754b278cfb26c3725efbcf2f45d462fbda72617eb7442859f5a21e0b40e790`。该同一产物在全新隔离根独立完成备份**38项**、账号**157=在线83+离线74项**、核心媒体大文件**52项**。证据依次为`s03-1-review-backup-final/result.json`、`s03-1-review-account-final/result.json`、`s03-1-review-core-final/run-manifest.json`；core完成时间为原始UTC `2026-11-23T04:23:33.947+00:00`，其余8组not_run。实施者旧SHA `6915b06f8ab0f46bd4be43218fe1208f2e81e148471b2f4479ac4e4d35c815d7`的自查保留为历史，不与新SHA累加通过数。
+- 备份专项有真实慢HTTP租约/第二请求409/断连清理重试、真实收藏进度事务及独立下载摘要核对；单连接VACUUM期间其它SQL可等待，不称真正并行写。自有隔离Console **3次CTRL_C_EVENT正常停服**，应用强制回收**0次**、`cleanupFailures=[]`，含慢下载中停止、DB/锁释放、原端口释放、同根立即重启和未知sentinel保留。原始应用双流秘密检查先于脱敏。core的OwnedProcess Job回收只记资源回收，不算正常停服证据；5GiB稀疏Range仅证明HTTP偏移。
+- gofmt、vet、清源全包编译、Vue严格类型检查和Python AST通过。实际Go工具链为**1.27.4 windows/amd64**，语言声明1.26.0。Linux amd64交叉产物21,350,440字节、SHA `d79616cb6048eee9c08233f053e24b30a3e712c6a92ccd27017d828a04e23ea8`；arm64为20,060,219字节、SHA `899f2bffac5a5a2bbbacdee15cdfd89b0cdd81d8d88f8b8e7d3450a80622d834`。它们未执行；checks证据`s03-1-review-checks-final/result.json`。清源后的无测试全包go test只记编译。
+
+S03.1按`local_complete_target_pending`记账，S03整体仍实施中。真实Linux/NAS权限、挂载/多卷、FULL/IOERR、拔盘/断电和大库性能待验。DB包含敏感索引、口令/会话哈希与私密引用，database-only不代表公开或整栈备份；本片不撤销快照旧会话，独立恢复准备仍属后续片。未操作用户实例、真实账号/媒体或Docker，未提交、部署或归档。
+
+## 2026-11-23 S03.2.1 备份存储与离线维护兼容
+
+正常启动新增 raw schemaV6 五张 STRICT 表及默认关闭的策略/未绑定store单例，同笔事务推进头版本6；重启保留storeId。没有创建持久备份根、启用策略或新增API、执行器、调度、轮转。当前快照checker只接受6；离线账号支持显式集合{5,6}，并要求事务实际user_version与预检完全相等。正式契约见`.trellis/spec/backend/backup-storage-contract.md`，独立报告为`.trellis/tasks/11-23-nas-backup-recovery/research/quality-review-s03-2-1.md`，SHA256 `0506957e6e2e1a461fc4e7362dbf40fda52c6fb9d27e80812f912b3e3211dded`。
+
+- 独立检查用真实伪6快照复现隐藏生成列漏检，将`pragma_table_info`修为`pragma_table_xinfo`并逐列要求hidden=0、精确字段名/声明类型，保留STRICT和两单例检查。该探针不证明全部DDL约束/索引语义。最终Go行为**8顶层组、653通过叶子子场景、0失败**；658个带斜线pass事件含5个嵌套容器，不记为叶子或断言。证据`s0321-review-behavior-final`含实际事件与计数审计、原始秘密扫描通过；临时源按SHA核对后精确删除。
+- fresh Windows产物`.runtime/bin/s0321-review-final-pass/nas.exe`，**21,581,824字节**，SHA256 `18a0a77fe0c10256e7eb406d0b07f64210901b8320012a78f2b02fc810a188cd`。同一产物完成storage **17项**、backup **38项**、account `--offline` **162=在线83+离线79项**、core `--large-file` **52项**；对应证据根为`s0321-review-storage-final`、`s0321-review-backup-final`、`s0321-review-account-final`、`s0321-review-core-final`。不与实施者自查或旧片相加。
+- storage覆盖真实v5结构迁移、旧Cookie/业务保留、冲突全回滚、future7拒绝、默认不建根和重启身份稳定。离线维护在真实5/6中成功及双向版本漂移拒绝，即使schema cookie不变也不得写；非空备份域/授权/ownership和pending sentinel保留。13条真实Console记录的原始及可见屏幕秘密扫描、实际ACL写拒绝与完整恢复通过；不把可分享脱敏日志扩大成所有线上原始流的秘密证明。
+- storage/backup分别**3次真实Console正常停服、0次活应用强制回收、cleanupFailures=[]**，原始日志先扫描后脱敏；core仍为OwnedProcess/Job回收（退出1、owned-tree-reclaimed），不算正常停服或泛称全部进程0次强制。最终两个本轮Windows产物确切路径活进程0、源码漂移[]、临时源0；实际总审计结束`2026-11-23T05:07:11.046614+00:00`。证据`.runtime/verify/s0321-review-checks-final-pass/final-audit.json`。storage/backup/account结果自身没有finishedAt，不从mtime补造。
+- gofmt、Go vet、清源全包编译、Python AST/类型标注、Vue严格类型和局部空白检查通过，清源go test无测试只记编译。Go工具链1.27.4、语言声明1.26.0。新Linux amd64交编产物21,377,958字节、SHA `80018064e68585b27b6cfc1421dc506b4220dfcb0a2028da3e9b7e9ec5fb7ba1`；arm64为20,063,537字节、SHA `ac22498c66801c37d509c341d8cc15b667dde1829a4b10b0499f0289ca1caeb7`，均未运行。
+- 失败历史保留且不累加：独立首轮`behavior-1`有extra-hidden叶子及其顶层失败（338通过叶子+5容器）；独立工程首轮误把git退出0的LF/CRLF stderr提示当失败，仅修runtime判定，在全新checks/artifacts根重跑。实施者storage首次因sqlite_sequence无序比较假失败，9项已完、2正常停服及**1次自有活应用强制回收**单列；core首次漏FFmpeg参数blocked、产品未运行。完整证据及自查旧SHA见独立报告，不覆盖旧根。
+
+随机失败验证只证明可返回的注入Reader EOF/short可回滚；固定Go默认crypto/rand.Reader底层熵灾难可能runtime fatal，未动态验证其崩溃恢复，也不承诺受控返回。200运行/64所有权/2048有效键和跨表关系仍留后片服务。S03.2.1记`local_complete_target_pending`，S03整体未完；真实Linux/NAS、FULL/IOERR、拔盘/断电、多卷及生产大库性能仍待验。所有命令经项目环境入口，未提交、部署、归档或操作用户实例。
+
+## 2026-11-23 S03.2.2 受控备份根与平台发布
+
+新增`NAS_BACKUP_DIR`静态配置、根/锁/marker身份核验、严格owner/manifest格式及Windows/Linux无覆盖发布；保持包内能力，正常disabled/unbound启动不探测或创建备份根。未开放API、执行器、启用、调度、持久下载或轮转。正式契约为`.trellis/spec/backend/backup-publish-contract.md`；独立报告`research/quality-review-s03-2-2.md`位于S03任务下，115行/15,581字节，SHA256 `4baa31ee219316e75e2290f12f37201d97ca0f81a66d090386d81b069835bbdb`。
+
+- 独立修复Windows扩展名前ASCII空格绕过设备名检测（32个原始red反例及4个合法名称正例保留），以及Linux首次Stat失败丢弃Close错误。后者仅静态核对/交编。最终行为证据`s0322-review-behavior-final`，实际UTC `06:05:45.664895`至`06:06:14.115372`，**24顶层、257叶子、0嵌套容器、0 skip**；5个无子测试顶层单列，不能并入叶子或与旧轮相加。47个叶子及2个无子测试为checker新增，其余以独立前缀/新根复用回归，不称全部全新设计。
+- 真实Windows核验包括零共享锁/零数据Stat、junction换根及恢复后sticky阻断、未知深树49节点DACL/内容前后不变、owner实际占用句柄证明末删、目标损坏和最终移动/Close未知保同ID。没有文件symlink创建权限，不计该产品场景；SYSTEM同SID分支覆盖不代表真实SYSTEM运行。源借用同App唯一快照，不重开/Close/转属。
+- 最终Windows产物`.runtime/bin/s0322-review-final/nas.exe`，**21,593,600字节**、SHA256 `9839729e64f80e052f6e5acd3114e251f8fa5fbffad8276753d2a15148a43137`；同产物四新根`s0322-review-storage-final` **17项**、`s0322-review-backup-final` **38项**、`s0322-review-account-final --offline` **162=83+79项**、`s0322-review-core-final --large-file` **52项**通过。core实际完成UTC `2026-11-23T06:08:46.306+00:00`；其它结果无finishedAt，不从mtime补造。
+- storage/backup共**6次真实Console CTRL_C_EVENT正常停服、0次应用强制回收、cleanupFailures=[]**；core服务退出1、owned-tree-reclaimed仅记自有Job回收。慢下载取消后锁/DB/监听释放及同根重启通过。5GiB稀疏Range仍只证明偏移，非解码/大库性能。
+- gofmt、vet、清源go test包编译、空白检查、22份Python AST/方法注解、Vue typecheck/build和三平台fresh构建通过，工程证据`s0322-review-checks-final`。Linux amd64为21,379,424字节、SHA256 `c2fda79fb9f8a0715db24acaac047951fbe2400538ec67a43918d679a4a11752`；arm64为20,067,563字节、SHA256 `c76435628240db221a1511cfe23dd53f8c485bc7cae2e9bcc2ab9edb95929486`，均仅交编。四份临时Go源按最终SHA保存txt后精确清除；193行产品源清单SHA256 `0dd6d62aa89118b7e40e6291b23f38d9ea95780eb220f01dac2471734c08d199`。
+- checker最终audit实际UTC `2026-11-23T06:10:08.902760+00:00`；主线另从原始事件重算计数、重算193源及三产物、核四回归同产物/临时源txt摘要和确切二进制路径活进程，证据`.runtime/verify/s0322-mainline-closeout/evidence-readback.json`为passed。sourceDrift=[]、临时源0、确切活进程0。行为/工程及storage/backup先扫描原始输出再存脱敏证据；账号离线13条Console原始流/可见viewport另有检查，不把在线脱敏日志扩大成所有秘密的原始证明。
+- 原始red、深树夹具权限设置失败、第二全量轮及实施者旧失败/自查全部保留，均不与最终轮相加。主线复盘位于任务`research/root-publisher-debug-retrospective.md`，防止重用Go junction假设或重设已有根的继承DACL。所有本地命令经项目环境入口，没有改用户环境、提交、部署、归档或操作用户实例。
+
+本片记`local_complete_target_pending`，S03整体继续。目标事后余量不是源前峰值准入；后者、原ID无source对账及执行器属S03.2.3。真实Linux ext4/XFS/NAS、多卷/FULL/IOERR/拔盘、真实大库、进程崩溃恢复、系统崩溃及物理断电仍待验；写穿/同步协议成功不构成断电保证。
+
+## 2026-11-23 当前修改的 Windows 可用开发包
+
+按用户“快速在当前修改上形成一个可用版本”的新优先级，本轮交付已验收 S03.2.2 源码的成品，S03.2.3 三份未接线草稿逐字节保存 `.go.txt` 后仅精确移出自有编译路径；没有回退既存产品修改或开放未完成 API。交接报告为 S03 任务 `research/s03-2-3-draft-checkpoint.md`（SHA256 `44d640541b56f6a2114b699778f6fa7a8e7439da7ef11a2eb16b147f8716ee06`），原产品193项源摘要无漂移。
+
+- 前端 typecheck/build、清源Go包编译通过，原12包均无测试文件，不计作新增行为测试。现有 release.py 使用本轮 web/dist、新鲜源码与 webembed 标记生成两 EXE；没有重用上轮二进制。
+- ZIP为 `bin/releases/usable-20261123/qiku-0.1.0-windows-amd64-development.zip`，13,434,468字节，SHA256 `63fae8eda5f9b5b3e693350951ecbd25a9b84f0104b0309f93b82ae33bb72c74`；已解压至 `bin/usable-20261123/`。开发包未捆绑FFmpeg/ffprobe，不能作为完整离线包。操作说明见[当前可用构建](usable-preview.md)。
+- 实际成品 nas.exe 为15,505,920字节，SHA256 `8b5f58c721573387c9133134ada1e3fd79249db329b27deec7aa4e465579156e`；同一个成品在四个新隔离根的 core52（`--large-file`）、backup38、account162（`--offline`）、storage17共269项通过。core使用显式本机FFmpeg/ffprobe，5GiB稀疏样本只证明偏移协议。证据为 `.runtime/verify/usable-20261123-{core,backup,account,storage}/`。
+- 成品栖库.exe 为15,735,296字节，SHA256 `ba0c2a5cb3afdf278f710cfd4ea1e15aa78ee2053dff71adbcdf10d093258220`；verify_desktop.py 省略 web-dir 与 with-tray，实际 embedded/headless 模式通过17类检查：中文路径/工作目录、端口避让、内嵌HTML/健康、IPC/单实例、慢流中断、退出释放、原位覆盖及同配置立即重启等。两次退出耗时0.029/0.017秒；不代表所有设备停服上限，本轮未实际操作托盘菜单。脚本临时夹具已自行回收，主线按实际工具stdout保存在 `.runtime/verify/usable-20261123-mainline/desktop-observed-result.json`，不冒充脚本原生持久结果。
+- storage/backup共6次真实Console正常停服、0次应用强制回收、cleanupFailures为空；core的自有Job回收单列。主线 readback.json 实际UTC `2026-11-23T06:31:29.992738+00:00` 为passed：四套同成品、193源零漂移、归档与包内摘要吻合、三草稿编译源0、确切交付产物活进程0。没有覆盖旧S03.2.2的历史证据。
+- 本轮轻量独立检查记录在 S03 任务 `research/quality-review-usable-20261123.md`；仅检本次交付完整性，不重复计入旧S03.2.2行为数，不代替未来S03.2.3完整门禁。没有新增产品契约，因此正式backend备份spec保持原已验收内容，新增启动说明与本节记录。
+
+当前包是Windows本机开发可用版本；真实NAS/Linux运行、Docker部署、介质故障和断电未作为本轮通过项。策略仍关闭，定时、手动持久运行、历史下载、轮转和恢复准备仍留后续。未自动提交、部署、停止用户实例或修改用户配置。

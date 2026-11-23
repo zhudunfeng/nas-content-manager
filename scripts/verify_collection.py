@@ -226,7 +226,7 @@ class CollectionHarness(Harness):
         self.rss()
         # 确认数据库增量迁移与秘密隔离；公开普通库不能保存来源查询令牌。
         with sqlite3.connect(self.root / 'data/library.db') as database:
-            client.check(database.execute('PRAGMA user_version').fetchone()[0] == 4 and database.execute('PRAGMA integrity_check').fetchone()[0] == 'ok', 'v4增量数据库完整且保留原下载模块')
+            client.check(database.execute('PRAGMA user_version').fetchone()[0] == 6 and database.execute('PRAGMA integrity_check').fetchone()[0] == 'ok', 'v6增量数据库完整且保留原下载模块')
             dump = '\n'.join(database.iterdump())
             client.check('collection-test-secret' not in dump, 'RSS私密地址未保存到普通数据库')
         public = json.dumps(client.json('/api/collection/sources'), ensure_ascii=False)

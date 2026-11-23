@@ -1,0 +1,15 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/roadmap.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/info.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/research/reliability-implementation.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": "docs/api.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-account-lifecycle/info.md", "reason": "S02冻结实施契约与分片验收"}
+{"file": ".trellis/spec/backend/account-contract.md", "reason": "账号schema5、快照CAS与时间边界的实际契约"}
+{"file": ".trellis/tasks/11-23-nas-account-lifecycle/research/offline-cli-notes.md", "reason": "独立复核离线锁、受限数据库打开、取消与秘密输出"}
+{"file": ".trellis/spec/backend/baseline-contract.md", "reason": "复核账号baseline注册、失败语义与实际产物证据"}
+{"file": ".trellis/tasks/11-23-nas-account-lifecycle/research/offline-cli-design.md", "reason": "离线维护拒绝路径、原始秘密扫描与Windows真实Console验证设计"}

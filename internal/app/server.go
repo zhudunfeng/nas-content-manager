@@ -35,11 +35,12 @@ type App struct {
 	mu            sync.Mutex                   // 活跃任务与登录速率锁。
 	cancels       map[int64]context.CancelFunc // 可取消的任务句柄。
 	loginAttempts map[string]loginAttempt      // 有界登录限速记录。
+	accountLimits accountReauthLimiter         // 独立账号再认证预算，不被登录或换会话清除。
 	wake          chan struct{}                // 合并任务唤醒通知。
 	wg            sync.WaitGroup               // 等待后台任务退出。
 	cacheMu       sync.Mutex                   // 保证缓存预算检查与发布串行。
-	cleanupErr    error                        // 由 mu 保护的进程树收尾错误，退出时必须如实返回。
-	backupMu      sync.Mutex                   // 一次只生成一个一致性备份。
+	cleanupErr    error                        // 由 mu 保护的资源收尾错误，退出时必须如实返回。
+	backupMu      sync.Mutex                   // 共用快照生成、校验、下载、关闭和清理的唯一互斥。
 	streams       chan struct{}                // 限制并发大文件流数量。
 	readerSlots   chan struct{}                // 限制同时解压漫画或解析文本的请求数。
 	downloads     *downloadManager             // 独立下载协调器，不占用媒体扫描执行器。
@@ -259,6 +260,7 @@ func (a *App) routes() http.Handler {
 	a.torrentSearchRoutes(mux)
 	a.collectionRoutes(mux)
 	a.engineRoutes(mux)
+	a.accountRoutes(mux)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) { fail(w, http.StatusNotFound, "接口不存在") })
 	mux.HandleFunc("/", a.static)
 	return a.security(mux)
@@ -267,6 +269,8 @@ func (a *App) routes() http.Handler {
 // security 拒绝跨站写入、限制请求体，并提供默认安全响应头。
 func (a *App) security(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 统一收尾忽略或只读了一部分的小正文，成功与拒绝响应遵循相同的连接边界。
+		defer discardUnreadSmallBody(w, r)
 		defer func() {
 			if value := recover(); value != nil {
 				a.logger.Error("请求处理异常", "path", r.URL.Path, "error", fmt.Sprint(value))
@@ -306,6 +310,28 @@ func (a *App) security(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// discardUnreadSmallBody 有界消费已知小请求体的剩余内容，使关闭连接时仍可交付响应。
+func discardUnreadSmallBody(w http.ResponseWriter, r *http.Request) {
+	// 只兼容已知不超过普通 JSON 限额的正文；不等待大文件、未知长度或 100-continue。
+	if r.Body == nil || r.ContentLength <= 0 || r.ContentLength > 64<<10 || r.Header.Get("Expect") != "" {
+		return
+	}
+	controller := http.NewResponseController(w)
+	if err := controller.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
+		return
+	}
+	// 原始正文流保留已消费位置；EOF也表示handler已读完，不能据此误判连接损坏。
+	// 不解析或保留剩余数据，也不允许未发送完正文的客户端占满默认30秒读取预算。
+	if _, err := io.CopyN(io.Discard, r.Body, r.ContentLength); err != nil && !errors.Is(err, io.EOF) {
+		w.Header().Set("Connection", "close")
+		// 不清除失败预算，否则net/http后续关闭正文时可能再次等待未发完的数据。
+		_ = controller.SetReadDeadline(time.Now())
+		return
+	}
+	// 成功请求恢复预算；HTTP服务会在下一请求重新设置读取截止时间。
+	_ = controller.SetReadDeadline(time.Time{})
 }
 
 // auth 验证持久会话并将安全用户信息放入请求上下文。

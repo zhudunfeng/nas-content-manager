@@ -1,0 +1,29 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/roadmap.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/info.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/research/reliability-implementation.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": "docs/collection.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": "docs/components.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": "docs/windows.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/info.md", "reason": "S03.1已冻结最小实施与验收边界"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/research/snapshot-service-design.md", "reason": "共用快照与只读校验设计依据"}
+{"file": ".trellis/spec/backend/account-contract.md", "reason": "备份复用当前schema和离线维护边界，迁移不得破坏账号恢复"}
+{"file": ".trellis/spec/backend/baseline-contract.md", "reason": "复用隔离进程与完整账号回归，不以旧产物替代"}
+{"file": ".trellis/spec/backend/backup-contract.md", "reason": "复用S03.1实际快照所有权、校验与收尾契约"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/storage-schema6-contract.md", "reason": "S03.2.1精确五表、迁移和账号兼容边界，冻结后开始"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/research/schema6-storage-contract-review.md", "reason": "S03.2.1独立接缝报告，已冻结契约优先"}
+{"file": ".trellis/spec/backend/backup-storage-contract.md", "reason": "S03.2.2实施接缝：已验收存储/当前根发布冻结契约及独立研究，以当前冻结稿优先"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/research/quality-review-s03-2-1.md", "reason": "S03.2.2实施接缝：已验收存储/当前根发布冻结契约及独立研究，以当前冻结稿优先"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/root-publisher-contract.md", "reason": "S03.2.2实施接缝：已验收存储/当前根发布冻结契约及独立研究，以当前冻结稿优先"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/research/root-publisher-contract-review.md", "reason": "S03.2.2实施接缝：已验收存储/当前根发布冻结契约及独立研究，以当前冻结稿优先"}
+{"file": ".trellis/spec/backend/backup-publish-contract.md", "reason": "S03.2.3已冻结：上片本机独立验收与当前执行器/手动意图权威，六组接缝修订以当前契约为准，不提前调度轮转"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/research/quality-review-s03-2-2.md", "reason": "S03.2.3已冻结：上片本机独立验收与当前执行器/手动意图权威，六组接缝修订以当前契约为准，不提前调度轮转"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/executor-manual-contract.md", "reason": "S03.2.3已冻结：上片本机独立验收与当前执行器/手动意图权威，六组接缝修订以当前契约为准，不提前调度轮转"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/research/executor-manual-contract-review.md", "reason": "S03.2.3已冻结：上片本机独立验收与当前执行器/手动意图权威，六组接缝修订以当前契约为准，不提前调度轮转"}
+{"file": ".trellis/tasks/11-23-nas-backup-recovery/research/executor-manual-freeze-review.md", "reason": "S03.2.3已冻结：上片本机独立验收与当前执行器/手动意图权威，六组接缝修订以当前契约为准，不提前调度轮转"}

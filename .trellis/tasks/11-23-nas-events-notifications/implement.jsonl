@@ -1,0 +1,12 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/roadmap.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/info.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/research/reliability-implementation.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/external-collection-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-events-notifications/research/event-core-design.md", "reason": "事件核心研究输入，需按上片实际schema和冻结契约实施，不代表功能已交付"}

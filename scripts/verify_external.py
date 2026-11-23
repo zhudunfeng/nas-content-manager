@@ -9,6 +9,7 @@ if __name__ == '__main__':
     sys.dont_write_bytecode = True
 
 import argparse
+from contextlib import closing
 import http.server
 import json
 import os
@@ -25,6 +26,7 @@ import uuid
 from project_env import verification_directory
 from verify import Client, generate_password
 from verify_downloads import Harness
+from verify_schema import create_legacy_database
 
 
 class ExternalFixture:
@@ -428,18 +430,22 @@ class ExternalHarness(Harness):
         local_root = next(item['id'] for item in capabilities['roots'] if Path(item['path']).resolve() == (self.root / 'media').resolve())
         original = self.api('/api/collection/sources', 'POST', {'kind': 'local', 'name': '迁移前既有来源', 'enabled': True, 'rootId': local_root, 'path': '', 'allowPrivate': False, 'refreshMinutes': 30, 'outputProfile': 'video', 'externalUrl': ''})['source']
         self.stop()
-        with sqlite3.connect(self.root / 'data/library.db') as database:
-            database.execute('DROP TABLE collection_external_choices')
-            database.execute('DROP TABLE collection_external_actions')
-            database.execute('DROP TABLE collection_external_connections')
-            database.execute('PRAGMA user_version=3')
+        database_path = self.root / 'data/library.db'
+        with closing(sqlite3.connect(database_path)) as database:
+            checkpoint = database.execute('PRAGMA wal_checkpoint(TRUNCATE)').fetchone()
+            assert checkpoint[0] == 0, '隔离旧库准备前必须完整回收应用写入'
+        legacy_path = self.root / 'schema3-fixture.db'
+        preserved_counts = create_legacy_database(legacy_path, 3, database_path)
+        self.client.check(preserved_counts['users'] == 1 and preserved_counts['sessions'] >= 1 and preserved_counts['collection_sources'] == 1, '真实schema3夹具逐字段保留用户、旧会话和原来源，未混入新账号字段')
+        database_path.replace(self.root / 'before-schema3-fixture.db')
+        legacy_path.replace(database_path)
         self.start()
         self.api('/api/login', 'POST', self.credentials)
         preserved = self.api('/api/collection/sources')['sources']
         with sqlite3.connect(self.root / 'data/library.db') as database:
             version = database.execute('PRAGMA user_version').fetchone()[0]
             users = database.execute('SELECT count(*) FROM users').fetchone()[0]
-        self.client.check(version == 4 and users == 1 and any(item['id'] == original['id'] for item in preserved), 'schema3增量迁移到4保留用户和原来源')
+        self.client.check(version == 6 and users == 1 and any(item['id'] == original['id'] for item in preserved), '真实schema3经外部服务及账号/备份增量迁移到6，保留用户和原来源')
         rejected = self.source_body('sonarr', allowPrivate=False)
         self.api('/api/collection/sources', 'POST', rejected, expected=400)
         self.client.check(not self.external.events, 'HTTP私网未授权在保存时拒绝且没有发送凭据')

@@ -1,0 +1,65 @@
+{
+  "formatVersion": 1,
+  "description": "真实NAS待验档案：formatVersion为结构版本1，targetId为匿名设备组合编号或null，environment为设备资料，measurements为真实测量，gates为里程碑待验门禁；null表示未知/待提供。本模板校验不连接设备，不代表验收通过。不要填写账号、令牌、私密主机地址或原始媒体路径。",
+  "targetId": null,
+  "environment": {
+    "nasModel": {"description": "NAS品牌、型号或自建平台；未知保留null", "value": null},
+    "operatingSystem": {"description": "目标系统名称、精确版本、内核及发行方式", "value": null},
+    "architecture": {"description": "实际amd64/arm64架构，不以交叉编译通过代替设备验证", "value": null},
+    "cpu": {"description": "CPU型号、核数和可用硬件能力", "value": null},
+    "memoryGiB": {"description": "物理内存GiB及容器/虚拟机实际限制", "value": null},
+    "disks": {"description": "数据盘/系统盘类型、阵列、容量及测试时空闲量，不填写设备序列号", "value": null},
+    "filesystem": {"description": "数据库与媒体所在文件系统、挂载参数；数据库是否为本地盘", "value": null},
+    "uidGid": {"description": "进程实际UID/GID及容器映射；不可用时明确原因", "value": null},
+    "acl": {"description": "数据可写/媒体只读/组件卷权限和ACL的实测结果", "value": null},
+    "mountMappings": {"description": "媒体、下载、worker和组件卷的脱敏宿主/容器映射及掉线行为", "value": null},
+    "deploymentMode": {"description": "原生Linux、Docker Compose、Windows原生或Docker Desktop；每种组合独立档案", "value": null},
+    "dockerVersion": {"description": "实际Docker版本与运行模式，未使用则填写不适用并解释", "value": null},
+    "composeVersion": {"description": "实际Compose版本和项目模式，未使用则说明不适用", "value": null},
+    "imageDigests": {"description": "实际应用/helper/worker/组件镜像不可变摘要，不填latest等可变标签", "value": null},
+    "applicationBuild": {"description": "实际二进制SHA256、源码commit及工作区修改状态", "value": null},
+    "network": {"description": "脱敏网络拓扑、有线/无线、协议与实际链路速率；不填私密地址", "value": null},
+    "clients": {"description": "真实桌面/手机型号、OS、浏览器精确版本和测试宽度", "value": null},
+    "realMedia": {"description": "合法代表性真实媒体：大小、容器、编码、码率、时长/页数及匿名样本ID；稀疏文件不能替代", "value": null},
+    "permissionsEvidence": {"description": "媒体只读写入拒绝、数据可写及UID/GID/ACL实测证据编号", "value": null},
+    "operator": {"description": "目标设备实测负责人；未分配保留null", "value": null}
+  },
+  "measurements": {
+    "protocol": {"description": "测量日期、样本/构建固定编号、预设阈值、冷热缓存与重复次数；实测前固定阈值", "value": null},
+    "playbackStartupMs": {"description": "真实大媒体首次可见/可听帧延迟ms，记录客户端、样本与每次值及p50/p95", "value": null},
+    "seekMs": {"description": "真实播放器多位置拖动到可播放延迟ms、失败数与重复次数", "value": null},
+    "throughputMiBps": {"description": "真实数据有效吞吐MiB/s与测量窗口，不使用5GiB稀疏Range结果", "value": null},
+    "concurrentScanDownload": {"description": "播放时并发扫描/真实下载的任务数、库规模、持续时间、完成结果及播放影响", "value": null},
+    "cpuPeakPercent": {"description": "空闲/播放/并发阶段进程或容器CPU峰值，注明采样周期和百分比口径", "value": null},
+    "rssPeakMiB": {"description": "空闲/播放/并发阶段实际RSS峰值MiB、容器限制与采样周期", "value": null},
+    "libraryQueryMs": {"description": "真实大库条目数、筛选/分页条件、p50/p95延迟ms及是否并发扫描", "value": null},
+    "restartAndDisconnect": {"description": "重启、网络/挂载失联、任务取消恢复、旧索引保留与只回收自有进程的证据", "value": null},
+    "backupAndRestore": {"description": "数据锁、空间不足、快照完整性、秘密/组件卷缺项和停机隔离恢复证据；不覆盖生产目录", "value": null},
+    "isolatedPowerLoss": {"description": "仅在已备份隔离副本执行的异常断电类演练、恢复检查及授权记录；没有执行保留null", "value": null},
+    "componentWorkflow": {"description": "真实组件版本、完整获取到入库流程、不确定操作对账及保数据维护演练证据", "value": null},
+    "evidenceIndex": {"description": "脱敏测量报告、截图和日志的人工证据索引；v1编排器不会导入或验证其通过声明", "value": null}
+  },
+  "gates": [
+    {
+      "id": "M1",
+      "description": "能持续使用、能恢复；字段说明：status只允许blocked/not_run，owner为负责人或null，requiredInputs为未完成输入。v1不接受passed声明。",
+      "status": "blocked",
+      "owner": null,
+      "requiredInputs": ["目标部署与实测负责人", "数据锁和重启记录", "备份空间不足及隔离恢复证据", "账号/会话/通知对应后续功能完成"]
+    },
+    {
+      "id": "M2",
+      "description": "内容好找且能消费；字段说明：status只允许blocked/not_run，owner为负责人或null，requiredInputs为所需媒体、客户端和测量资料。",
+      "status": "not_run",
+      "owner": null,
+      "requiredInputs": ["合法真实大媒体与代表客户端", "起播/拖动/吞吐/并发扫描/下载/CPU/RSS/大库查询测量", "作品/元数据/字幕/管理对应后续功能完成"]
+    },
+    {
+      "id": "M3",
+      "description": "无人值守与长期维护；字段说明：status只允许blocked/not_run，owner为负责人或null，requiredInputs为真实组件、权限和维护演练条件。",
+      "status": "not_run",
+      "owner": null,
+      "requiredInputs": ["真实组件及固定版本/镜像摘要", "UID/GID/ACL与挂载失联实测", "完整获取入库、重启恢复及保数据维护证据", "自动导入/容量/规则/维护对应后续功能完成"]
+    }
+  ]
+}

@@ -19,6 +19,11 @@ The first release is a standard-library Go HTTP service with pure-Go SQLite. Its
 7. For native launchers, lifecycle, tool resolution, embedded assets or packaging, read [Cross-platform contract](./cross-platform-contract.md).
 8. For RSS, collection tasks, worker adapters or collection publication, read [Collection contract](./collection-contract.md).
 9. For MoviePilot/AutoBangumi/Sonarr/Radarr installation, read [Component deployment contract](./collection-component-contract.md).
+10. For regression orchestration or target NAS acceptance records, read [Regression baseline contract](./baseline-contract.md).
+11. For credential/session changes or offline account maintenance, read [Account lifecycle contract](./account-contract.md).
+12. For database snapshots, read-only validation, temporary backup ownership or future persistent backup consumers, read [Database snapshot contract](./backup-contract.md).
+13. For schema-6 backup storage, current snapshot column probes or offline account version compatibility, read [Backup storage contract](./backup-storage-contract.md).
+14. For dedicated backup roots, strict metadata, protection-path isolation or platform no-overwrite publication, read [Backup root and publication contract](./backup-publish-contract.md).
 
 ## Quality Check
 
@@ -38,6 +43,11 @@ Run `go vet ./...`, `go test ./...`, `go build ./cmd/nas`, and the isolated `scr
 | [Collection contract](./collection-contract.md) | Multi-source collection, durable worker, publication and exact import coverage | Implemented |
 | [External collection contract](./external-collection-contract.md) | Schema v4, typed external automation, durable intents and MoviePilot workflows | Implemented |
 | [Component deployment contract](./collection-component-contract.md) | Fixed Docker components, private volume ownership, persistent deployment and desktop v3 | Implemented |
+| [Regression baseline contract](./baseline-contract.md) | Isolated verifier orchestration, truthful evidence and target acceptance boundaries | Implemented |
+| [Account lifecycle contract](./account-contract.md) | Historical schema 5, login CAS, online password/session APIs and explicit offline reset for heads 5/6 | Implemented locally; target pending |
+| [Database snapshot contract](./backup-contract.md) | Shared temporary lease, read-only SQLite verification, bounded cleanup and compatible download | Implemented locally; target pending |
+| [Backup storage contract](./backup-storage-contract.md) | Schema 6 five-table storage, disabled defaults, exact current-head probes and offline compatibility | Implemented locally; target pending |
+| [Backup root and publication contract](./backup-publish-contract.md) | Dedicated root, strict metadata, path/ACL identity and platform publication certainty; package-internal only | Implemented locally; target pending |
 | [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
 | [Database Guidelines](./database-guidelines.md) | ORM patterns, queries, migrations | To fill |
 | [Error Handling](./error-handling.md) | Error types, handling strategies | To fill |

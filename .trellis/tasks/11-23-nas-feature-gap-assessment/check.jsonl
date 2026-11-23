@@ -1,0 +1,6 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/tasks/11-23-nas-feature-gap-assessment/assessment.md", "reason": "核对评估结论与研究证据，不扩大为业务实施"}
+{"file": ".trellis/tasks/11-23-nas-feature-gap-assessment/research/media-capabilities.md", "reason": "媒体能力静态核验依据"}
+{"file": ".trellis/tasks/11-23-nas-feature-gap-assessment/research/acquisition-capabilities.md", "reason": "资源获取与组件能力静态核验依据"}
+{"file": ".trellis/tasks/11-23-nas-feature-gap-assessment/research/operations-capabilities.md", "reason": "账户恢复与运维能力静态核验依据"}

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"mime"
 	"net/http"
@@ -74,49 +75,22 @@ func (a *App) file(w http.ResponseWriter, r *http.Request) {
 
 // backup 生成运行中数据库的一致性快照，下载结束后移除临时文件。
 func (a *App) backup(w http.ResponseWriter, r *http.Request) {
-	if !a.backupMu.TryLock() {
-		fail(w, 409, "已有备份正在生成或下载，请稍后重试")
-		return
-	}
-	defer a.backupMu.Unlock()
-	info, err := os.Stat(filepath.Join(a.config.DataDir, "library.db"))
+	snapshot, err := a.createDatabaseSnapshot(r.Context())
 	if err != nil {
-		fail(w, 500, "无法读取数据库状态")
+		if r.Context().Err() != nil {
+			return
+		}
+		var failure *snapshotError
+		if errors.As(err, &failure) {
+			fail(w, failure.status, failure.text)
+		} else {
+			fail(w, 500, "数据库备份失败，请稍后重试")
+		}
 		return
 	}
-	free, err := freeDiskBytes(a.config.DataDir)
-	if err != nil || free < a.config.MinFreeBytes+uint64(info.Size())*2 {
-		fail(w, 507, "剩余空间不足，无法生成一致性备份")
-		return
-	}
-	temporary, err := os.CreateTemp(a.config.DataDir, "backup-*.db")
-	if err != nil {
-		fail(w, 500, "无法创建备份文件")
-		return
-	}
-	path := temporary.Name()
-	temporary.Close()
-	os.Remove(path)
-	defer os.Remove(path)
-	// VACUUM INTO 包含 WAL 中已提交的数据，不是复制正在写入的主文件。
-	if _, err = a.db.ExecContext(r.Context(), "VACUUM INTO ?", path); err != nil {
-		a.logger.Error("生成一致性备份失败", "error", err)
-		fail(w, 500, "数据库备份失败，请稍后重试")
-		return
-	}
-	file, err := os.Open(path)
-	if err != nil {
-		fail(w, 500, "无法读取备份文件")
-		return
-	}
-	defer file.Close()
-	snapshot, err := file.Stat()
-	if err != nil {
-		fail(w, 500, "备份状态不可用")
-		return
-	}
+	defer snapshot.Close() // 头后失败由租约记录并汇总，不能再向数据库正文追加JSON。
 	w.Header().Set("Content-Type", "application/vnd.sqlite3")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=nas-library-%s.db", time.Now().Format("20060102-150405")))
-	a.logger.Info("一致性数据库备份已生成", "size", snapshot.Size())
-	http.ServeContent(w, r, snapshot.Name(), snapshot.ModTime(), file)
+	a.logger.Info("一致性数据库快照生成并校验通过", "size", snapshot.metadata.SizeBytes, "schema", snapshot.metadata.SchemaVersion, "scope", snapshot.metadata.Scope)
+	http.ServeContent(w, r, snapshot.info.Name(), snapshot.info.ModTime(), snapshot.file)
 }

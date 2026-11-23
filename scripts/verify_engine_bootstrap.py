@@ -176,7 +176,7 @@ class BootstrapHarness(Harness):
         status = client.json('/api/engines/probe', 'POST', {})
         client.check(next(c for c in status['components'] if c['id'] == 'qbittorrent')['readiness'] == 'ready' and client.json('/api/torrent-search/status')['enabled'], '应用重启恢复原实例与已选来源')
         with sqlite3.connect(self.root / 'data' / 'library.db') as connection:
-            client.check(connection.execute('PRAGMA user_version').fetchone()[0] == 4 and connection.execute("SELECT count(*) FROM sqlite_master WHERE name IN ('downloads','collection_tasks','collection_external_actions')").fetchone()[0] == 3, 'schema v4保留下载、收集与外部操作表，托管接入不改变媒体数据')
+            client.check(connection.execute('PRAGMA user_version').fetchone()[0] == 6 and connection.execute("SELECT count(*) FROM sqlite_master WHERE name IN ('downloads','collection_tasks','collection_external_actions')").fetchone()[0] == 3, 'schema v6保留下载、收集与外部操作表，托管接入不改变媒体数据')
         client.check(not any(self.engine.password in line or self.discovery.key in line for line in (self.root / 'application.log').read_text(encoding='utf-8').splitlines()), '关键业务日志未输出凭据')
         print(f'托管接入验证通过：{client.passed} 项断言；助手Docker状态机及真实镜像需单独验收。', flush=True)
 

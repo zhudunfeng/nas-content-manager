@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
@@ -14,9 +15,10 @@ import (
 
 // TorrentSearchConfig 定义独立可选的服务端搜种配置，不进入设置响应或数据库。
 type TorrentSearchConfig struct {
-	Mode    string                // NAS_TORRENT_SEARCH_MODE，disabled/external/managed；未设置时兼容旧开关。
-	Enabled bool                  // 启动时是否已有完整外接来源；旧开关只在未指定新模式时生效。
-	Sources []TorrentSearchSource // NAS_TORRENT_SEARCH_SOURCES_FILE 中的来源，最多八个，只在后端使用。
+	Mode        string                // NAS_TORRENT_SEARCH_MODE，disabled/external/managed；未设置时兼容旧开关。
+	Enabled     bool                  // 启动时是否已有完整外接来源；旧开关只在未指定新模式时生效。
+	Sources     []TorrentSearchSource // NAS_TORRENT_SEARCH_SOURCES_FILE 中的来源，最多八个，只在后端使用。
+	SourcesFile string                // NAS_TORRENT_SEARCH_SOURCES_FILE 的同次配置路径快照；禁用时仍保留而不读取。
 }
 
 // TorrentSearchSource 是只读 JSON 文件中的一个 Torznab 来源。
@@ -35,8 +37,14 @@ func loadTorrentSearchConfig() (TorrentSearchConfig, error) {
 // loadTorrentSearchConfigWithLookup 以与主配置相同的来源读取模式和私密来源文件。
 func loadTorrentSearchConfigWithLookup(lookup func(string) string) (TorrentSearchConfig, error) {
 	source := newConfigSource(lookup)
-	c := TorrentSearchConfig{Sources: []TorrentSearchSource{}}
+	c := TorrentSearchConfig{Sources: []TorrentSearchSource{}, SourcesFile: source.lookup("NAS_TORRENT_SEARCH_SOURCES_FILE")}
 	var err error
+	if c.SourcesFile != "" {
+		c.SourcesFile, err = filepath.Abs(c.SourcesFile)
+		if err != nil {
+			return c, fmt.Errorf("搜种来源文件路径无效")
+		}
+	}
 	c.Mode, err = loadEngineModeWithLookup("NAS_TORRENT_SEARCH_MODE", "NAS_TORRENT_SEARCH_ENABLED", source.lookup)
 	c.Enabled = c.Mode == "external"
 	if err != nil {
@@ -45,7 +53,7 @@ func loadTorrentSearchConfigWithLookup(lookup func(string) string) (TorrentSearc
 	if !c.Enabled {
 		return c, nil
 	}
-	file, err := os.Open(source.lookup("NAS_TORRENT_SEARCH_SOURCES_FILE"))
+	file, err := os.Open(c.SourcesFile)
 	if err != nil {
 		return c, fmt.Errorf("搜种来源文件不可读取，请设置 NAS_TORRENT_SEARCH_SOURCES_FILE")
 	}

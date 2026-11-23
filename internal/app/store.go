@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +12,9 @@ import (
 
 	_ "modernc.org/sqlite"
 )
+
+// currentDatabaseSchemaVersion 是当前启动器和独立快照检查器共同支持的数据库头版本。
+const currentDatabaseSchemaVersion = 6
 
 // openDatabase 打开本地 SQLite，依次应用版本化迁移并恢复中断任务。
 func openDatabase(ctx context.Context, dataDir string) (*sql.DB, error) {
@@ -42,7 +46,7 @@ func openDatabase(ctx context.Context, dataDir string) (*sql.DB, error) {
 		db.Close()
 		return nil, err
 	}
-	if version > 4 {
+	if version > currentDatabaseSchemaVersion {
 		db.Close()
 		return nil, fmt.Errorf("数据库版本较新，请使用匹配的应用版本")
 	}
@@ -127,6 +131,48 @@ func openDatabase(ctx context.Context, dataDir string) (*sql.DB, error) {
 			db.Close()
 			return nil, fmt.Errorf("升级外部服务数据库失败: %w", err)
 		}
+	}
+	if version < 5 {
+		tx, txErr := db.BeginTx(ctx, nil)
+		if txErr != nil {
+			db.Close()
+			return nil, txErr
+		}
+		err = migrateAccountSchema(ctx, tx)
+		if err == nil {
+			_, err = tx.ExecContext(ctx, "PRAGMA user_version=5")
+		}
+		if err == nil {
+			err = tx.Commit()
+		} else {
+			_ = tx.Rollback()
+		}
+		if err != nil {
+			db.Close()
+			return nil, fmt.Errorf("升级账号会话数据库失败: %w", err)
+		}
+		slog.Info("管理员会话数据库升级完成", "schemaVersion", 5)
+	}
+	if version < 6 {
+		tx, txErr := db.BeginTx(ctx, nil)
+		if txErr != nil {
+			db.Close()
+			return nil, txErr
+		}
+		err = migrateBackupSchema(ctx, tx)
+		if err == nil {
+			_, err = tx.ExecContext(ctx, "PRAGMA user_version=6")
+		}
+		if err == nil {
+			err = tx.Commit()
+		} else {
+			_ = tx.Rollback()
+		}
+		if err != nil {
+			db.Close()
+			return nil, fmt.Errorf("升级备份存储数据库失败: %w", err)
+		}
+		slog.Info("备份存储数据库升级完成，计划默认关闭", "schemaVersion", 6)
 	}
 	// 写请求在进程中断后只能读取对账，绝不再次自动提交。
 	_, err = db.ExecContext(ctx, "UPDATE collection_external_actions SET state='uncertain',message='应用已重启，外部提交结果待核对',updated_at=? WHERE state='dispatching'", now())

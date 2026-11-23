@@ -7,6 +7,21 @@ export interface User {
   /** 用户编号。 */ id: number
   /** 账户名称。 */ username: string
 }
+/** 公开的有限会话元数据，不含 bearer 凭据或原始客户端信息。 */
+export interface AccountSession {
+  /** 独立随机公开编号。 */ id: string
+  /** 是否为实际 Cookie 对应的当前会话。 */ current: boolean
+  /** 浏览器类别，仅为提示。 */ clientBrowser: 'unknown' | 'chrome' | 'edge' | 'firefox' | 'safari' | 'opera' | 'other'
+  /** 操作系统类别，仅为提示。 */ clientOS: 'unknown' | 'windows' | 'macos' | 'linux' | 'android' | 'ios' | 'other'
+  /** 实际创建时间；历史未知值为空。 */ createdAt: string | null
+  /** 精确到期时间。 */ expiresAt: string
+}
+/** 一批有界会话结果；空批次仍可能允许继续。 */
+export interface AccountSessionPage {
+  /** 单独固定的真实当前会话。 */ currentSession: AccountSession
+  /** 仅本批其他有效会话。 */ items: AccountSession[]
+  /** 最后消费原始行的游标，末批为空。 */ nextCursor: string | null
+}
 /** 媒体库的挂载与索引状态。 */
 export interface Library {
   /** 媒体库编号。 */ id: number

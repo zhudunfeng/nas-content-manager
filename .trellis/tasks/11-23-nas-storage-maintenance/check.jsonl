@@ -1,0 +1,11 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/roadmap.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/info.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/tasks/11-23-nas-evolution-plan/research/automation-implementation.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/collection-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}
+{"file": ".trellis/spec/backend/download-contract.md", "reason": "实施/复核本步骤时读取对应路线、拟议契约、研究与现有安全边界"}

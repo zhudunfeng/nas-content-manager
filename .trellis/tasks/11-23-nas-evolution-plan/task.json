@@ -1,0 +1,53 @@
+{
+  "id": "nas-evolution-plan",
+  "name": "nas-evolution-plan",
+  "title": "制定 NAS 内容管理系统分阶段实施计划",
+  "description": "12步路线已授权实施；S01/S02、S03.1及S03.2.1本机完成，当前实施S03.2.2受控根与平台发布，真实NAS门禁另轨待验。",
+  "status": "in_progress",
+  "dev_type": "docs",
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-23",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "11-23-nas-validation-baseline",
+    "11-23-nas-account-lifecycle",
+    "11-23-nas-backup-recovery",
+    "11-23-nas-events-notifications",
+    "11-23-nas-work-catalog",
+    "11-23-nas-local-metadata",
+    "11-23-nas-subtitles-diagnostics",
+    "11-23-nas-library-management",
+    "11-23-nas-external-auto-import",
+    "11-23-nas-storage-maintenance",
+    "11-23-nas-rule-guidance",
+    "11-23-nas-component-maintenance"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "planning_deliverable": "complete",
+    "recommended_next": "11-23-nas-backup-recovery",
+    "baseline_commit": "6f380be",
+    "execution_authorized_this_turn": true,
+    "child_count": 12,
+    "quality_review": ".trellis/tasks/11-23-nas-evolution-plan/research/quality-review.md",
+    "execution_mode": "incremental_with_quality_gates",
+    "active_step": "11-23-nas-backup-recovery",
+    "completed_local_steps": [
+      "S01",
+      "S02"
+    ],
+    "active_slice": "S03.2.2"
+  }
+}

@@ -16,6 +16,7 @@ type Config struct {
 	Engines             EngineConfig        // 私有引擎助手与运行时连接清单参数。
 	Addr                string              // HTTP 监听地址，NAS_ADDR，默认 :8090。
 	DataDir             string              // SQLite 与可重建缓存目录，NAS_DATA_DIR，默认 ./data。
+	BackupDir           string              // NAS_BACKUP_DIR，专属本地备份根；空值为数据根下backups，仅显式准备时创建。
 	MediaRoots          []string            // 允许纳管的媒体根目录，NAS_MEDIA_ROOTS，以系统路径分隔符分开。
 	WebDir              string              // 编译后的前端资源目录，NAS_WEB_DIR，默认 web/dist。
 	WebDirExplicit      bool                // 是否显式配置 NAS_WEB_DIR；显式目录优先于发布包内嵌资源。
@@ -98,6 +99,11 @@ func LoadConfigWithLookup(lookup func(string) string) (Config, error) {
 		return c, err
 	}
 	c.Engines, err = loadEngineConfigWithLookup(source.lookup)
+	if err != nil {
+		return c, err
+	}
+	c.BackupDir = source.lookup("NAS_BACKUP_DIR")
+	err = normalizeBackupConfig(&c)
 	return c, err
 }
 

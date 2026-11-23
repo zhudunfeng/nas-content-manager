@@ -1,12 +1,14 @@
 /** 保留中文服务端错误与状态码的异常。 */
 export class ApiError extends Error {
   /** HTTP 状态码。 */ status: number
+  /** 服务端建议至少等待的秒数；缺失或不合法时不提供。 */ retryAfterSeconds?: number
 
   /** 创建请求错误，保留可供会话过期处理的状态码。 */
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, retryAfterSeconds?: number) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.retryAfterSeconds = retryAfterSeconds
   }
 }
 
@@ -22,7 +24,8 @@ export async function api<T>(path: string, method: string = 'GET', body?: unknow
   if (!response.ok) {
     const failure = await response.json().catch((): { error: string } => ({ error: '服务暂时不可用，请稍后重试' })) as { error?: string }
     if (response.status === 401) window.dispatchEvent(new Event('session-expired'))
-    throw new ApiError(failure.error || `请求失败（${response.status}）`, response.status)
+    const retry: number = Number(response.headers.get('Retry-After'))
+    throw new ApiError(failure.error || `请求失败（${response.status}）`, response.status, Number.isInteger(retry) && retry > 0 && retry <= 300 ? retry : undefined)
   }
   return await response.json() as T
 }
