@@ -12,22 +12,30 @@ import (
 
 // Config 是只能由受信任部署环境指定的助手参数。
 type Config struct {
-	StorageMode  string // ENGINE_STORAGE_MODE：bind保留Linux宿主目录，volume使用固定角色命名卷，默认bind。
-	VolumePrefix string // ENGINE_VOLUME_PREFIX：volume模式的可信部署前缀，仅允许小写字母、数字和短横线。
-	HostRoot     string // ENGINE_HOST_ROOT：仅bind模式的Docker宿主专用绝对根；volume模式必须为空。
-	Root         string // ENGINE_MANAGED_ROOT：助手内部专用根，默认/managed；volume模式不可覆盖。
-	Socket       string // ENGINE_HELPER_SOCKET：私有HTTP Unix socket，默认/ipc/helper.sock；volume模式不可覆盖。
-	DockerSocket string // ENGINE_DOCKER_SOCKET：本机Docker Unix socket，默认 /var/run/docker.sock。
-	Network      string // ENGINE_NETWORK：已存在的应用专用可出站bridge网络。
-	UID          int    // ENGINE_UID：专用文件及下载进程用户ID，默认1000。
-	GID          int    // ENGINE_GID：应用可读取连接及socket的组ID，默认1000。
-	PeerPort     int    // QBT_PEER_PORT：固定宿主及容器BT TCP/UDP端口，默认6881。
-	SetupPort    int    // JACKETT_SETUP_PORT：Jackett宿主回环配置端口，默认19117。
+	CollectionEnabled bool   // ENGINE_COLLECTION_ENABLED：显式启用四类资源组件Docker部署及独立媒体角色，默认false。
+	StorageMode       string // ENGINE_STORAGE_MODE：bind保留Linux宿主目录，volume使用固定角色命名卷，默认bind。
+	VolumePrefix      string // ENGINE_VOLUME_PREFIX：volume模式的可信部署前缀，仅允许小写字母、数字和短横线。
+	HostRoot          string // ENGINE_HOST_ROOT：仅bind模式的Docker宿主专用绝对根；volume模式必须为空。
+	Root              string // ENGINE_MANAGED_ROOT：助手内部专用根，默认/managed；volume模式不可覆盖。
+	Socket            string // ENGINE_HELPER_SOCKET：私有HTTP Unix socket，默认/ipc/helper.sock；volume模式不可覆盖。
+	DockerSocket      string // ENGINE_DOCKER_SOCKET：本机Docker Unix socket，默认 /var/run/docker.sock。
+	Network           string // ENGINE_NETWORK：已存在的应用专用可出站bridge网络。
+	UID               int    // ENGINE_UID：专用文件及下载进程用户ID，默认1000。
+	GID               int    // ENGINE_GID：应用可读取连接及socket的组ID，默认1000。
+	PeerPort          int    // QBT_PEER_PORT：固定宿主及容器BT TCP/UDP端口，默认6881。
+	SetupPort         int    // JACKETT_SETUP_PORT：Jackett宿主回环配置端口，默认19117。
 }
 
 // LoadConfig 读取并拒绝不受支持或相互覆盖的部署路径。
 func LoadConfig() (Config, error) {
 	c := Config{StorageMode: setting("ENGINE_STORAGE_MODE", "bind"), VolumePrefix: os.Getenv("ENGINE_VOLUME_PREFIX"), HostRoot: os.Getenv("ENGINE_HOST_ROOT"), Root: setting("ENGINE_MANAGED_ROOT", "/managed"), Socket: setting("ENGINE_HELPER_SOCKET", "/ipc/helper.sock"), DockerSocket: setting("ENGINE_DOCKER_SOCKET", "/var/run/docker.sock"), Network: os.Getenv("ENGINE_NETWORK")}
+	switch setting("ENGINE_COLLECTION_ENABLED", "false") {
+	case "true":
+		c.CollectionEnabled = true
+	case "false":
+	default:
+		return c, fmt.Errorf("ENGINE_COLLECTION_ENABLED 仅支持true或false")
+	}
 	paths := []string{c.Root, c.Socket, c.DockerSocket}
 	switch c.StorageMode {
 	case "bind":

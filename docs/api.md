@@ -191,6 +191,26 @@ MoviePilot workflow routes below are relative to `/moviepilot`. Replies are `{ch
 
 Workflow actions accept only the matching `selectionId` and, for scraping, mandatory `confirmOverwrite:true`; they reject unrelated raw arguments. Server-side immutable payloads are persisted outside SQLite. Organization rechecks the source file version and configured target policy; scraping covers only one selected supported video file and overwrites metadata/artwork according to MoviePilot. Library refresh synchronizes **MoviePilot's index from configured media servers**; it is not an Emby/Plex disk scan. Exact schemas and protocol boundaries: [external integration contract](../.trellis/tasks/11-20-collection-external-api/api-contract.md).
 
+### Component Docker deployment
+
+The app uses the existing administrator session, same-origin checks, strict 64 KiB JSON and its configured private helper socket. Opening the source dialog or reading status never installs anything. Deployment and first-configuration instructions: [components.md](components.md).
+
+| Endpoint | Input / result |
+| --- | --- |
+| `GET /api/collection/components` | `CollectionStatus`; four fixed products and actual helper/runtime capability |
+| `POST /api/collection/components/deploy` | `{requestId,component,templateVersion,noticeVersion,acceptNotice}` → 202 `EngineTaskResponse` |
+| `POST /api/collection/components/{component}/start` | `{requestId,revision}` → 202 `EngineTaskResponse`; only starts the original owned container |
+| `GET /api/collection/components/tasks/{id}?afterSequence=0` | `EngineTaskResponse`; bounded incremental events |
+| `POST /api/collection/components/tasks/{id}/retry` | `{requestId,revision}` → 202 `EngineTaskResponse`; retries the original failed deployment/start task |
+
+`component` is exactly `moviepilot|autobangumi|sonarr|radarr`. Deploy requires template `collection-2026-11-20.1`, notice `collection-storage-v1` and explicit `acceptNotice:true`; unchecked or outdated authorization returns 409. It accepts no image/command/port/mount overrides.
+
+`CollectionStatus = {helper,message,templateVersion,noticeVersion,noticeText,activeTaskId,components:CollectionComponent[]}`. Each component is `{id,name,version,presence,runtime,readiness,message,revision,canDeploy,canStart,setupPort,serviceUrl,latestTaskId}`. Presence is `unknown|missing|present|conflict`, runtime `unknown|stopped|starting|running`, readiness `not_configured|starting|configuration_required|error`. Helper is `ready|unavailable|unsupported|not_enabled`. Actions follow the returned permission booleans. `serviceUrl` contains no credentials and is available only after the owned running component passes its bounded anonymous HTTP probe. It is an internal platform address, not a public browser proxy or proof of API authentication. `setupPort` is bound only on Docker-host loopback.
+
+Task response fields match the managed-engine DTOs above; collection task actions are `deploy|start`. Persistent UUID binding survives lost responses and helper restart. Same accepted intent returns its original task; changed intent or stale revision is 409, different active work 429, absent/pruned/out-of-scope task 404 and unavailable execution 503. A failed task returns its snapshot with HTTP 200. These task endpoints cannot read/retry qB/Jackett or stop-all work, and old engine routes cannot deploy these new products.
+
+`ENGINE_COLLECTION_ENABLED` defaults false. Linux managed Compose and desktop schema-v3 overlays enable it. Four products use separate owned private configuration volumes and explicitly authorized `/downloads` plus `/data` mounts; app can register only the read-only `/collection-media/library` subtree. GET never creates/adopts volumes. Conflict stops deployment without takeover. Components still require their own initial setup and the existing authenticated source test; container completion does not activate external business capabilities or import media. Exact executable contract and validation cases: [component deployment contract](../.trellis/spec/backend/collection-component-contract.md).
+
 ## Release boundary
 
 Deliver five content workflows, including music. Large-file direct playback/Range is required. Remux/HLS, hardware acceleration, audio transcoding, playlists/lyrics, CBR/PDF and AI remain optional later capabilities, and the UI must explain unsupported audio/video formats rather than silently pretend they work. No fabricated demo records appear in real libraries.

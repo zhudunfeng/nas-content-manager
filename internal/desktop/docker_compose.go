@@ -172,7 +172,11 @@ func (d *dockerRuntime) serviceEnvironment(service string) map[string]string {
 		return collectionWorkerEnvironment()
 	}
 	if service == "nas-engine-helper" {
-		return map[string]string{"ENGINE_STORAGE_MODE": "volume", "ENGINE_VOLUME_PREFIX": d.project, "ENGINE_MANAGED_ROOT": "/managed", "ENGINE_HELPER_SOCKET": "/ipc/helper.sock", "ENGINE_DOCKER_SOCKET": "/var/run/docker.sock", "ENGINE_NETWORK": d.project + "-engines", "ENGINE_UID": "1000", "ENGINE_GID": "1000", "QBT_PEER_PORT": "6881", "JACKETT_SETUP_PORT": "19117"}
+		environment := map[string]string{"ENGINE_STORAGE_MODE": "volume", "ENGINE_VOLUME_PREFIX": d.project, "ENGINE_MANAGED_ROOT": "/managed", "ENGINE_HELPER_SOCKET": "/ipc/helper.sock", "ENGINE_DOCKER_SOCKET": "/var/run/docker.sock", "ENGINE_NETWORK": d.project + "-engines", "ENGINE_UID": "1000", "ENGINE_GID": "1000", "QBT_PEER_PORT": "6881", "JACKETT_SETUP_PORT": "19117"}
+		if d.manifest.SchemaVersion == 3 {
+			environment["ENGINE_COLLECTION_ENABLED"] = "true"
+		}
+		return environment
 	}
 	environment := map[string]string{"NAS_ADDR": "0.0.0.0:8090", "NAS_DATA_DIR": "/data", "NAS_MEDIA_ROOTS": "/media:/downloads/complete", "NAS_DOWNLOAD_MODE": "managed", "NAS_TORRENT_SEARCH_MODE": "managed", "NAS_DOWNLOAD_ROOT": "/downloads", "NAS_DOWNLOAD_ENGINE_ROOT": "/downloads", "NAS_ENGINE_CONNECTION_DIR": "/run/nas-engines", "NAS_ENGINE_HELPER_SOCKET": "/run/nas-engine-helper/helper.sock", "NAS_DOWNLOAD_MIN_FREE_GB": "2"}
 	if d.manifest.CollectionImage != "" {
@@ -182,6 +186,9 @@ func (d *dockerRuntime) serviceEnvironment(service string) map[string]string {
 		environment["NAS_COLLECTION_READ_ROOT"] = "/collection"
 		environment["NAS_COLLECTION_WORKER_ALLOW_HTTP"] = "true"
 	}
+	if d.manifest.SchemaVersion == 3 {
+		environment["NAS_MEDIA_ROOTS"] += ":/collection-media/library"
+	}
 	return environment
 }
 
@@ -190,12 +197,18 @@ func (d *dockerRuntime) validateComposeMounts(mounts []composeDesktopMount, serv
 	expected := map[string]composeDesktopMount{
 		"/data": {Type: "volume", Source: "app_data"}, "/downloads": {Type: "volume", Source: "downloads", ReadOnly: true}, "/run/nas-engines": {Type: "volume", Source: "connections", ReadOnly: true}, "/run/nas-engine-helper": {Type: "volume", Source: "ipc", ReadOnly: true}, "/media": {Type: "bind", Source: d.config.MediaRoots[0], ReadOnly: true},
 	}
+	if d.manifest.SchemaVersion == 3 && service == "nas" {
+		expected["/collection-media"] = composeDesktopMount{Type: "volume", Source: "collection_media", ReadOnly: true}
+	}
 	if d.manifest.CollectionImage != "" && service == "nas" {
 		expected["/collection"] = composeDesktopMount{Type: "volume", Source: "collection_data", ReadOnly: true}
 		expected["/run/nas-collection"] = composeDesktopMount{Type: "volume", Source: "collection_secrets", ReadOnly: true}
 	}
 	if service == "nas-engine-helper" {
 		expected = map[string]composeDesktopMount{"/var/run/docker.sock": {Type: "bind", Source: "/var/run/docker.sock"}, "/managed/state": {Type: "volume", Source: "state"}, "/managed/qbittorrent": {Type: "volume", Source: "qbittorrent"}, "/managed/jackett": {Type: "volume", Source: "jackett"}, "/managed/downloads": {Type: "volume", Source: "downloads"}, "/managed/connections": {Type: "volume", Source: "connections"}, "/ipc": {Type: "volume", Source: "ipc"}}
+		if d.manifest.SchemaVersion == 3 {
+			expected["/managed/collection-media"] = composeDesktopMount{Type: "volume", Source: "collection_media"}
+		}
 	}
 	if service == "nas-collection-worker" && d.manifest.CollectionImage != "" {
 		expected = map[string]composeDesktopMount{"/collection": {Type: "volume", Source: "collection_data"}, "/run/nas-collection": {Type: "volume", Source: "collection_secrets"}}

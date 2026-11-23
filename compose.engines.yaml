@@ -5,6 +5,8 @@ services:
     # 预接好固定路径，网页无法给运行容器追加挂载。
     volumes:
       - ${ENGINE_HOST_ROOT:?请设置Docker宿主专用根}/downloads:/downloads:ro
+      # 组件独立资源根只读；只有library子树允许登记。
+      - ${ENGINE_HOST_ROOT:?请设置Docker宿主专用根}/collection-media:/collection-media:ro
       - ${ENGINE_HOST_ROOT:?请设置Docker宿主专用根}/connections:/run/nas-engines:ro
       - engine_ipc:/run/nas-engine-helper:ro
     # 托管模式允许首次没有连接凭据，保留媒体服务启动。
@@ -18,7 +20,7 @@ services:
       # 引擎侧路径必须与固定模板的同一挂载一致。
       NAS_DOWNLOAD_ENGINE_ROOT: /downloads
       # 搜索媒体目录只授权完成子树，不能授权整个下载根。
-      NAS_MEDIA_ROOTS: /media:/downloads/complete
+      NAS_MEDIA_ROOTS: /media:/downloads/complete:/collection-media/library
       # 私有助手socket路径，未挂载时仅显示部署指引。
       NAS_ENGINE_HELPER_SOCKET: /run/nas-engine-helper/helper.sock
       # 整个目录只读bind使原子替换清单可见。
@@ -50,6 +52,8 @@ services:
       - engine_ipc:/ipc
     # 所有路径/端口来自运维环境，浏览器不能覆盖。
     environment:
+      # 允许用户从平台明确部署四种固定资源组件；打开页面不会安装。
+      ENGINE_COLLECTION_ENABLED: "true"
       # 传给Docker的宿主根，必须与上方bind source精确一致。
       ENGINE_HOST_ROOT: ${ENGINE_HOST_ROOT:?请设置Docker宿主专用根}
       # Docker网络实际名称，不能使用Compose内部短键代替。

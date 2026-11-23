@@ -15,7 +15,7 @@ import (
 	"nas-content-manager/internal/enginecontract"
 )
 
-// handleStopAll 只为本安装的两个固定引擎建立可恢复停止任务，不提供通用Docker操作。
+// handleStopAll 只为当前安装已启用的固定组件建立停止任务，不提供通用Docker操作。
 func (s *Service) handleStopAll(w http.ResponseWriter, r *http.Request) {
 	var request struct {
 		RequestID string `json:"requestId"` // 本次停止请求的幂等身份。
@@ -28,6 +28,9 @@ func (s *Service) handleStopAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	components := []string{enginecontract.QBittorrent, enginecontract.Jackett}
+	if s.config.CollectionEnabled {
+		components = append(components, enginecontract.CollectionComponents()...)
+	}
 	task, err := s.submit(r.Context(), request.RequestID, taskSignature("stop", components, "1"), components)
 	if errors.Is(err, errBusy) {
 		failure(w, http.StatusConflict, "初始化或启动仍在执行，请等待完成后停止完整实例")
@@ -48,7 +51,7 @@ func (s *Service) handleStopAll(w http.ResponseWriter, r *http.Request) {
 
 // stopComponent 核对实际镜像、模板和完整挂载后仅停止原容器，绝不拉取、创建或删除。
 func (s *Service) stopComponent(task *enginecontract.Task, index int) error {
-	t, err := engineTemplate(task.Steps[index].Component)
+	t, err := deploymentTemplate(task.Steps[index].Component)
 	if err != nil {
 		return err
 	}
@@ -65,6 +68,11 @@ func (s *Service) stopComponent(task *enginecontract.Task, index int) error {
 	}
 	if err = validateContainer(existing, s.config, s.store.installation, t); err != nil {
 		return err
+	}
+	if enginecontract.IsCollectionComponent(t.Component) {
+		if err = s.validateCollectionRuntime(s.ctx, existing, t); err != nil {
+			return err
+		}
 	}
 	imageID, ready, err := s.docker.imageReady(s.ctx, t)
 	if err != nil {
@@ -102,7 +110,7 @@ func (s *Service) stopComponent(task *enginecontract.Task, index int) error {
 
 // StopAll 通过既有私有Unix服务停止当前安装，不打开状态库、不取得第二把安装锁。
 func StopAll(ctx context.Context, socket string) error {
-	ctx, cancel := context.WithTimeout(ctx, 90*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 240*time.Second)
 	defer cancel()
 	if !filepath.IsAbs(socket) || filepath.Clean(socket) != socket || socket == string(filepath.Separator) {
 		return errors.New("助手私有socket路径无效")

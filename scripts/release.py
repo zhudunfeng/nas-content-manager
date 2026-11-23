@@ -127,11 +127,11 @@ def validate_images_manifest(manifest: dict[str, Any]) -> str | None:
     """统一验证镜像元数据与可选归档，拒绝空值、可变标签及非固定摘要。"""
     required = {"schemaVersion", "appImage", "helperImage"}
     optional = {"archive", "archiveSha256", "collectionImage"}
-    if not required.issubset(manifest) or set(manifest) - required - optional or type(manifest["schemaVersion"]) is not int or manifest["schemaVersion"] not in (1, 2):
+    if not required.issubset(manifest) or set(manifest) - required - optional or type(manifest["schemaVersion"]) is not int or manifest["schemaVersion"] not in (1, 2, 3):
         raise ValueError("镜像清单字段或版本无效")
-    if (manifest["schemaVersion"] == 2) != ("collectionImage" in manifest):
-        raise ValueError("v2镜像清单必须包含获取执行端，v1不接受该字段")
-    image_keys = ("appImage", "helperImage", "collectionImage") if manifest["schemaVersion"] == 2 else ("appImage", "helperImage")
+    if (manifest["schemaVersion"] == 2 and "collectionImage" not in manifest) or (manifest["schemaVersion"] == 1 and "collectionImage" in manifest):
+        raise ValueError("v2清单必须包含获取执行端，v1不接受该字段，v3可选")
+    image_keys = ("appImage", "helperImage", "collectionImage") if "collectionImage" in manifest else ("appImage", "helperImage")
     for key in image_keys:
         value = manifest[key]
         if not isinstance(value, str) or len(value) > 512 or not IMAGE_REFERENCE.fullmatch(value):
@@ -307,11 +307,11 @@ def build(args: argparse.Namespace) -> Path:
             tools = install_tools(Path(args.tools_manifest).resolve(), args.target, stage) if args.tools_manifest else None
             if args.images_manifest:
                 install_images(Path(args.images_manifest).resolve(), stage)
-            for name in ("compose.desktop.yaml", "compose.desktop.collection.yaml"):
+            for name in ("compose.desktop.yaml", "compose.desktop.collection.yaml", "compose.desktop.components.yaml"):
                 if not (ROOT / name).is_file():
                     raise ValueError(f"发布文件缺失：{name}")
                 shutil.copyfile(ROOT / name, stage / name)
-            for name in ("windows.md", "release.md", "collection.md"):
+            for name in ("windows.md", "release.md", "collection.md", "components.md"):
                 source = ROOT / "docs" / name
                 if source.is_file():
                     (stage / "docs").mkdir(exist_ok=True)

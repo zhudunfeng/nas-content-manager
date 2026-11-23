@@ -1,6 +1,6 @@
 # 功能验证记录
 
-最新验证日期：**2026-11-18（Asia/Shanghai）**。搜种章节记录本日新增检查；后续 BT／音乐章节保留 2026-11-17 历史结果。本记录区分已经执行的检查与目标设备待验事项，不将编译成功、稀疏文件或短视频样本视为完整 NAS 性能验收。
+最新验证日期：**2026-11-20（Asia/Singapore）**。各章节保留相应实施日期和历史结果。本记录区分已经执行的检查与目标设备待验事项，不将编译成功、稀疏文件或短视频样本视为完整 NAS 性能验收。
 
 ## 搜种扩展验证（2026-11-18）
 
@@ -401,3 +401,17 @@ python -B scripts/project_env.py -- python -B scripts/verify_external.py --binar
 - 最终 `python -B scripts/project_env.py -- npm --prefix web run build` 通过，包含严格Vue类型检查与Vite生产构建。临时测试源码已删除，浏览器已关闭；结果和截图位于 `.runtime/verify/password-visibility/`，详细记录位于 `.trellis/tasks/11-20-password-visibility/research/`。
 
 上述浏览器检查在独立context拦截全部API，仅验证真实前端组件、原密码策略及提交值；没有向用户后端创建账户、登录或保存外部凭据，也不构成真实后端认证通过的证据。
+
+## 2026-11-20 平台部署资源组件验收
+
+新增 MoviePilot、AutoBangumi、Sonarr、Radarr 的固定Docker部署入口，嵌入原来源弹窗。Linux托管配置与Windows清单v3提供能力，旧v1/v2保留原部署边界；部署、组件首次配置、API认证接入和本地完成目录导入各自展示真实结果。使用说明见[组件部署](components.md)。
+
+- 真实应用→生产私有Unix socket→隔离helper协议服务 **55项**通过：会话/来源/严格参数、GET无部署、四模板与授权、持久请求幂等、丢回执与应用重启、任务范围、层进度/游标、启动/失败重试、禁用/旧助手/离线和11秒慢响应。没有更换产品传输；Windows Python缺少AF_UNIX时用仓库内Go桥承接真正Unix socket。
+- 浏览器 **30项**通过，未拦截API：实际来源按钮提交部署、层进度、刷新恢复、服务切换、503原UUID恢复、失败revision重试、首次配置入口与连接预填、空凭据默认掩码、离线仍可连接已有服务、键盘Space/Esc及焦点恢复。375/768/1024/1440×明暗共8组均为一个dialog/一个form，44px控件可达、无横向溢出；远程主机名只显示NAS端口和SSH指引。无pageerror，手机与桌面viewport截图已目视检查。证据 `.runtime/verify/cmp-1120c/browser-result.json`。
+- 最新构建追加真实浏览器跨组件预填5项通过：MoviePilot→Sonarr清理旧自动入口，保留用户自填入口和手选完成目录，证据 `cmp-1120c/browser-prefill-result.json`。Linux `/collection-media/library` 自动目录由实际Vue SFC setup专项23项覆盖；后者是无DOM组件逻辑证据。
+- helper六组临时行为测试与app五组代理测试通过；四组件×bind/volume模板、私密卷nonce/外来资源拒绝、GET无写、匿名探针、丢create响应对账、SQLite重开、六组件停止门禁及错误任务回执均有断言。最终SQLite专项补验锁内完整签名、不同revision无绑定及活动任务结束后不绕过状态校验新建任务。新增临时单测已清除，保留集成脚本 `scripts/verify_components.py`；浏览器、自有fixture进程和socket已回收。
+- 真实Compose CLI离线规范化六组合通过：桌面v1、v2+worker、v3、v3+worker、Linux托管及托管+worker。48项桌面临时断言核验精确媒体根、只读/写入挂载、环境和角色身份；发布自检83项通过。离线规范化没有部署Docker服务。
+- 本轮原功能回归：MoviePilot等外部API含六阶段 **83项**、收集app+worker **27项**、下载 **36项**、搜种 **43项**、托管接入 **35项**、五媒体/音乐/备份/5GiB稀疏Range **52项**全部通过。真实rclone、公网站点和BT载荷未在本轮重跑。
+- 最终审查修复后的Go vet、清理单测后的全包编译、前端严格类型检查与生产构建通过；重新完成Windows amd64应用/桌面/助手，以及Linux amd64、arm64应用/助手交叉构建。CodeGraph同步成功。最终独立审查及补充质量检查见任务的 `research/quality-review.md`，最终协议55项证据为 `.runtime/verify/cmp-final/result.json`。
+
+本轮未拉取或运行四个真实产品镜像、连接用户账号或修改真实媒体。Linux文件权限、Docker Desktop实际卷、首次初始化、目标NAS网络/UID/ACL、真实媒体服务器和掉电恢复仍需目标环境验收；交叉编译和协议fixture不能替代这些证据。详细命令及结果位于 `.trellis/tasks/11-20-collection-component-install/research/runtime-validation.md`。

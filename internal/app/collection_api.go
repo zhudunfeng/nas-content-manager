@@ -39,6 +39,7 @@ func (a *App) collectionRoutes(mux *http.ServeMux) {
 	register("GET /api/collection/tasks/{id}/events", a.collectionTaskEvents)
 	register("POST /api/collection/tasks/{id}/actions", a.collectionTaskAction)
 	a.collectionExternalRoutes(register)
+	a.collectionComponentRoutes(register)
 }
 
 // collectionFail 只公开经过审查的业务错误。

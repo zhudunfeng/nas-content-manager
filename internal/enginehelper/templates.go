@@ -71,6 +71,9 @@ type containerSpec struct {
 
 // makeSpec 仅从受信任部署参数生成完整的固定创建请求。
 func makeSpec(c Config, installation string, t template) containerSpec {
+	if enginecontract.IsCollectionComponent(t.Component) {
+		return makeCollectionSpec(c, installation, t)
+	}
 	name := containerName(installation, t.Component)
 	s := containerSpec{Image: t.Image, Labels: map[string]string{"nas.engines.installation": installation, "nas.engines.component": t.Component, "nas.engines.template": enginecontract.TemplateVersion}, ExposedPorts: map[string]struct{}{fmt.Sprintf("%d/tcp", t.Port): {}}}
 	if c.StorageMode == "volume" {
@@ -112,6 +115,9 @@ func makeSpec(c Config, installation string, t template) containerSpec {
 
 // validateContainer 同时核对身份、完整挂载和权限，绝不仅凭同名接管。
 func validateContainer(info *containerInfo, c Config, installation string, t template) error {
+	if enginecontract.IsCollectionComponent(t.Component) {
+		return validateCollectionContainer(info, c, installation, t)
+	}
 	if info.Config.Labels["nas.engines.installation"] != installation || info.Config.Labels["nas.engines.component"] != t.Component || info.Config.Labels["nas.engines.template"] != enginecontract.TemplateVersion || info.Config.Image != t.Image || info.HostConfig.Privileged || info.HostConfig.NetworkMode != c.Network {
 		return errors.New("容器归属或固定模板冲突，请人工核对；不会接管或覆盖")
 	}

@@ -170,8 +170,12 @@ type containerInfo struct {
 	ID     string `json:"Id"` // Docker容器身份。
 	Image  string // 镜像内容身份。
 	Config struct {
-		Image  string            // 创建时的完整固定镜像引用。
-		Labels map[string]string // 安装与模板归属标签。
+		Image      string            // 创建时的完整固定镜像引用。
+		Labels     map[string]string // 安装与模板归属标签。
+		Env        []string          // 实际运行环境，资源组件须与固定镜像默认值和受信任覆盖一致。
+		Cmd        []string          // 实际启动参数，不允许浏览器或外部修改。
+		Entrypoint []string          // 实际入口，须与固定镜像一致。
+		User       string            // 实际初始用户，须保留固定镜像初始化身份。
 	} // 固定模板和归属标签。
 	State struct {
 		Running bool   // daemon确认的运行状态。
@@ -186,6 +190,27 @@ type containerInfo struct {
 		RW          bool   // 引擎专用数据挂载必须可写。
 	} // 完整挂载集合。
 	HostConfig struct {
+		CapAdd          []string          // 禁止添加额外Linux权限。
+		CapDrop         []string          // 不允许未核验的权限集合变更。
+		Devices         []json.RawMessage // 禁止任意宿主设备。
+		DeviceRequests  []json.RawMessage // 禁止额外GPU或其他设备请求。
+		VolumesFrom     []string          // 禁止继承其他容器挂载。
+		PidMode         string            // 禁止共享宿主进程命名空间。
+		IpcMode         string            // 只接受Docker默认private IPC。
+		UTSMode         string            // 禁止共享宿主UTS。
+		UsernsMode      string            // 禁止模板外用户命名空间。
+		PublishAllPorts bool              // 禁止自动发布其他端口。
+		ReadonlyRootfs  bool              // 保留上游所需根目录初始化能力。
+		AutoRemove      bool              // 禁止退出时自动删除持久容器。
+		SecurityOpt     []string          // 固定no-new-privileges，不自动关闭seccomp。
+		RestartPolicy   struct {
+			Name              string // 固定unless-stopped。
+			MaximumRetryCount int    // 不设置模板外重试次数。
+		} // 保留明确手动停止意图。
+		LogConfig struct {
+			Type   string            // 固定local日志驱动。
+			Config map[string]string // 固定轮转大小与数量。
+		} // 防止无界日志占用。
 		Privileged   bool                     // 禁止特权容器。
 		NetworkMode  string                   // 必须加入固定专用网络。
 		PortBindings map[string][]portBinding // 固定peer或回环管理映射。

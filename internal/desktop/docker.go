@@ -22,10 +22,10 @@ import (
 
 // imageManifest 只接受发布方提供的不可变镜像摘要与可选离线归档。
 type imageManifest struct {
-	SchemaVersion   int    `json:"schemaVersion"`             // 清单格式版本，1为应用/助手，2增加获取服务。
+	SchemaVersion   int    `json:"schemaVersion"`             // 清单格式版本：1为应用/助手，2增加获取服务，3启用固定资源组件部署。
 	AppImage        string `json:"appImage"`                  // 应用仓库摘要或精确 sha256 镜像 ID。
 	HelperImage     string `json:"helperImage"`               // Linux helper 仓库摘要或精确镜像 ID。
-	CollectionImage string `json:"collectionImage,omitempty"` // v2 清单的受控获取服务固定镜像；v1 保持原双服务部署。
+	CollectionImage string `json:"collectionImage,omitempty"` // v2必需、v3可选的受控获取镜像；v1保持原双服务部署。
 	Archive         string `json:"archive,omitempty"`         // 可选包内相对归档路径，不得越过发布目录。
 	ArchiveSHA256   string `json:"archiveSha256,omitempty"`   // 归档内容校验，存在归档时必须填写。
 }
@@ -85,11 +85,11 @@ func readManifest(path string) (imageManifest, error) {
 		return manifest, errors.New("镜像清单字段无效")
 	}
 	_, hasCollection := fields["collectionImage"]
-	if (manifest.SchemaVersion == 2) != hasCollection {
-		return manifest, errors.New("v2镜像清单必须包含获取镜像，v1不接受该字段")
+	if manifest.SchemaVersion == 2 && !hasCollection || manifest.SchemaVersion == 1 && hasCollection || hasCollection && manifest.CollectionImage == "" {
+		return manifest, errors.New("v2清单必须包含获取镜像，v1不接受该字段，v3可选但不能为空")
 	}
 	digest := regexp.MustCompile(`^(?:[a-zA-Z0-9][a-zA-Z0-9._:/-]*@)?sha256:[a-f0-9]{64}$`)
-	if (manifest.SchemaVersion != 1 && manifest.SchemaVersion != 2) || !digest.MatchString(manifest.AppImage) || !digest.MatchString(manifest.HelperImage) || (manifest.SchemaVersion == 2 && !digest.MatchString(manifest.CollectionImage)) || (manifest.SchemaVersion == 1 && manifest.CollectionImage != "") {
+	if (manifest.SchemaVersion != 1 && manifest.SchemaVersion != 2 && manifest.SchemaVersion != 3) || !digest.MatchString(manifest.AppImage) || !digest.MatchString(manifest.HelperImage) || (hasCollection && !digest.MatchString(manifest.CollectionImage)) {
 		return manifest, errors.New("应用与助手镜像必须使用固定仓库摘要或精确 sha256 镜像 ID，拒绝可变标签")
 	}
 	if manifest.AppImage == manifest.HelperImage {
@@ -162,6 +162,9 @@ func (d *dockerRuntime) composeArgs(args ...string) []string {
 	if d.manifest.CollectionImage != "" {
 		base = append(base, "--file", filepath.Join(d.packageDir, "compose.desktop.collection.yaml"))
 	}
+	if d.manifest.SchemaVersion == 3 {
+		base = append(base, "--file", filepath.Join(d.packageDir, "compose.desktop.components.yaml"))
+	}
 	return append(base, args...)
 }
 
@@ -177,6 +180,9 @@ func (d *dockerRuntime) serviceImages() map[string]string {
 // volumeRoles 返回当前发布模板声明的全部角色，旧清单不隐式认领新增卷。
 func (d *dockerRuntime) volumeRoles() map[string]string {
 	roles := map[string]string{"app_data": "app-data", "state": "state", "qbittorrent": "qbittorrent", "jackett": "jackett", "downloads": "downloads", "connections": "connections", "ipc": "ipc"}
+	if d.manifest.SchemaVersion == 3 {
+		roles["collection_media"] = "collection-media"
+	}
 	if d.manifest.CollectionImage != "" {
 		roles["collection_data"] = "collection-data"
 		roles["collection_secrets"] = "collection-secrets"
@@ -262,6 +268,10 @@ func (c *controller) prepareDocker(ctx context.Context, cfg Config) (*dockerRunt
 	values := map[string]string{"NAS_APP_IMAGE": manifest.AppImage, "NAS_HELPER_IMAGE": manifest.HelperImage, "NAS_DESKTOP_PREFIX": prefix, "ENGINE_VOLUME_PREFIX": prefix, "ENGINE_NETWORK": prefix + "-engines", "MEDIA_PATH": cfg.MediaRoots[0], "WEB_PORT": strconv.Itoa(cfg.Port), "WEB_BIND_IP": "127.0.0.1", "QBT_PEER_PORT": "6881", "JACKETT_SETUP_PORT": "19117"}
 	if manifest.CollectionImage != "" {
 		values["NAS_COLLECTION_IMAGE"] = manifest.CollectionImage
+	}
+	if manifest.SchemaVersion == 3 {
+		// 媒体根由清单能力派生，不能从继承环境额外授权目录。
+		values["NAS_DESKTOP_MEDIA_ROOTS"] = d.serviceEnvironment("nas")["NAS_MEDIA_ROOTS"]
 	}
 	d.environment = dockerEnvironment(values)
 	// 空 env 文件阻止 Compose 隐式读取发布目录中的 .env；值只由经过校验的参数快照提供。
@@ -549,12 +559,18 @@ func (d *dockerRuntime) validateMounts(container dockerContainer, service string
 		Write bool
 	} // 固定卷角色及写权限。
 	expected := map[string]expectedMount{"/data": {"app-data", true}, "/downloads": {"downloads", false}, "/run/nas-engines": {"connections", false}, "/run/nas-engine-helper": {"ipc", false}}
+	if d.manifest.SchemaVersion == 3 && service == "nas" {
+		expected["/collection-media"] = expectedMount{"collection-media", false}
+	}
 	if d.manifest.CollectionImage != "" && service == "nas" {
 		expected["/collection"] = expectedMount{"collection-data", false}
 		expected["/run/nas-collection"] = expectedMount{"collection-secrets", false}
 	}
 	if service == "nas-engine-helper" {
 		expected = map[string]expectedMount{"/managed/state": {"state", true}, "/managed/qbittorrent": {"qbittorrent", true}, "/managed/jackett": {"jackett", true}, "/managed/downloads": {"downloads", true}, "/managed/connections": {"connections", true}, "/ipc": {"ipc", true}}
+		if d.manifest.SchemaVersion == 3 {
+			expected["/managed/collection-media"] = expectedMount{"collection-media", true}
+		}
 	}
 	extraMounts := 1
 	if service == "nas-collection-worker" && d.manifest.CollectionImage != "" {
@@ -812,7 +828,7 @@ func (d *dockerRuntime) stopAll(ctx context.Context) error {
 	if !helperRunning {
 		return errors.New("助手容器未运行，无法核验动态引擎已停止；请先恢复本实例助手后重试")
 	}
-	if _, err := d.execute(ctx, "安全停止本实例托管引擎", 105*time.Second, d.composeArgs("exec", "-T", "nas-engine-helper", "/nas-engine-helper", "stop-all")...); err != nil {
+	if _, err := d.execute(ctx, "安全停止本实例托管引擎及资源组件", 255*time.Second, d.composeArgs("exec", "-T", "nas-engine-helper", "/nas-engine-helper", "stop-all")...); err != nil {
 		return errors.New("助手未确认全部引擎安全停止；可能仍有初始化任务或归属冲突，已保留 app/helper，请在网页等待任务完成后重试")
 	}
 	services := []string{"stop", "--timeout", "30", "nas", "nas-engine-helper"}

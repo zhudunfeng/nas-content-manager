@@ -37,6 +37,15 @@ func volumeRoles() []string {
 	return []string{"state", "qbittorrent", "jackett", "downloads", "connections", "ipc"}
 }
 
+// configuredVolumeRoles 保留旧六角色兼容，只在显式启用资源组件时要求独立资源卷。
+func configuredVolumeRoles(c Config) []string {
+	roles := volumeRoles()
+	if c.CollectionEnabled {
+		roles = append(roles, "collection-media")
+	}
+	return roles
+}
+
 // volumeName 从部署配置派生固定角色卷名，不接受HTTP输入。
 func volumeName(c Config, role string) string { return c.VolumePrefix + "-" + role }
 
@@ -55,7 +64,7 @@ func volumePermissions(c Config, role string) (os.FileMode, int, int) {
 		return 0700, 0, 0
 	case "ipc":
 		return 0750, 0, c.GID
-	case "downloads":
+	case "downloads", "collection-media":
 		return 0755, c.UID, c.GID
 	default:
 		return 0750, c.UID, c.GID
@@ -83,7 +92,7 @@ func (d *dockerClient) volumeIdentity(ctx context.Context, c Config, role string
 // verifyVolumeMounts 核对助手所有角色挂载及元数据，拒绝覆盖挂载和重复目标。
 func (s *Service) verifyVolumeMounts(ctx context.Context, self *containerInfo) error {
 	want := map[string]string{}
-	for _, role := range volumeRoles() {
+	for _, role := range configuredVolumeRoles(s.config) {
 		want[volumePath(s.config, role)] = role
 	}
 	seen := map[string]bool{}
@@ -253,7 +262,7 @@ func verifyVolumeDirectory(c Config, role string) error {
 
 // verifyVolumeBindings 只读核验安装绑定，未知非空卷不会成为可初始化目标。
 func (s *Service) verifyVolumeBindings() error {
-	for _, role := range volumeRoles() {
+	for _, role := range configuredVolumeRoles(s.config) {
 		if _, err := claimVolume(s.config, role, s.store.installation, false); err != nil {
 			return errors.New("命名卷安装绑定冲突或包含未知数据，不会接管")
 		}

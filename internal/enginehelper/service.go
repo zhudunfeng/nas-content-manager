@@ -31,17 +31,18 @@ var (
 
 // Service 持有独立助手状态、单执行器和受控Docker客户端。
 type Service struct {
-	config    Config          // 不可变受信任部署配置。
-	store     *store          // 独立SQLite状态库。
-	docker    *dockerClient   // 本机Docker专用客户端。
-	logger    *slog.Logger    // 仅记录受控中文业务日志。
-	ctx       context.Context // 独立于浏览器请求的生命周期。
-	queue     chan string     // 全局唯一执行器的有界任务通道。
-	opMu      sync.Mutex      // 只保护短幂等提交，不跨网络调用。
-	wg        sync.WaitGroup  // 等待任务在退出时停止。
-	running   string          // opMu保护的执行器当前任务，防止旧worker未退出时retry。
-	quiescing bool            // opMu保护的停止闸门；本进程开始完整停止后不再接受启动副作用。
-	lease     *os.File        // 在打开状态库和恢复任务前取得的跨进程独占锁。
+	config         Config          // 不可变受信任部署配置。
+	store          *store          // 独立SQLite状态库。
+	docker         *dockerClient   // 本机Docker专用客户端。
+	collectionHTTP *http.Client    // 仅用于固定资源组件匿名探针的有界HTTP客户端。
+	logger         *slog.Logger    // 仅记录受控中文业务日志。
+	ctx            context.Context // 独立于浏览器请求的生命周期。
+	queue          chan string     // 全局唯一执行器的有界任务通道。
+	opMu           sync.Mutex      // 只保护短幂等提交，不跨网络调用。
+	wg             sync.WaitGroup  // 等待任务在退出时停止。
+	running        string          // opMu保护的执行器当前任务，防止旧worker未退出时retry。
+	quiescing      bool            // opMu保护的停止闸门；本进程开始完整停止后不再接受启动副作用。
+	lease          *os.File        // 在打开状态库和恢复任务前取得的跨进程独占锁。
 }
 
 // New 创建助手私有状态，恢复已授权的未完成任务；不自动启动已完成引擎。
@@ -103,7 +104,7 @@ func New(ctx context.Context, c Config, logger *slog.Logger) (*Service, error) {
 		db.db.Close()
 		return nil, errors.New("助手状态库权限设置失败")
 	}
-	s := &Service{config: c, store: db, docker: docker, logger: logger, ctx: ctx, queue: make(chan string, 1), lease: lease}
+	s := &Service{config: c, store: db, docker: docker, collectionHTTP: probeHTTP(), logger: logger, ctx: ctx, queue: make(chan string, 1), lease: lease}
 	if c.StorageMode == "volume" {
 		// IPC是助手本身的启动资源；配置、下载和连接卷仅在授权初始化中绑定。
 		if _, err = claimVolume(c, "ipc", db.installation, true); err == nil {
@@ -135,6 +136,9 @@ func New(ctx context.Context, c Config, logger *slog.Logger) (*Service, error) {
 func (s *Service) Close() error {
 	s.wg.Wait()
 	s.docker.http.CloseIdleConnections()
+	if s.collectionHTTP != nil {
+		s.collectionHTTP.CloseIdleConnections()
+	}
 	err := s.store.db.Close()
 	if s.lease != nil {
 		err = errors.Join(err, s.lease.Close())
@@ -215,6 +219,11 @@ func (s *Service) Handler() http.Handler {
 	mux.HandleFunc("POST /api/engines/initializations/{id}/retry", s.handleRetry)
 	mux.HandleFunc("POST /api/engines/{component}/start", s.handleStart)
 	mux.HandleFunc("POST /api/engines/stop-all", s.handleStopAll)
+	mux.HandleFunc("GET /api/collection/components", s.handleCollectionStatus)
+	mux.HandleFunc("POST /api/collection/components/deploy", s.handleCollectionDeploy)
+	mux.HandleFunc("POST /api/collection/components/{component}/start", s.handleCollectionStart)
+	mux.HandleFunc("GET /api/collection/components/tasks/{id}", s.handleCollectionTask)
+	mux.HandleFunc("POST /api/collection/components/tasks/{id}/retry", s.handleCollectionRetry)
 	return mux
 }
 
@@ -277,7 +286,7 @@ func (s *Service) status(ctx context.Context) enginecontract.Status {
 	s.opMu.Lock()
 	quiescing := s.quiescing
 	s.opMu.Unlock()
-	if activeErr == nil && active != nil {
+	if activeErr == nil && active != nil && !isCollectionTask(*active) {
 		result.ActiveTaskID = active.ID
 	}
 	manifest, manifestErr := s.loadManifest()
@@ -371,6 +380,12 @@ func (s *Service) submit(ctx context.Context, requestID string, signature string
 		if strings.Join(active.Components, ",") != strings.Join(components, ",") || active.Action != strings.Split(signature, "|")[0] {
 			return enginecontract.Task{}, errBusy
 		}
+		// 组件启动签名还包含状态版本，不能把不同版本的并发意图合并到同一任务。
+		if isCollectionTask(*active) {
+			if err = s.validateCollectionIntentSignature(ctx, active.ID, signature); err != nil {
+				return enginecontract.Task{}, err
+			}
+		}
 		if err = s.store.alias(ctx, requestID, signature, active.ID); err != nil {
 			return enginecontract.Task{}, err
 		}
@@ -438,11 +453,20 @@ func (s *Service) handleTask(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	if isCollectionTask(result.Task) {
+		failure(w, 404, "请通过资源组件专用接口读取该任务")
+		return
+	}
 	respond(w, 200, result)
 }
 
 // handleRetry 只重排失败步骤，已成功组件和其凭据完全保留。
 func (s *Service) handleRetry(w http.ResponseWriter, r *http.Request) {
+	s.retryTask(w, r, false)
+}
+
+// retryTask 以显式路由范围复用短锁、版本校验及持久重试事务。
+func (s *Service) retryTask(w http.ResponseWriter, r *http.Request, collection bool) {
 	var request enginecontract.ActionRequest
 	if !decode(w, r, &request) {
 		return
@@ -450,6 +474,15 @@ func (s *Service) handleRetry(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if !safeID(id) || !safeID(request.RequestID) || request.Revision < 1 {
 		failure(w, 400, "重试参数无效")
+		return
+	}
+	scopeTask, scopeErr := s.store.getTask(r.Context(), id)
+	if scopeErr != nil {
+		writeError(w, scopeErr)
+		return
+	}
+	if isCollectionTask(scopeTask) != collection || collection && !s.config.CollectionEnabled {
+		failure(w, 404, "该路由不存在此范围的部署任务")
 		return
 	}
 	signature := fmt.Sprintf("retry|%s|%d", id, request.Revision)

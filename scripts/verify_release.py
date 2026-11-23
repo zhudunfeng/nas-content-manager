@@ -150,8 +150,10 @@ def verify(path: Path) -> int:
     if "release-images.json" in small:
         manifest = metadata_object(small["release-images.json"])
         name = validate_images_manifest(manifest)
-        if manifest["schemaVersion"] == 2 and "compose.desktop.collection.yaml" not in hashes:
+        if "collectionImage" in manifest and "compose.desktop.collection.yaml" not in hashes:
             raise ValueError("三镜像发布包缺少获取服务覆盖模板")
+        if manifest["schemaVersion"] == 3 and "compose.desktop.components.yaml" not in hashes:
+            raise ValueError("v3发布包缺少固定组件部署覆盖模板")
         if name is not None and hashes.get(name) != manifest["archiveSha256"]:
             raise ValueError("离线镜像归档摘要不匹配")
     print(f"发布包校验通过：{metadata['target']}，{len(hashes)}份文件，开发验证包={metadata['developmentWithoutTools']}")
@@ -223,6 +225,13 @@ def self_test() -> int:
         if validate_images_manifest(collection_images) is not None:
             raise AssertionError("无归档的三镜像清单解析错误")
         count += 1
+        component_images = {**fixed_images, "schemaVersion": 3}
+        for value in (component_images, {**collection_images, "schemaVersion": 3}):
+            if validate_images_manifest(value) is not None:
+                raise AssertionError("v3组件部署清单未兼容双镜像与三镜像")
+            count += 1
+        for value in ({**component_images, "collectionImage": None}, {**component_images, "collectionImage": ""}, {**component_images, "schemaVersion": 4}):
+            rejected(lambda: validate_images_manifest(value), "错误组件部署版本或空镜像未被拒绝")
         for replacement in ({**fixed_images, "schemaVersion": 2}, {**collection_images, "schemaVersion": 1}, {**collection_images, "collectionImage": fixed_images["appImage"]}, {**collection_images, "collectionImage": "collection:latest"}, {**collection_images, "collectionImage": None}):
             rejected(lambda: validate_images_manifest(replacement), "获取执行端版本、镜像身份或不可变引用未被校验")
         for extra in ({"archive": None, "archiveSha256": None}, {"archive": "images/archive.tar"}, {"archive": "other/archive.tar", "archiveSha256": "c" * 64}, {"archive": "images/archive.tar", "archiveSha256": "invalid"}):
@@ -255,6 +264,13 @@ def self_test() -> int:
         seal(stage, second)
         rejected(lambda: verify(second), "三镜像归档缺少覆盖模板仍被接受")
         (stage / "compose.desktop.collection.yaml").write_text("仅用于封装校验", encoding="utf-8")
+        seal(stage, second)
+        verify(second)
+        count += 1
+        (stage / "release-images.json").write_text(json.dumps(component_images), encoding="utf-8")
+        seal(stage, second)
+        rejected(lambda: verify(second), "v3归档缺少组件部署覆盖模板仍被接受")
+        (stage / "compose.desktop.components.yaml").write_text("仅用于封装校验", encoding="utf-8")
         seal(stage, second)
         verify(second)
         count += 1

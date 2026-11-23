@@ -43,6 +43,8 @@ BT仍使用下载中心的固定流程。RSS确认后产生关联下载任务，
 
 ## Linux/NAS部署
 
+需要从平台部署 MoviePilot、AutoBangumi、Sonarr/Radarr 时使用新版引擎助手覆盖文件；选择服务后可在来源窗口完成部署并接入。具体首次配置、目录映射与Windows v3完整模式见[资源组件部署](components.md)。
+
 在仓库根构建可选服务：
 
 ```sh
@@ -55,7 +57,7 @@ docker compose -f compose.yaml -f compose.collection.yaml up -d --build
 
 ```dotenv
 # 合并原媒体、BT完成区和获取完成区，不能将staging/私有状态加入媒体根。
-COLLECTION_MEDIA_ROOTS=/media:/downloads/complete:/collection/complete
+COLLECTION_MEDIA_ROOTS=/media:/downloads/complete:/collection/complete:/collection-media/library
 ```
 
 ```sh
@@ -82,7 +84,7 @@ worker可用`go build ./cmd/nas-collection-worker`单独构建。使用固定路
 | `NAS_COLLECTION_WORKER_ALLOW_HTTP` | `false`；仅显式允许回环/受限内网HTTP，跨主机优先使用HTTPS |
 | `NAS_COLLECTION_MAX_BYTES` | `21474836480`；单任务总字节上限，默认20GiB |
 | `NAS_COLLECTION_MAX_FILES` | `1000`；单任务文件数上限 |
-| `COLLECTION_MEDIA_ROOTS` | Compose覆盖参数，默认`/media:/collection/complete`；同时启用BT时加入`/downloads/complete` |
+| `COLLECTION_MEDIA_ROOTS` | Compose覆盖参数，默认`/media:/collection/complete`；同时启用BT时加入`/downloads/complete`，启用组件部署时再加入`/collection-media/library` |
 
 ## Worker配置
 

@@ -1,0 +1,11 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/tasks/11-20-collection-component-install/info.md", "reason": "跨层部署契约"}
+{"file": ".trellis/tasks/11-20-collection-component-install/research/official-deployment.md", "reason": "固定镜像及首次配置依据"}
+{"file": ".trellis/tasks/11-20-collection-component-install/research/repository-deployment.md", "reason": "现有部署复用"}
+{"file": ".trellis/spec/backend/engine-bootstrap-contract.md", "reason": "私有Docker安全边界"}
+{"file": ".trellis/spec/backend/external-collection-contract.md", "reason": "外部服务API及凭据"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "桌面固定模板及停止"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "组件与弹窗交互"}
+{"file": ".trellis/spec/backend/collection-component-contract.md", "reason": "四组件部署跨层可执行契约"}

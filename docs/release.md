@@ -63,13 +63,15 @@ docker --context desktop-linux build --platform linux/amd64 -f Dockerfile.engine
 docker --context desktop-linux build --platform linux/amd64 -f Dockerfile.collection-worker -t qiku-collection:local .
 # 只保存现有镜像，不启动容器；拒绝远程context。
 python scripts/package_desktop_images.py --context desktop-linux --app-image qiku-app:local --helper-image qiku-helper:local --output bin/desktop-images
-# 三镜像模式：选择不同输出目录，并生成v2清单。
+# 三镜像模式：选择不同输出目录，生成可部署组件的v3清单。
 python scripts/package_desktop_images.py --context desktop-linux --app-image qiku-app:local --helper-image qiku-helper:local --collection-image qiku-collection:local --output bin/desktop-collection-images
 # 将校验过的离线镜像归档一并装入Windows包。
 python scripts/release.py --target windows-amd64 --tools-manifest /path/to/windows-tools.json --images-manifest bin/desktop-images/release-images.json
 ```
 
-`release-images.json` 的 `schemaVersion=1`保留双镜像；`schemaVersion=2`必须再提供`collectionImage`，三个镜像引用和实际ID都必须不同。所有镜像为真实本地 `sha256:<64位>` 或 `repository@sha256:<64位>`。v2包必须含`compose.desktop.collection.yaml`，启动器在基础模板后叠加并严格核验。离线时 `archive` 为 `images/` 下包内相对路径，`archiveSha256` 为真实摘要，两项必须同时出现。使用本地ID且不带归档时，终端 Docker 必须已存在相同镜像。面向在线部署时，维护者先自行发布真实镜像，再填写其不可变仓库 digest；不接受 latest/普通标签。
+`release-images.json` 的 `schemaVersion=1`保留双镜像；`schemaVersion=2`必须再提供`collectionImage`。新打包器生成 **v3**，允许双镜像或附带`collectionImage`，并显式启用四类固定资源组件部署。所有镜像引用和实际ID必须不同，均为真实本地 `sha256:<64位>` 或 `repository@sha256:<64位>`。含获取镜像的包必须有`compose.desktop.collection.yaml`；v3还必须包含`compose.desktop.components.yaml`，启动器按顺序叠加并严格核验。旧v1/v2不隐式授权新卷。组件镜像由用户在平台确认后按固定摘要另行拉取，未包含在应用/助手离线归档中。
+
+离线时 `archive` 为 `images/` 下包内相对路径，`archiveSha256` 为真实摘要，两项必须同时出现。使用本地ID且不带归档时，终端 Docker 必须已存在相同镜像。面向在线部署时，维护者先自行发布真实镜像，再填写其不可变仓库 digest；不接受 latest/普通标签。部署操作与首次配置见 [资源组件](components.md)。
 
 获取镜像中的yt-dlp通过`deploy/collection-requirements.txt`固定版本和wheel摘要，系统FFmpeg/rclone版本记录在`/app/system-tools.txt`。正式再分发前需将对应许可证、构建版本、源码/提供源码材料与最终镜像digest一起归档；yt-dlp、rclone和FFmpeg分别遵循其实际发行许可，不能以主应用许可替代。当前源码构建配方不等于已完成镜像许可审核或真实容器运行验收。
 

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import { api, errorMessage, isAbort } from '../api'
 import { collectionKindLabels } from '../collection'
+import { collectionComponentLocalEntry } from '../collection-components'
+import type { CollectionComponent } from '../collection-components'
 import type { CollectionCapabilities, CollectionExternalService, CollectionKind, CollectionSource, CollectionSourceInput, CollectionWorkerSource } from '../types'
 import DialogShell from './DialogShell.vue'
 import Icon from './Icon.vue'
 import PasswordInput from './PasswordInput.vue'
+import CollectionComponentDeploy from './CollectionComponentDeploy.vue'
 
 /** 来源配置只接收公开字段，秘密永不预填。 */
 interface Props {
@@ -31,6 +34,16 @@ const serviceNames: Record<CollectionExternalService, string> = { '': '仅入口
 const externalService = ref<CollectionExternalService>(props.source ? props.source.externalService || '' : 'moviepilot')
 const baseUrl = ref<string>('')
 const apiKey = ref<string>('')
+/** 已有连接保持原接入流程，新部署在同一弹窗中逐步完成。 */
+const externalMode = ref<'connect' | 'deploy'>('connect')
+/** 仅记录系统生成的入口，切换服务时不覆盖用户另填的入口。 */
+const deployedEntrySuggestion = ref<string>('')
+/** 仅记录系统生成的完成目录根，用于组件切换时移除过期建议。 */
+const deployedRootSuggestion = ref<string>('')
+/** 系统生成的完成子目录，与目录根共同判断建议是否仍未修改。 */
+const deployedPathSuggestion = ref<string>('')
+/** 部署完成切回连接时将焦点交给内部服务地址。 */
+const baseUrlInput = ref<HTMLInputElement | null>(null)
 const clearConnection = ref<boolean>(false)
 const saving = ref<boolean>(false)
 const error = ref<string>('')
@@ -43,6 +56,7 @@ const workerChoices = computed<CollectionWorkerSource[]>((): CollectionWorkerSou
 
 /** 新建时切换类型并丢弃不适用的目录及私密输入。 */
 function changeKind(): void {
+  clearDeployedSuggestions()
   rootId.value = ''
   url.value = ''
   path.value = ''
@@ -51,21 +65,61 @@ function changeKind(): void {
   baseUrl.value = ''
   apiKey.value = ''
   clearConnection.value = false
+  externalMode.value = 'connect'
   if (kind.value === 'external' && !name.value.trim()) name.value = serviceNames[externalService.value]
 }
 /** 本地模式改变时重新选择真实配置的目录。 */
 function changeMode(): void { rootId.value = '' }
-/** 服务切换只保留公开目录，要求重新填写该服务的秘密。 */
+/** 清理仍未被用户修改的部署建议，防止跨组件连接到旧入口或目录。 */
+function clearDeployedSuggestions(): void {
+  if (deployedEntrySuggestion.value && externalUrl.value === deployedEntrySuggestion.value) externalUrl.value = ''
+  if (deployedRootSuggestion.value && rootId.value === deployedRootSuggestion.value && path.value === deployedPathSuggestion.value) {
+    rootId.value = ''
+    path.value = ''
+  }
+  deployedEntrySuggestion.value = ''
+  deployedRootSuggestion.value = ''
+  deployedPathSuggestion.value = ''
+}
+/** 服务切换保留用户填写的公开设置，清理旧组件建议并重新填写秘密。 */
 function changeService(): void {
+  clearDeployedSuggestions()
   if (!name.value.trim() || Object.values(serviceNames).includes(name.value)) name.value = externalService.value ? serviceNames[externalService.value] : ''
   baseUrl.value = ''
   apiKey.value = ''
   clearConnection.value = false
   error.value = ''
+  externalMode.value = 'connect'
+}
+/** 只预填已核验组件的公开连接信息，API 凭据仍由用户输入。 */
+async function connectDeployed(component: CollectionComponent): Promise<void> {
+  if (component.id !== externalService.value || !component.serviceUrl) return
+  baseUrl.value = component.serviceUrl
+  apiKey.value = ''
+  clearConnection.value = false
+  allowPrivate.value = true
+  if (!externalUrl.value) {
+    externalUrl.value = collectionComponentLocalEntry(component.setupPort)
+    deployedEntrySuggestion.value = externalUrl.value
+  }
+  if (!rootId.value) {
+    const root: CollectionCapabilities['roots'][number] | undefined = props.capabilities?.roots.find((entry: CollectionCapabilities['roots'][number]): boolean => entry.path.replace(/\\/g, '/').replace(/\/$/, '') === '/collection-media/library')
+    if (root) {
+      rootId.value = root.id
+      path.value = component.id
+      deployedRootSuggestion.value = root.id
+      deployedPathSuggestion.value = component.id
+    }
+  }
+  externalMode.value = 'connect'
+  error.value = ''
+  await nextTick()
+  baseUrlInput.value?.focus()
 }
 /** 创建或乐观修订来源，地址仅通过提交写入。 */
 async function save(): Promise<void> {
   if (saving.value) return
+  if (usesAPI.value && externalMode.value === 'deploy') return
   if (usesDirectory.value && !usesAPI.value && !rootId.value) { error.value = '请先选择已配置的受控目录或连接。'; return }
   if (usesAPI.value && !clearConnection.value && !keepsConnection.value && (!baseUrl.value.trim() || !apiKey.value.trim())) { error.value = '请填写服务地址和已有 API 凭据。'; return }
   if (kind.value === 'rss' && !props.source && !url.value.trim()) { error.value = '请输入 RSS 来源地址。'; return }
@@ -95,7 +149,7 @@ onBeforeUnmount((): void => { controller.abort(); url.value = ''; baseUrl.value 
   <DialogShell :title="source ? '编辑收集来源' : '添加收集来源'" @close="emit('close')">
     <form class="collection-form" @submit.prevent="save">
       <p v-if="kind !== 'external'" class="muted">来源是你已经拥有的地址或连接。执行工具是否可用会单独检测。</p>
-      <p v-else class="section-note">选择服务 → 填写连接 → 保存并检测。下载仍由外部服务负责，完成目录可以稍后设置。</p>
+      <p v-else class="section-note">选择服务 → 连接或部署 → 保存并检测。下载仍由外部服务负责，完成目录可以稍后设置。</p>
       <div class="collection-field-grid">
         <label>来源类型<select v-model="kind" :disabled="!!source || saving" @change="changeKind"><option v-for="(label, key) in collectionKindLabels" :key="key" :value="key">{{ label }}</option></select><span class="field-hint">来源创建后类型固定；不同入口可各建一个来源。</span></label>
         <label>来源名称<input v-model="name" autofocus required maxlength="80" :disabled="saving" placeholder="例如：个人音乐目录" /><span class="field-hint">在候选和任务记录中显示的名称。</span></label>
@@ -103,7 +157,11 @@ onBeforeUnmount((): void => { controller.abort(); url.value = ''; baseUrl.value 
       <template v-if="kind === 'external'">
         <label>选择服务<select v-model="externalService" :disabled="saving" @change="changeService"><option v-for="(label, value) in serviceNames" :key="value" :value="value">{{ label }}</option></select><span class="field-hint">自动检测兼容版本，无需选择 API 版本。</span></label>
         <template v-if="usesAPI">
-          <label>服务地址<input v-model="baseUrl" type="url" :required="!keepsConnection && !clearConnection" :disabled="saving || clearConnection" autocomplete="off" spellcheck="false" :placeholder="keepsConnection ? '留空保留已保存地址' : '例如 http://192.168.1.10:8989'" /><span class="field-hint">填写实例首页基址，可保留反向代理子路径，不需要追加 /api。地址保密，不会回显。</span></label>
+          <div class="collection-tabs source-external-mode" role="group" aria-label="组件接入方式"><button type="button" :class="{ active: externalMode === 'connect' }" :aria-pressed="externalMode === 'connect'" :disabled="saving" @click="externalMode = 'connect'">连接已有组件</button><button type="button" :class="{ active: externalMode === 'deploy' }" :aria-pressed="externalMode === 'deploy'" :disabled="saving" @click="externalMode = 'deploy'">在此部署组件</button></div>
+          <CollectionComponentDeploy v-if="externalMode === 'deploy'" :key="externalService" :service="externalService" :disabled="saving" @connect="connectDeployed" />
+        </template>
+        <template v-if="usesAPI && externalMode === 'connect'">
+          <label>服务地址<input ref="baseUrlInput" v-model="baseUrl" type="url" :required="!keepsConnection && !clearConnection" :disabled="saving || clearConnection" autocomplete="off" spellcheck="false" :placeholder="keepsConnection ? '留空保留已保存地址' : '例如 http://192.168.1.10:8989'" /><span class="field-hint">填写实例首页基址，可保留反向代理子路径，不需要追加 /api。地址保密，不会回显。</span></label>
           <!-- 切换服务时重建凭据框，即使旧值为空也恢复默认掩码。 -->
           <div class="collection-secret-field"><label for="source-api-key">{{ externalService === 'autobangumi' ? 'API Token' : 'API Key / Token' }}</label><PasswordInput :key="externalService" id="source-api-key" v-model="apiKey" secret-label="API 凭据" :required="!keepsConnection && !clearConnection" :disabled="saving || clearConnection" autocomplete="new-password" spellcheck="false" aria-describedby="source-api-key-hint" :placeholder="keepsConnection ? '已保存凭据，留空保留' : '粘贴外部服务中已生成的 API 凭据'" /><span id="source-api-key-hint" class="field-hint">{{ externalService === 'autobangumi' ? '使用 AutoBangumi 中 scope 为 api 的 Token。' : '在外部应用设置中获取 API 凭据。' }} 凭据仅写入，不在列表和编辑中显示。</span></div>
           <label class="collection-check"><input v-model="allowPrivate" type="checkbox" :disabled="saving" /><span>允许连接我的 NAS 私网服务<span class="field-hint">内网或本机地址需要明确勾选。保留地址、元数据地址和越界重定向仍会拒绝。</span></span></label>
@@ -122,7 +180,7 @@ onBeforeUnmount((): void => { controller.abort(); url.value = ''; baseUrl.value 
         <p v-if="!capabilities || (!register && !capabilities.workerReady)" class="error-box">{{ capabilities?.workerReason || '目录能力尚未读取成功，请关闭后刷新能力。' }}</p>
         <label>来源子目录<input v-model="path" :disabled="saving" maxlength="512" placeholder="可留空，例如 Music/2026" /><span class="field-hint">相对于所选根目录的路径；留空使用根目录，不允许绝对路径或上级跳转。</span></label>
       </template>
-      <template v-if="kind === 'external'">
+      <template v-if="kind === 'external' && (!usesAPI || externalMode === 'connect')">
         <details class="collection-advanced" :open="!usesAPI">
           <summary>{{ usesAPI ? '高级设置：完成目录与外部入口（可稍后）' : '外部入口与成品目录' }}</summary>
           <div class="collection-advanced-fields">
@@ -136,11 +194,14 @@ onBeforeUnmount((): void => { controller.abort(); url.value = ''; baseUrl.value 
       </template>
       <label v-if="kind !== 'external'" class="collection-check"><input v-model="enabled" type="checkbox" :disabled="saving" /><span>启用来源<span class="field-hint">停用后不产生新的收集；历史任务与媒体保留。</span></span></label>
       <p v-if="error" class="error-box" role="alert">{{ error }}</p>
-      <div class="dialog-actions"><button class="secondary-button" type="button" @click="emit('close')">取消</button><button class="primary-button" type="submit" :disabled="saving || !name.trim()"><Icon name="check" />{{ saving ? '保存中…' : usesAPI && !clearConnection ? '保存并检测' : '保存来源' }}</button></div>
+      <div class="dialog-actions"><button class="secondary-button" type="button" @click="emit('close')">{{ usesAPI && externalMode === 'deploy' ? '关闭' : '取消' }}</button><button v-if="!usesAPI || externalMode === 'connect'" class="primary-button" type="submit" :disabled="saving || !name.trim()"><Icon name="check" />{{ saving ? '保存中…' : usesAPI && !clearConnection ? '保存并检测' : '保存来源' }}</button></div>
     </form>
   </DialogShell>
 </template>
 
 <style scoped>
 .collection-secret-field { display: flex; flex-direction: column; gap: 9px; min-width: 0; font-weight: 500; }
+.source-external-mode { width: fit-content; max-width: 100%; }
+.source-external-mode button { white-space: normal; }
+@media (max-width: 600px) { .source-external-mode { width: 100%; } .source-external-mode button { flex: 1; padding: 10px; } }
 </style>

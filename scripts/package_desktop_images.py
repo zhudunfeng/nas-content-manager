@@ -86,9 +86,10 @@ def package(args: argparse.Namespace) -> Path:
         invoke(["--context", selected, "image", "save", "--output", str(pending), *[image["Id"] for image in images]], environment)
         checksum = digest(pending)
         pending.replace(archive)
-    value = {"schemaVersion": 1, "appImage": app["Id"], "helperImage": helper["Id"], "archive": "images/desktop-linux-amd64.tar", "archiveSha256": checksum}
+    # v3显式授权固定组件部署覆盖文件；旧v1/v2材料继续保持原角色边界。
+    value = {"schemaVersion": 3, "appImage": app["Id"], "helperImage": helper["Id"], "archive": "images/desktop-linux-amd64.tar", "archiveSha256": checksum}
     if collection:
-        value.update(schemaVersion=2, collectionImage=collection["Id"])
+        value.update(collectionImage=collection["Id"])
     try:
         with manifest.open("x", encoding="utf-8", newline="\n") as stream:
             stream.write(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
@@ -106,7 +107,7 @@ def main() -> int:
     parser.add_argument("--context", help="本机Docker context；默认读取当前选择并校验socket")
     parser.add_argument("--app-image", required=True, help="维护者已构建的Linux amd64应用镜像引用")
     parser.add_argument("--helper-image", required=True, help="维护者已构建的Linux amd64助手镜像引用")
-    parser.add_argument("--collection-image", help="可选的Linux amd64获取执行端镜像；提供时生成三镜像v2清单")
+    parser.add_argument("--collection-image", help="可选的Linux amd64获取执行端镜像；v3清单启用固定组件部署，可附带此第三镜像")
     parser.add_argument("--output", required=True, help="资源输出目录，不覆盖已有归档或清单")
     try:
         print(f"镜像清单：{package(parser.parse_args())}")

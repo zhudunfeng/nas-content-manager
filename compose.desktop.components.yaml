@@ -1,0 +1,30 @@
+# 桌面 v3 清单专用；v1/v2仍使用原固定角色卷，不隐式授权新组件。
+services:
+  # 主应用只读登记组件独立整理好的媒体。
+  nas:
+    volumes:
+      # 不授予写权限，也不挂载组件私密配置卷。
+      - collection_media:/collection-media:ro
+    environment:
+      # 有获取服务时由启动器传入其完成区；始终只授权组件library子树。
+      NAS_MEDIA_ROOTS: ${NAS_DESKTOP_MEDIA_ROOTS:?缺少经核验的媒体根集合}
+  # 助手只在明确部署任务中创建固定组件。
+  nas-engine-helper:
+    volumes:
+      # Linux命名卷保持UID与权限语义，独立于Windows只读媒体盘。
+      - collection_media:/managed/collection-media
+    environment:
+      # 启用四类固定模板及第七存储角色；不会自动安装组件。
+      ENGINE_COLLECTION_ENABLED: "true"
+volumes:
+  # 动态组件共享的独立资源数据根。
+  collection_media:
+    # 固定实例名，助手按精确角色核验。
+    name: ${ENGINE_VOLUME_PREFIX}-collection-media
+    # 只接受无额外驱动选项的本机卷。
+    driver: local
+    labels:
+      # 与原六角色使用同一可信部署身份。
+      nas.engines.deployment: ${ENGINE_VOLUME_PREFIX}
+      # 组件的下载/整理数据角色，不含应用凭据。
+      nas.engines.role: collection-media

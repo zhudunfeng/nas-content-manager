@@ -141,6 +141,11 @@ func (s *Service) ownedConfig(component string, claim bool) error {
 		_, err := claimVolume(s.config, component, s.store.installation, claim)
 		return err
 	}
+	return s.ownedDirectory(component, claim)
+}
+
+// ownedDirectory 只为固定受管子目录原子绑定安装身份，不接管未知非空内容。
+func (s *Service) ownedDirectory(component string, claim bool) error {
 	dir := filepath.Join(s.config.Root, component)
 	if !claim {
 		info, err := os.Lstat(dir)

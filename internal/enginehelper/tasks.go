@@ -78,6 +78,9 @@ func (s *Service) execute(id string) {
 			t.Steps[index].State = "completed"
 			t.Steps[index].Phase = "completed"
 			t.Steps[index].Message = "部署与私有连接发布完成，等待应用接入"
+			if enginecontract.IsCollectionComponent(t.Steps[index].Component) {
+				t.Steps[index].Message = "组件已运行且HTTP检查通过，待首次配置和API连接"
+			}
 			if t.Action == "stop" {
 				t.Steps[index].Message = "本安装引擎已停止或原本不存在，数据完整保留"
 			}
@@ -89,6 +92,9 @@ func (s *Service) execute(id string) {
 	}
 	t.State = "completed"
 	t.Message = "引擎部署完成，应用将自动验证接入；搜索仍需配置站点来源"
+	if isCollectionTask(t) {
+		t.Message = "组件部署完成，待首次配置；请打开组件设置账号后回到平台输入API凭据"
+	}
 	if t.Action == "stop" {
 		t.Message = "本安装全部受管引擎已停止，容器和数据卷完整保留"
 	}
@@ -115,7 +121,7 @@ func (s *Service) executeComponent(task *enginecontract.Task, index int) error {
 	if task.Action == "stop" {
 		return s.stopComponent(task, index)
 	}
-	t, err := engineTemplate(task.Steps[index].Component)
+	t, err := deploymentTemplate(task.Steps[index].Component)
 	if err != nil {
 		return err
 	}
@@ -125,7 +131,11 @@ func (s *Service) executeComponent(task *enginecontract.Task, index int) error {
 	if err = s.preflight(s.ctx); err != nil {
 		return err
 	}
-	if s.config.StorageMode == "volume" {
+	collection := enginecontract.IsCollectionComponent(t.Component)
+	if collection && !s.config.CollectionEnabled {
+		return errors.New("当前未启用资源组件部署，请恢复原受管Docker配置后重试")
+	}
+	if !collection && s.config.StorageMode == "volume" {
 		// 仅持久化授权任务可认领连接角色卷，GET检测始终无认领副作用。
 		if _, err = claimVolume(s.config, "connections", s.store.installation, true); err != nil {
 			return err
@@ -136,7 +146,11 @@ func (s *Service) executeComponent(task *enginecontract.Task, index int) error {
 			return err
 		}
 	}
-	if err = s.ownedConfig(t.Component, false); err != nil {
+	if collection {
+		if err = s.collectionPrivateVolumes(s.ctx, t.Component, false, false); err != nil {
+			return err
+		}
+	} else if err = s.ownedConfig(t.Component, false); err != nil {
 		return errConflict
 	}
 	name := containerName(s.store.installation, t.Component)
@@ -147,6 +161,11 @@ func (s *Service) executeComponent(task *enginecontract.Task, index int) error {
 	if existing != nil {
 		if err = validateContainer(existing, s.config, s.store.installation, t); err != nil {
 			return err
+		}
+		if collection {
+			if err = s.validateCollectionRuntime(s.ctx, existing, t); err != nil {
+				return err
+			}
 		}
 	} else if task.Action == "start" {
 		return errors.New("原受管容器已不存在，请刷新检测；启动操作不会创建替代容器")
@@ -190,11 +209,22 @@ func (s *Service) executeComponent(task *enginecontract.Task, index int) error {
 	if err = s.phase(task, index, "preparing", "正在验证配置归属与目标UID读写权限"); err != nil {
 		return err
 	}
-	if err = s.ownedConfig(t.Component, true); err != nil {
-		return errConflict
-	}
-	if err = verifyTargetAccess(filepath.Join(s.config.Root, t.Component), s.config.UID, s.config.GID); err != nil {
-		return err
+	if collection {
+		if task.Action != "start" {
+			if err = s.prepareCollectionData(); err != nil {
+				return err
+			}
+			if err = s.collectionPrivateVolumes(s.ctx, t.Component, true, false); err != nil {
+				return err
+			}
+		}
+	} else {
+		if err = s.ownedConfig(t.Component, true); err != nil {
+			return errConflict
+		}
+		if err = verifyTargetAccess(filepath.Join(s.config.Root, t.Component), s.config.UID, s.config.GID); err != nil {
+			return err
+		}
 	}
 	var password string
 	if t.Component == enginecontract.QBittorrent {
@@ -227,11 +257,20 @@ func (s *Service) executeComponent(task *enginecontract.Task, index int) error {
 			return err
 		}
 	}
+	if collection {
+		if err = s.validateCollectionRuntime(s.ctx, existing, t); err != nil {
+			return err
+		}
+	}
 	if !existing.State.Running {
 		if err = s.phase(task, index, "starting", "正在启动已核对归属的原受管容器"); err != nil {
 			return err
 		}
-		startErr := s.docker.call(s.ctx, http.MethodPost, s.docker.api()+"/containers/"+s.escapedName(t.Component)+"/start", nil, nil)
+		originalID := existing.ID
+		if originalID == "" {
+			return errors.New("受管容器缺少实际身份，已拒绝启动")
+		}
+		startErr := s.docker.call(s.ctx, http.MethodPost, s.docker.api()+"/containers/"+url.PathEscape(originalID)+"/start", nil, nil)
 		existing, err = s.docker.inspect(s.ctx, name)
 		if err != nil || existing == nil {
 			return errors.New("启动结果暂不可确认，请重试对账")
@@ -239,12 +278,31 @@ func (s *Service) executeComponent(task *enginecontract.Task, index int) error {
 		if err = validateContainer(existing, s.config, s.store.installation, t); err != nil {
 			return err
 		}
+		if existing.ID != originalID || existing.Image != imageID {
+			return errors.New("启动期间实际容器身份发生变化，已拒绝继续操作")
+		}
 		if !existing.State.Running {
 			if startErr != nil {
 				return errors.New("容器启动失败，请检查固定端口是否占用及Docker资源")
 			}
 			return errors.New("容器未进入运行状态，请保留配置后检查引擎")
 		}
+	}
+	if collection {
+		if err = s.validateCollectionRuntime(s.ctx, existing, t); err != nil {
+			return err
+		}
+		if err = s.phase(task, index, "healthcheck", "正在检查组件匿名HTTP；首次配置和API认证需随后完成"); err != nil {
+			return err
+		}
+		if err = s.waitCollectionHTTP(s.ctx, t); err != nil {
+			return err
+		}
+		actual, inspectErr := s.docker.inspect(s.ctx, name)
+		if inspectErr != nil || actual == nil || actual.ID != existing.ID || !actual.State.Running {
+			return errors.New("HTTP检查后组件实际运行身份已变化，请刷新状态后重试核对")
+		}
+		return s.validateCollectionRuntime(s.ctx, actual, t)
 	}
 	if err = s.phase(task, index, "credentials", "正在读取本安装私有凭据，不读取或传递容器日志"); err != nil {
 		return err

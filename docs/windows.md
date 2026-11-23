@@ -89,7 +89,9 @@ GUI 子系统的 EXE 不保证 PowerShell 显示标准输出；诊断结果同�
 
 包中需要 `compose.desktop.yaml` 和维护者提供的 `release-images.json`。当前仓库没有已发布的公共应用/助手镜像；缺少清单会明确报错，不会拉取虚构镜像。维护者生成方式见 [发布流程](release.md)。镜像只接受精确 SHA-256 ID 或仓库 digest；带离线归档时先流式校验再 `docker load`。在线 registry 认证由本机 Docker 管理，凭据不进入网页和发布清单。
 
-资源收集完整模式使用v2三镜像清单和包内`compose.desktop.collection.yaml`。获取服务不发布控制端口，仅写本实例的`collection-data`/`collection-secrets`卷；主应用只读访问并执行发布门禁。完整停止会包含该服务并保留数据卷。旧v1清单继续按原两服务运行。原生模式可配置独立worker与共享根，参数和恢复步骤见[资源收集](collection.md)。
+新版 **v3** 镜像清单配合`compose.desktop.components.yaml`，可从“资源收集 → 添加来源”部署MoviePilot、AutoBangumi、Sonarr、Radarr。主动确认后创建固定组件及私密配置卷，完成首次配置再填写API凭据接入；组件数据放在独立`collection-media`卷，原Windows媒体盘仍只读。流程与入口见[资源组件](components.md)。
+
+v3可选附带获取镜像，旧v2必须带获取镜像，均配合`compose.desktop.collection.yaml`。获取服务不发布控制端口，仅写本实例的`collection-data`/`collection-secrets`卷；主应用只读访问并执行发布门禁。完整停止包括新资源组件和可选获取服务，保留所有数据卷。旧v1/v2保留原角色和挂载，不隐式启用新组件部署。原生模式可连接独立worker或已有资源组件，参数和恢复步骤见[资源收集](collection.md)。
 
 启动器显式传入本机 context，拒绝 TCP/SSH/远端 daemon，清除可能干扰的 Docker/Compose 环境。Compose 项目、网络和卷前缀由当前配置的稳定实例身份派生。复用与停止前核对实际镜像、标签、挂载和项目身份，拒绝接管同名外来资源。
 
@@ -105,7 +107,7 @@ GUI 子系统的 EXE 不保证 PowerShell 显示标准输出；诊断结果同�
 
 原生恢复：退出实例，保存现有 `library.db`、`library.db-wal`、`library.db-shm` 到独立备份位置；将网页下载的快照放为 `dataDir/library.db`，不要遗留旧 WAL/SHM，再启动。保持原媒体根一致。回滚程序时恢复配套数据库备份，不能假定旧版能读取新版 schema。
 
-Docker 恢复除网页数据库快照外，还须停机备份应用数据卷、助手 state、qB/Jackett 配置、下载及 connections 卷和本机 `desktop.json`。凭据与安装标记属于敏感资料，保持卷角色和实例身份一致。逐卷恢复到原 deployment，不要把不同安装的标记混用。数据库备份不包含媒体、载荷或引擎凭据。跨 Linux/Windows 路径迁移不在本期自动化范围。
+Docker 恢复除网页数据库快照外，还须停机备份应用数据卷、助手 state、qB/Jackett 配置、下载及 connections 卷和本机 `desktop.json`。启用组件部署后还须备份 `collection-media` 和四产品各自的私密配置/缓存/数据库卷；附带获取服务时也备份其数据与秘密卷。凭据与安装标记属于敏感资料，保持卷角色和实例身份一致。逐卷恢复到原 deployment，不要把不同安装的标记混用。数据库备份不包含媒体、载荷或引擎凭据。跨 Linux/Windows 路径迁移不在本期自动化范围。
 
 ## 人工验收清单
 

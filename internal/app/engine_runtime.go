@@ -43,8 +43,9 @@ type engineRuntime struct {
 func (a *App) startEngineRuntime() {
 	transport := &http.Transport{DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
 		return (&net.Dialer{Timeout: 3 * time.Second}).DialContext(ctx, "unix", a.config.Engines.Socket)
-	}, ResponseHeaderTimeout: 10 * time.Second, MaxResponseHeaderBytes: 32 << 10, MaxIdleConns: 2, IdleConnTimeout: 30 * time.Second}
-	a.engines = &engineRuntime{http: &http.Client{Transport: transport, Timeout: 15 * time.Second, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}, diagnostics: map[string]string{}, diagnosticStates: map[string]string{}}
+	}, ResponseHeaderTimeout: 25 * time.Second, MaxResponseHeaderBytes: 32 << 10, MaxIdleConns: 2, IdleConnTimeout: 30 * time.Second}
+	// 资源组件只读检测最多等待22秒，私有传输预算需覆盖完整探测及有界回执读取。
+	a.engines = &engineRuntime{http: &http.Client{Transport: transport, Timeout: 30 * time.Second, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}, diagnostics: map[string]string{}, diagnosticStates: map[string]string{}}
 	if a.config.Downloads.Mode != "managed" && a.config.TorrentSearch.Mode != "managed" {
 		return
 	}
