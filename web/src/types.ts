@@ -339,6 +339,31 @@ export interface CollectionJMComicItem {
   /** 纯文本标题。 */ title: string
   /** 有界纯文本标签。 */ tags: string[]
 }
+/** API 客户端实际支持的固定漫画排序。 */
+export type CollectionJMComicOrder = 'mr' | 'mv' | 'mp' | 'tf'
+/** API 客户端实际支持的固定搜索时间范围。 */
+export type CollectionJMComicTime = 'a' | 't' | 'w' | 'm'
+/** 只含编号、标题及页数的章节元信息。 */
+export interface CollectionJMComicChapter {
+  /** 规范正整数章节编号。 */ id: string
+  /** 作为纯文本展示的章节标题。 */ title: string
+  /** 章节元信息声明的图片数。 */ pageCount: number
+}
+/** 预览中已绑定的漫画章节选择。 */
+export interface CollectionJMComicPreview {
+  /** 规范漫画编号。 */ albumId: string
+  /** 当前选中章节的总页数。 */ pageCount: number
+  /** 按上游顺序排列的完整章节目录。 */ chapters: CollectionJMComicChapter[]
+  /** 本次预览绑定的有序章节编号。 */ selectedChapterIds: string[]
+  /** 选中页数超过当前单任务预算，必须减少章节后重新预览。 */ overBudget?: boolean
+}
+/** 获取阶段的真实图片计数，不能代表发布或入库进度。 */
+export interface CollectionJMComicProgress {
+  /** 已通过图片校验的页数。 */ completedPages: number
+  /** 本次选中章节的总页数。 */ totalPages: number
+  /** 已校验页面的累计字节数，含安全复用页。 */ bytes: number
+  /** 从已校验恢复记录复用的页数。 */ reusedPages: number
+}
 /** JMComic 每次只返回当前页，不在浏览器无限积累结果。 */
 export interface CollectionJMComicPage {
   /** 本次实际查询。 */ query: string
@@ -560,6 +585,7 @@ export interface CollectionPreview {
   /** 已知总字节数。 */ totalBytes: number
   /** 预览失效时间。 */ expiresAt: string
   /** 有界中文预览说明。 */ warnings: string[]
+  /** 固定漫画插件的章节目录与不可变选择；其他来源不提供。 */ jmcomic?: CollectionJMComicPreview
 }
 /** 获取与入库分别保存状态的统一任务。 */
 export interface CollectionTask {
@@ -581,6 +607,7 @@ export interface CollectionTask {
   /** 已知总字节数。 */ bytes: number
   /** 创建时间。 */ createdAt: string
   /** 最近更新时间。 */ updatedAt: string
+  /** 任务详情读取的漫画获取进度快照，独立于持久产物字节数。 */ jmcomicProgress?: CollectionJMComicProgress
 }
 /** 脱敏的中文任务事件。 */
 export interface CollectionEvent {

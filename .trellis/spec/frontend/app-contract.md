@@ -56,6 +56,31 @@ Applies to `web/**`, new API consumers, reader behavior, and responsive/theme ch
 - Organization exposes only `organizeAllowed===true` targets and previews fixed copy without automatic scrape. Scrape requires a separate unchecked overwrite acknowledgement. Label refresh as “刷新 MoviePilot 媒体库索引” and explain that it syncs configured media-server indexes, without implying Emby/Plex filesystem scan or local NAS import. Keep external receipt, external completion and local import separate.
 - Keep one stable UUID for the same pending intent after a lost response. An uncertain action offers read-only reconciliation or explicit external-check acknowledgement recorded as `unconfirmed`; never relabel it succeeded. Actual HTTP503 retains old lists as snapshots and remains distinct from empty success. Stale revision409 requires reopening/reloading, without dispatching the obsolete confirmation. Download state labels accept controlled Chinese values; unknown states retain explicit pause/continue choices.
 
+### JMComic advanced flow
+
+`CollectionJMComicDialog` keeps one native modal. Search exposes fixed `orderBy`
+and `time` enums from the backend contract; filter changes abort old requests and
+clear results. Retain legacy query/page defaults. Do not expose ignored categories.
+
+Preview metadata includes chapter IDs/titles/counts and selected total. Any chapter
+change invalidates the confirmation preview and requires another server preview.
+Show an over-budget catalogue read-only and disable task submission; selecting a
+smaller subset must still obtain a fresh preview. Never submit chapter choices
+through `/tasks` or treat local totals as download authority.
+
+Batch accepts at most 10 unique numeric full-album IDs, uses bounded sequential
+preview/submission and shows each result. Freeze an independent complete task body
+and UUID before each submit; unknown transport/5xx outcomes retain that body and
+lock source/target/mode. Retry it even if preview expired before refreshing any
+preview. Keep accepted tasks visible without immediately closing the whole batch,
+and never resubmit them. Closing tells users to reconcile in the durable task list.
+
+Task detail may show a native `<progress>` with verified pages, bytes including
+reuse and reused-page count. No invented network speed or ETA. Preserve existing
+download/publish/import states, abort/poll lifecycle and optional-worker fallback.
+Test real application flows separately from intercepted UI-only failure/expiry
+responses, at 375/768/1024/1440 widths in both themes.
+
 ## 4. Validation & Error Matrix
 
 Collection adds overview/sources/subscriptions/candidates/tasks without adding a sixth mobile navigation entry. Keep query failures independent from successful empty data. Show actual worker/tool readiness; registration roots and worker copy roots are distinct. RSS secrets are write-only. Automatic subscriptions require explicit authorization and complete deterministic rules. Web batches contain at most ten independent sequential previews/submissions; retain each accepted task and retry only failed entries with their original immutable plan and UUID. Never accept tool arguments or cookies in the UI.

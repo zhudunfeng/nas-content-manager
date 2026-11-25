@@ -552,3 +552,14 @@ HLS 解码时长下界容差为 `max(0.5 秒, EXTINF 总时长的 2%)`，只能�
 - 前端严格类型检查与生产构建、清理单元测试后的全仓 Go vet/编译及 6 个 Windows/Linux amd64/arm64 主服务/worker 构建均通过；Linux 仅交叉编译。工程门禁分别为 `.runtime/verify/supjav-{frontend,build}-20261125-1/`，最终格式、AST、Trellis 上下文、源码/产物摘要和进程清理审计见 `.runtime/verify/supjav-final-audit-20261125-1/`。新增临时单元测试源码已删除，保留可复验文本。
 
 固定下载器不逐字节验证 AES 的 PKCS#7 填充；若改变填充后仍得到相同 TS 明文，后续结构与解码校验无法识别。仍未执行真实公网站点/CDN 搜索下载、Docker、Linux 运行或物理 NAS 验收。完整本轮报告为 `.trellis/tasks/11-25-uav-downloader-plugin/research/supjav-mainline-verification.md`，任务保留 review；未自动提交、部署或归档。
+
+## 2026-11-25 JMComic 高级搜索与下载扩展
+
+在原可选漫画插件上新增四种排序、四种时间范围、全本／选章预览与下载、最多十本独立批量、逐页进度和显式失败后的可信页面复用。进度字节包含复用图片，不是网络流量；恢复以完整图片页为单位，不是 HTTP 字节断点续传。固定依赖仍为 `jmcomic==2.7.12`，schema 仍为 6。使用与同步升级要求见 [jmcomic.md](jmcomic.md)，最终报告为 `.trellis/tasks/11-25-jmcomic-advanced/research/final-validation.md`。
+
+- 独立检查后统一构建 `.runtime/bin/jmcomic-advanced-final/`：高级应用／worker 协议 **144 项**、高级浏览器 **50 项**、原漫画协议 **66 项**、原漫画浏览器 **38 项**、UAV 五站协议 **102 项**全部通过；同批产物的核心媒体 **44 项**、资源收集 **27 项**、发布边界自检 **83 项**通过。协议和浏览器使用实际应用、worker、媒体发布／扫描／阅读与离线上游协议 fixture，不代表真实站点传输。高级协议另覆盖总页数不变但分章从 2+2 变为 1+3 的拒绝场景。
+- 固定真实 JMComic 依赖离线桥接 **22 个检查点**通过，执行真实客户端、下载器、图片解码及筛选／选章钩子，禁止真实网络。实际验证三页可信复用、仅一页新传输，以及损坏页重新获取、元信息／请求绑定／页面来源漂移、硬链接／额外文件和总预算拒绝。证据 `.runtime/verify/jmcomic-real-bridge-b2944294a242457a83df76bbfb410107/report.json`，与协议 fixture 分开记账。
+- 浏览器覆盖 375／768／1024／1440 四种宽度、明暗主题、焦点／Escape、慢响应隔离、超预算后选章入库阅读、真实获取中的原生进度条，以及批量部分失败、未知结果过期后原 body／UUID 重试和成功项不重发。最终高级及原浏览器证据分别为 `.runtime/verify/jmadvanced-final-browser-20261125-1/advanced-browser-153252/` 与 `.runtime/verify/jmadvanced-final-oldbrowser-20261125-1/browser-153252/`；已人工回读手机目录、长标题、部分失败和进度截图。
+- 最终 Go vet、清理临时测试后的包编译、gofmt、Python AST、Vue 严格类型检查及生产构建通过。Windows 与 Linux amd64／arm64 主服务和 worker 共六个产物构建成功；Linux 仅交叉编译。工程证据 `.runtime/verify/jmadvanced-final-checks-20261125-2/result.json` 为 passed，记录源码／产物摘要；临时测试和源码漂移均为空。
+
+最终高级协议证据为 `.runtime/verify/jmcomic-advanced-20261125T073227515799Z-1ec0d7/`；原漫画、UAV 与 baseline 分别为 `.runtime/verify/jmadvanced-final-{jmcomic,uav,baseline}-20261125-1/`。早期 fixture 格式、Windows 快照替换冲突及辅助工具路径失败均保留并说明修复，未混入最终通过数量。真实公网站点、账号、Docker、Linux 运行及物理 NAS 未实测；账号／Cookie／收藏夹、PDF／ZIP 与任意上游插件仍未开放。本轮自有服务和浏览器已关闭，临时单元测试源码已删除，任务进入 review；未自动提交、部署或归档。

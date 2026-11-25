@@ -134,7 +134,7 @@ func (s *Service) validateRequest(input *contract.PreviewRequest) error {
 	if input.Kind != "uav" && (input.UAVSite != "" || input.VideoID != "") {
 		return errors.New("视频站点和编号只能用于UAV插件")
 	}
-	if input.Kind != "jmcomic" && input.AlbumID != "" {
+	if input.Kind != "jmcomic" && (input.AlbumID != "" || len(input.ChapterIDs) != 0) {
 		return errors.New("漫画编号只能用于JMComic插件")
 	}
 	if input.MaxBytes == 0 {
@@ -153,6 +153,9 @@ func (s *Service) validateRequest(input *contract.PreviewRequest) error {
 		}
 		input.Profile = "video"
 	case "jmcomic":
+		if err := contract.ValidateJMComicChapters(input.ChapterIDs); err != nil {
+			return err
+		}
 		if !validJMComicAlbumID(input.AlbumID) || input.URL != "" || input.SourceID != "" || input.Path != "" || (input.Profile != "" && input.Profile != "comic") {
 			return errors.New("漫画获取仅接受正整数漫画编号和漫画输出")
 		}
@@ -219,6 +222,9 @@ func (s *Service) previewHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	preview.ID = rand.Text()
+	if input.Kind == "jmcomic" && len(input.ChapterIDs) > 0 && preview.JMComic != nil {
+		input.ChapterIDs = append([]string{}, preview.JMComic.SelectedChapterIDs...)
+	}
 	until := time.Now().UTC().Add(5 * time.Minute)
 	preview.ExpiresAt = until.Format(time.RFC3339Nano)
 	s.mu.Lock()
@@ -402,7 +408,12 @@ func (s *Service) acquire(ctx context.Context, saved savedOperation) (files []co
 	}
 	target := filepath.Join(s.config.DataDir, "staging", input.ID)
 	if err := os.Mkdir(target, 0700); err != nil {
-		return nil, errors.New("暂存目录已存在或无法创建，需要核对旧结果")
+		// 只有原漫画意图的显式重试能够保留暂存，实际页面仍由固定桥接逐页验真。
+		info, statErr := os.Lstat(target)
+		canonical, pathErr := filepath.EvalSymlinks(target)
+		if input.Kind != "jmcomic" || saved.Attempts < 2 || statErr != nil || pathErr != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 || !sameNativePath(target, canonical) {
+			return nil, errors.New("暂存目录已存在或无法创建，需要核对旧结果")
+		}
 	}
 	// 正在写入的文件也计入预算，超过大小、数量或磁盘余量立即取消自有执行。
 	var monitor sync.WaitGroup
@@ -448,7 +459,14 @@ func (s *Service) acquire(ctx context.Context, saved savedOperation) (files []co
 		if saved.Preview.Identity != current.Identity {
 			return nil, errors.New("漫画章节或页数已改变，请重新预览")
 		}
-		if err = s.fetchJMComic(ctx, input, target, saved.Preview.Identity); err != nil {
+		// 新记录另行绑定各章页数；旧无目录记录继续使用原身份摘要，不破坏历史重试。
+		if saved.Preview.JMComic != nil && !sameJMComicMetadata(saved.Preview.JMComic, current.JMComic) {
+			return nil, errors.New("漫画章节目录页数已改变，请重新预览")
+		}
+		if current.JMComic == nil || current.JMComic.OverBudget {
+			return nil, errors.New("漫画选择超过执行页数预算")
+		}
+		if err = s.fetchJMComic(ctx, input, target, current); err != nil {
 			return nil, err
 		}
 	case "local":

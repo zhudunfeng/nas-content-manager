@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ApiError, api, errorMessage, isAbort } from '../api'
 import { collectionCanCancel, collectionCanRetry, collectionCanRetryImport, collectionImportLabel, collectionStateLabel, collectionTime } from '../collection'
 import { formatSize, typeLabels } from '../format'
-import type { CollectionEvent, CollectionTask, Item } from '../types'
+import type { CollectionEvent, CollectionJMComicProgress, CollectionTask, Item } from '../types'
 import DialogShell from './DialogShell.vue'
 import Icon from './Icon.vue'
 
@@ -28,6 +28,13 @@ let controller: AbortController | null = null
 let pollTimer: ReturnType<typeof setTimeout> | undefined
 let disposed: boolean = false
 const active = computed<boolean>((): boolean => !['completed', 'failed', 'canceled', 'cancelled'].includes(task.value.state) || ['queued', 'importing', 'scanning', 'running'].includes(task.value.importState))
+/** 只展示合法图片计数，获取进度不代表发布或扫描入库已经完成。 */
+const jmcomicProgress = computed<CollectionJMComicProgress | null>((): CollectionJMComicProgress | null => {
+  const progress: CollectionJMComicProgress | undefined = task.value.jmcomicProgress
+  if (task.value.kind !== 'jmcomic' || !progress) return null
+  if (![progress.completedPages, progress.totalPages, progress.bytes, progress.reusedPages].every((value: number): boolean => Number.isSafeInteger(value) && value >= 0)) return null
+  return progress.totalPages > 0 && progress.completedPages <= progress.totalPages && progress.reusedPages <= progress.completedPages ? progress : null
+})
 
 /** 详情只在前台、无请求时安排下一次同步。 */
 function schedule(): void {
@@ -108,6 +115,12 @@ onBeforeUnmount((): void => { disposed = true; clearTimeout(pollTimer); controll
     <div class="collection-form">
       <div class="collection-callout"><h3>{{ task.title }}</h3><p class="field-hint">{{ typeLabels[task.contentType] || task.contentType }} · {{ formatSize(task.bytes) }} · 创建于 {{ collectionTime(task.createdAt) }}</p></div>
       <div class="collection-stage-grid"><div><span class="field-hint">获取阶段</span><strong>{{ collectionStateLabel(task.state) }}</strong></div><div><span class="field-hint">媒体入库</span><strong>{{ collectionImportLabel(task.importState) }}</strong></div></div>
+      <div v-if="jmcomicProgress" class="collection-callout" aria-label="漫画图片获取进度">
+        <strong>图片获取：{{ jmcomicProgress.completedPages }} / {{ jmcomicProgress.totalPages }} 页</strong>
+        <progress class="download-progress" :max="jmcomicProgress.totalPages" :value="jmcomicProgress.completedPages" aria-label="漫画图片获取进度" />
+        <p class="field-hint">已校验 {{ formatSize(jmcomicProgress.bytes) }} · 复用 {{ jmcomicProgress.reusedPages }} 页</p>
+        <p class="field-hint">字节数包含已校验的复用页面；图片获取完成后仍需校验、发布和扫描入库。{{ queryingError ? '当前显示上次成功读取的进度快照。' : '' }}</p>
+      </div>
       <p>{{ task.message || '任务已保存，等待后续处理。' }}</p>
       <p class="field-hint">最近更新：{{ collectionTime(task.updatedAt) }}{{ queryingError ? '（当前显示上次成功读取的快照）' : '' }}</p>
       <p v-if="queryingError" class="error-box" role="alert">任务状态暂未同步：{{ queryingError }} <button class="text-button" @click="restart">重新读取</button></p>

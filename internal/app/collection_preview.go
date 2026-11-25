@@ -123,14 +123,15 @@ func (a *App) collectionLocalPreview(ctx context.Context, root string) ([]Collec
 // collectionCreatePreview 建立有时效且绑定来源版本的服务器预览。
 func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		SourceID string `json:"sourceId"` /* 来源编号。 */
-		URL      string `json:"url"`      /* 单条网页链接。 */
-		Path     string `json:"path"`     /* 来源内相对路径。 */
-		Profile  string `json:"profile"`  /* 网页video/audio输出，固定插件只用其内容规格。 */
-		Mode     string `json:"mode"`     /* register/copy。 */
-		AlbumID  string `json:"albumId"`  /* JMComic 固定漫画编号。 */
-		UAVSite  string `json:"uavSite"`  /* UAV 固定站点标识。 */
-		VideoID  string `json:"videoId"`  /* 所选固定站点的视频编号。 */
+		SourceID   string   `json:"sourceId"`   /* 来源编号。 */
+		URL        string   `json:"url"`        /* 单条网页链接。 */
+		Path       string   `json:"path"`       /* 来源内相对路径。 */
+		Profile    string   `json:"profile"`    /* 网页video/audio输出，固定插件只用其内容规格。 */
+		Mode       string   `json:"mode"`       /* register/copy。 */
+		AlbumID    string   `json:"albumId"`    /* JMComic 固定漫画编号。 */
+		UAVSite    string   `json:"uavSite"`    /* UAV 固定站点标识。 */
+		VideoID    string   `json:"videoId"`    /* 所选固定站点的视频编号。 */
+		ChapterIDs []string `json:"chapterIds"` /* 漫画显式选章，空表示全本。 */
 	}
 	if !decodeJSON(w, r, &input) {
 		return
@@ -145,12 +146,16 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.Kind == "jmcomic" {
+		if err = collectioncontract.ValidateJMComicChapters(input.ChapterIDs); err != nil {
+			fail(w, 400, err.Error())
+			return
+		}
 		if !collectioncontract.ValidJMComicAlbumID(input.AlbumID) || input.URL != "" || input.Path != "" || (input.Profile != "" && input.Profile != "comic") {
 			fail(w, 400, "漫画插件只接受正整数漫画编号")
 			return
 		}
 		input.Profile = "comic"
-	} else if input.AlbumID != "" {
+	} else if input.AlbumID != "" || len(input.ChapterIDs) > 0 {
 		fail(w, 400, "漫画编号只能用于漫画插件来源")
 		return
 	}
@@ -236,9 +241,10 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 			request.SourceID = ""
 		} else if s.Kind == "jmcomic" {
 			request.AlbumID = input.AlbumID
+			request.ChapterIDs = input.ChapterIDs
 			request.Path = ""
 			request.SourceID = ""
-			p.Warnings = append(p.Warnings, "仅下载所选漫画的全部章节；获取完成后通过发布校验与漫画扫描才会入库")
+			p.Warnings = append(p.Warnings, "仅下载预览冻结的章节且每章必须完整；获取完成后通过发布校验与漫画扫描才会入库")
 		} else if s.Kind == "uav" {
 			request.UAVSite = input.UAVSite
 			request.VideoID = input.VideoID
@@ -259,6 +265,19 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		}
 		var preview collectioncontract.Preview
 		_, err = a.collectionWorkerCall(r.Context(), "POST", "/v1/previews", request, &preview)
+		if err == nil && s.Kind == "jmcomic" {
+			if !collectionValidJMComicMetadata(preview.JMComic, request) {
+				err = collectionProblem(502, "执行端漫画章节目录无效")
+			} else {
+				p.JMComic = preview.JMComic
+				if len(request.ChapterIDs) > 0 {
+					request.ChapterIDs = append([]string{}, preview.JMComic.SelectedChapterIDs...)
+				}
+				if preview.JMComic.OverBudget {
+					p.Warnings = append(p.Warnings, "当前选择超过页数预算，请减少章节后重新预览")
+				}
+			}
+		}
 		if err == nil {
 			titleLimit := 512
 			if s.Kind == "uav" {
@@ -278,7 +297,7 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 				}
 				private.Identity = preview.Identity
 				private.WorkerInstance = caps.InstanceID
-				private.Request = collectioncontract.OperationRequest{Kind: request.Kind, URL: request.URL, Profile: request.Profile, SourceID: request.SourceID, Path: request.Path, MaxBytes: request.MaxBytes, MaxFiles: request.MaxFiles, PreviewID: preview.ID, AlbumID: request.AlbumID, UAVSite: request.UAVSite, VideoID: request.VideoID}
+				private.Request = collectioncontract.OperationRequest{Kind: request.Kind, URL: request.URL, Profile: request.Profile, SourceID: request.SourceID, Path: request.Path, MaxBytes: request.MaxBytes, MaxFiles: request.MaxFiles, PreviewID: preview.ID, AlbumID: request.AlbumID, UAVSite: request.UAVSite, VideoID: request.VideoID, ChapterIDs: request.ChapterIDs}
 			}
 		}
 	} else {
@@ -353,6 +372,10 @@ func (a *App) collectionCreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if input.LibraryID == 0 && !input.CreateLibrary {
 		fail(w, 400, "请选择目标媒体库或允许首次建库")
+		return
+	}
+	if p.Kind == "jmcomic" && p.JMComic != nil && (p.JMComic.OverBudget || p.JMComic.PageCount > private.Request.MaxFiles) {
+		fail(w, 422, "漫画选择超过页数预算，请减少章节后重新预览")
 		return
 	}
 	files := []CollectionFile{}

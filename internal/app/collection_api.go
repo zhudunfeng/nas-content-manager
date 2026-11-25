@@ -604,6 +604,7 @@ func (a *App) collectionGetTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, "收集任务不存在")
 		return
 	}
+	a.collectionAttachJMComicProgress(r.Context(), &t)
 	respond(w, 200, map[string]any{"task": t.CollectionTask})
 }
 

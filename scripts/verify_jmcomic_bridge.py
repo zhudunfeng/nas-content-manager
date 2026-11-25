@@ -24,6 +24,8 @@ MODE: str = "normal"  # 控制离线元数据和图片响应的固定分支。
 DECODED: list[int] = []  # 实际上游解码执行时的分割数。
 PROXIES: list[dict[str, str]] = []  # 实际客户端获得的代理配置。
 NETWORK_CALLS: list[str] = []  # 任何意外真实传输尝试均记录并失败。
+IMAGE_CALLS: list[str] = []  # 真实下载器每次取得离线图片传输响应的记录。
+SEARCH_CALLS: list[str] = []  # 真实API客户端实际生成的查询，用于断言筛选透传。
 
 
 def deny_network(*args: Any, **kwargs: Any) -> Any:
@@ -47,13 +49,14 @@ def get_album(self: Any, value: str) -> jm.JmAlbumDetail:
 def get_photo(self: Any, value: str, *args: Any, **kwargs: Any) -> jm.JmPhotoDetail:
     """返回实际章节实体，让真实 check_photo 补全页数组与图片编号。"""
     assert value in ("101", "102")
-    return jm.JmPhotoDetail(value, "../unsafe", "100", "10" if value == "101" else "20", scramble_id="0",
+    return jm.JmPhotoDetail(value, "../unsafe", "100", "10" if value == "101" else "20", scramble_id="1" if MODE == "metadata-drift" else "0",
                             page_arr=["00001.png", "00002.gif" if value == "101" else "00002.png"],
                             data_original_domain="fixture.invalid")
 
 
 def image_response(self: Any, url: str) -> jm.JmImageResp:
     """只替换图片传输层，真实传输响应仍由上游执行解码和格式转换。"""
+    IMAGE_CALLS.append(url)
     if MODE == "partial" and "/102/00002" in url:
         raise RuntimeError("fixture raw source error must never escape protocol")
     target: io.BytesIO = io.BytesIO()
@@ -66,6 +69,7 @@ def api_response(self: Any, url: str, *args: Any, **kwargs: Any) -> Any:
     if url == "/setting":
         return SimpleNamespace(model_data=jm.AdvancedDict({"jm3_version": jm.JmMagicConstants.APP_VERSION}),
                                resp=SimpleNamespace(cookies={"fixture": "offline"}))
+    SEARCH_CALLS.append(url)
     if "search_query=100" in url:
         data: dict[str, Any] = {"total": 1, "redirect_aid": "100", "content": []}
     elif "search_query=empty" in url:
@@ -106,6 +110,47 @@ def action(namespace: dict[str, Any], request: dict[str, Any], name: str) -> dic
     return namespace["run"](request)
 
 
+def resume_action(namespace: dict[str, Any], request: dict[str, Any], directory: Path, checkpoint: Path) -> dict[str, Any]:
+    """在原暂存目录执行显式重试，检查点单独位于私密根。"""
+    os.chdir(directory)
+    return namespace["run"]({**request, "outputDir": str(directory), "checkpointDir": str(checkpoint), "binding": "b" * 64})
+
+
+def expect_failure(action: Any) -> None:
+    """确认受控失败没有被误报为成功。"""
+    try:
+        action()
+    except Exception:
+        return
+    raise AssertionError("unsafe bridge result was accepted")
+
+
+def verify_atomic_replacement(namespace: dict[str, Any]) -> None:
+    """注入Windows短暂共享冲突，确认有限重试成功且永久冲突不会无限等待。"""
+    original: Any = os.replace
+    calls: int = 0
+    permanent: bool = False
+
+    def contested(source: Path, target: Path) -> None:
+        """用明确次数模拟短暂或持续的只读句柄竞争。"""
+        nonlocal calls
+        calls += 1
+        if permanent or calls <= 3:
+            raise PermissionError("simulated bounded share conflict")
+        original(source, target)
+
+    target: Path = BASE / "atomic-progress.json"
+    try:
+        os.replace = contested
+        namespace["atomic_json"](target, {"completedPages": 1})
+        assert calls == 4 and json.loads(target.read_text()) == {"completedPages": 1}
+        calls, permanent = 0, True
+        expect_failure(lambda: namespace["atomic_json"](target, {"completedPages": 2}))
+        assert calls == namespace["ATOMIC_RETRIES"] and json.loads(target.read_text()) == {"completedPages": 1}
+    finally:
+        os.replace = original
+
+
 def main() -> None:
     """覆盖真实依赖导入、搜索、重定向、多章解码、部分失败与协议脱敏。"""
     global BASE, MODE, jm, Image, ORIGINAL_CLIENT, ORIGINAL_DECODE
@@ -141,12 +186,24 @@ def main() -> None:
     assert namespace["run"]({"action": "probe"}) == {"version": "2.7.12", "protocolVersion": 1}
     result: dict[str, Any] = action(namespace, {"action": "search", "query": "fixture", "page": 1, "proxy": proxy}, "search")
     assert result["total"] == 81 and result["hasNext"] and len(result["items"]) == 1
+    action(namespace, {"action": "search", "query": "filters", "page": 2, "orderBy": "mv", "time": "w", "proxy": proxy}, "search-filters")
+    assert "o=mv" in SEARCH_CALLS[-1] and "t=w" in SEARCH_CALLS[-1] and "page=2" in SEARCH_CALLS[-1]
+    expect_failure(lambda: action(namespace, {"action": "search", "query": "filters", "page": 1, "orderBy": "tr", "proxy": proxy}, "bad-order"))
     redirect: dict[str, Any] = action(namespace, {"action": "search", "query": "100", "page": 1, "proxy": proxy}, "redirect")
     assert redirect["total"] == 1 and not redirect["hasNext"] and redirect["items"][0]["albumId"] == "100"
     empty: dict[str, Any] = action(namespace, {"action": "search", "query": "empty", "page": 1, "proxy": proxy}, "empty")
     assert empty["total"] == 0 and not empty["hasNext"] and not empty["items"]
     preview: dict[str, Any] = action(namespace, {"action": "album", "albumId": "100", "proxy": proxy}, "album")
     assert preview["chapters"] == ["101", "102"] and preview["pageCount"] == 4
+    assert [chapter["pageCount"] for chapter in preview["chapterDetails"]] == [2, 2]
+    selected: dict[str, Any] = action(namespace, {"action": "download", "albumId": "100", "chapterIds": ["102"], "maxBytes": 1048576, "maxFiles": 2, "proxy": proxy}, "selected")
+    assert selected["files"] == 2 and selected["selectedChapterIds"] == ["102"]
+    assert sorted(path.relative_to(Path.cwd()).as_posix() for path in Path.cwd().rglob("*.*")) == ["00002/00001.jpg", "00002/00002.jpg"]
+    canonical: dict[str, Any] = action(namespace, {"action": "album", "albumId": "100", "chapterIds": ["102", "101"], "proxy": proxy}, "canonical")
+    assert canonical["selectedChapterIds"] == ["101", "102"]
+    for ids in (["101", "101"], ["999"]):
+        expect_failure(lambda: action(namespace, {"action": "album", "albumId": "100", "chapterIds": ids, "proxy": proxy}, "bad-chapter"))
+    DECODED.clear()
     downloaded: dict[str, Any] = action(namespace, {"action": "download", "albumId": "100", "maxBytes": 1048576, "maxFiles": 4, "proxy": proxy}, "download")
     assert downloaded["files"] == 4 and len(DECODED) == 3 and all(count > 0 for count in DECODED)
     download_dir: Path = Path.cwd()
@@ -163,6 +220,62 @@ def main() -> None:
     except Exception as error:
         assert not isinstance(error, AssertionError)
     MODE = "normal"
+    resume_dir: Path = BASE / "resume-staging"
+    checkpoint_dir: Path = BASE / "resume-private"
+    resume_dir.mkdir()
+    checkpoint_dir.mkdir()
+    resume_request: dict[str, Any] = {"action": "download", "albumId": "100", "maxBytes": 1048576, "maxFiles": 4, "proxy": proxy}
+    MODE = "partial"
+    expect_failure(lambda: resume_action(namespace, resume_request, resume_dir, checkpoint_dir))
+    partial_progress: dict[str, Any] = json.loads((checkpoint_dir / "progress.json").read_text())
+    assert partial_progress["completedPages"] == 3 and partial_progress["totalPages"] == 4
+    MODE = "normal"
+    before: int = len(IMAGE_CALLS)
+    resumed: dict[str, Any] = resume_action(namespace, resume_request, resume_dir, checkpoint_dir)
+    progress: dict[str, Any] = json.loads((checkpoint_dir / "progress.json").read_text())
+    assert resumed["files"] == 4 and len(IMAGE_CALLS) - before == 1
+    assert progress["completedPages"] == 4 and progress["reusedPages"] == 3 and progress["bytes"] > 0
+    assert not list(resume_dir.rglob("*.json"))
+    # 损坏普通缓存必须重新获取；未登记页面也不能仅凭存在跳过传输。
+    (resume_dir / "00001/00001.jpg").write_bytes(b"corrupt")
+    receipts: dict[str, Any] = json.loads((checkpoint_dir / "checkpoint.json").read_text())
+    receipts["pages"].pop("00002/00001.jpg")
+    (checkpoint_dir / "checkpoint.json").write_text(json.dumps(receipts))
+    before = len(IMAGE_CALLS)
+    resume_action(namespace, resume_request, resume_dir, checkpoint_dir)
+    assert len(IMAGE_CALLS) - before == 2
+    pristine_receipts: str = (checkpoint_dir / "checkpoint.json").read_text()
+    MODE = "metadata-drift"
+    expect_failure(lambda: resume_action(namespace, resume_request, resume_dir, checkpoint_dir))
+    MODE = "normal"
+    expect_failure(lambda: namespace["run"]({**resume_request, "outputDir": str(resume_dir), "checkpointDir": str(checkpoint_dir), "binding": "c" * 64}))
+    # 普通内容摘要被修改也不能当缓存命中，必须实际重新取得该页。
+    receipts = json.loads(pristine_receipts)
+    receipts["pages"]["00001/00001.jpg"]["sha256"] = "0" * 64
+    (checkpoint_dir / "checkpoint.json").write_text(json.dumps(receipts))
+    before = len(IMAGE_CALLS)
+    resume_action(namespace, resume_request, resume_dir, checkpoint_dir)
+    assert len(IMAGE_CALLS) - before == 1
+    # 暂存中的硬链接和额外sidecar都属于不可信产物，整个尝试必须拒绝。
+    page: Path = resume_dir / "00001/00001.jpg"
+    outside: Path = BASE / "hardlink-source.jpg"
+    page.rename(outside)
+    os.link(outside, page)
+    expect_failure(lambda: resume_action(namespace, resume_request, resume_dir, checkpoint_dir))
+    page.unlink()
+    outside.rename(page)
+    (resume_dir / "unexpected.json").write_text("{}")
+    expect_failure(lambda: resume_action(namespace, resume_request, resume_dir, checkpoint_dir))
+    (resume_dir / "unexpected.json").unlink()
+    # 修改元信息摘要或请求绑定时拒绝整个尝试，不复用或发布旧页面。
+    receipts = json.loads((checkpoint_dir / "checkpoint.json").read_text())
+    receipts["metadata"] = "0" * 64
+    (checkpoint_dir / "checkpoint.json").write_text(json.dumps(receipts))
+    expect_failure(lambda: resume_action(namespace, resume_request, resume_dir, checkpoint_dir))
+    (checkpoint_dir / "checkpoint.json").write_text(pristine_receipts)
+    expect_failure(lambda: resume_action(namespace, {**resume_request, "maxFiles": 3}, resume_dir, checkpoint_dir))
+    expect_failure(lambda: resume_action(namespace, {**resume_request, "maxBytes": 10}, resume_dir, checkpoint_dir))
+    assert not NETWORK_CALLS
     for label, byte_limit, file_limit in (("file-budget", 1048576, 3), ("byte-budget", 10, 4)):
         try:
             action(namespace, {"action": "download", "albumId": "100", "maxBytes": byte_limit,
@@ -188,9 +301,10 @@ def main() -> None:
         sys.stdin, sys.stdout, sys.stderr = original_stdin, original_stdout, original_stderr
     assert PROXIES and all(item == {"http": proxy, "https": proxy} for item in PROXIES)
     assert not NETWORK_CALLS
+    verify_atomic_replacement(namespace)
     report: dict[str, Any] = {"dependency": "jmcomic==2.7.12", "realDownloader": True, "isolatedSubprocessProbe": True,
         "realClientConstruction": True, "networkOverridden": ["domain discovery", "album/photo metadata", "search response", "image response"],
-        "realNetworkCalls": len(NETWORK_CALLS), "passed": ["probe", "search pagination", "numeric redirect", "empty search", "album chapters", "4-page 2-chapter real decode", "gif preservation", "partial rejection", "file/byte budget rejection", "safe partial-failure protocol error", "explicit proxy binding"]}
+        "realNetworkCalls": len(NETWORK_CALLS), "passed": ["probe", "search pagination and actual order/time query", "numeric redirect", "empty search", "album chapter page counts", "canonical selected chapters and selected completeness", "invalid/duplicate selection rejection", "4-page 2-chapter real decode", "gif preservation", "partial rejection", "private page progress", "3-page verified resume with only 1 actual image fetch", "corrupt/unreceipted page refetch", "checkpoint metadata digest rejection", "real source semantics and request binding drift rejection", "tampered content digest refetch", "hardlink/sidecar rejection", "retained staging page/byte budget rejection", "file/byte budget rejection", "safe partial-failure protocol error", "explicit proxy binding", "bounded atomic replacement contention retry"]}
     (BASE / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False))
     print("真实桥接离线核验通过，证据：" + str(BASE / "report.json"))

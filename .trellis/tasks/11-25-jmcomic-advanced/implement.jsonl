@@ -1,0 +1,8 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/backend/jmcomic-contract.md", "reason": "高级漫画能力与兼容/恢复边界"}
+{"file": ".trellis/spec/backend/collection-contract.md", "reason": "高级漫画能力与兼容/恢复边界"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "高级漫画能力与兼容/恢复边界"}
+{"file": ".trellis/tasks/11-25-jmcomic-advanced/research/upstream-advanced.md", "reason": "高级漫画能力与兼容/恢复边界"}
+{"file": ".trellis/tasks/11-25-jmcomic-advanced/research/architecture-advanced.md", "reason": "高级漫画能力与兼容/恢复边界"}

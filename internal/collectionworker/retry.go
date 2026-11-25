@@ -53,7 +53,7 @@ func (s *Service) retryHTTP(w http.ResponseWriter, r *http.Request) {
 			failJSON(w, 409, "暂存目录存在链接别名")
 			return
 		}
-		if os.RemoveAll(absolute) != nil {
+		if saved.Request.Kind != "jmcomic" && os.RemoveAll(absolute) != nil {
 			failJSON(w, 500, "无法清理本操作失败暂存，请检查占用")
 			return
 		}
@@ -66,6 +66,7 @@ func (s *Service) retryHTTP(w http.ResponseWriter, r *http.Request) {
 	saved.Operation.Message = "已明确重试原获取意图，等待执行"
 	saved.Operation.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	saved.Operation.Bytes = 0
+	saved.Operation.JMComicProgress = nil
 	saved.Operation.Files = saved.Operation.Files[:0]
 	if err = s.saveLocked(&saved); err != nil {
 		failJSON(w, 500, err.Error())

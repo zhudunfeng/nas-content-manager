@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"nas-content-manager/internal/collectioncontract"
 )
 
 // CollectionSource 是来源的公开配置，私密地址只保存于独立秘密文件。
@@ -109,38 +111,40 @@ type CollectionFormat struct {
 
 // CollectionPreview 是有时效并绑定来源修订的获取计划。
 type CollectionPreview struct {
-	ID         string             `json:"id"`         // 预览编号。
-	SourceID   string             `json:"sourceId"`   // 来源编号。
-	Title      string             `json:"title"`      // 标题。
-	Kind       string             `json:"kind"`       // 执行类型或 register。
-	Profile    string             `json:"profile"`    // 输出规格。
-	Files      []CollectionFile   `json:"files"`      // 有界文件列表。
-	Formats    []CollectionFormat `json:"formats"`    // 安全格式说明。
-	TotalBytes int64              `json:"totalBytes"` // 已知总量。
-	ExpiresAt  string             `json:"expiresAt"`  // 预览失效时间。
-	Warnings   []string           `json:"warnings"`   // 预览提示。
+	ID         string                              `json:"id"`                // 预览编号。
+	SourceID   string                              `json:"sourceId"`          // 来源编号。
+	Title      string                              `json:"title"`             // 标题。
+	Kind       string                              `json:"kind"`              // 执行类型或 register。
+	Profile    string                              `json:"profile"`           // 输出规格。
+	Files      []CollectionFile                    `json:"files"`             // 有界文件列表。
+	Formats    []CollectionFormat                  `json:"formats"`           // 安全格式说明。
+	TotalBytes int64                               `json:"totalBytes"`        // 已知总量。
+	ExpiresAt  string                              `json:"expiresAt"`         // 预览失效时间。
+	Warnings   []string                            `json:"warnings"`          // 预览提示。
+	JMComic    *collectioncontract.JMComicMetadata `json:"jmcomic,omitempty"` // 漫画有序章节、选中页数及预算状态。
 }
 
 // CollectionTask 保存业务获取与入库状态，BT 事实仍由原下载模块维护。
 type CollectionTask struct {
-	ID          string  `json:"id"`          // 随机任务编号。
-	RequestID   string  `json:"requestId"`   // 幂等请求编号。
-	SourceID    string  `json:"sourceId"`    // 来源编号。
-	CandidateID string  `json:"candidateId"` // 可选候选编号。
-	Kind        string  `json:"kind"`        // bt/web/local/remote/register。
-	Title       string  `json:"title"`       // 名称。
-	ContentType string  `json:"contentType"` // 目标类别。
-	State       string  `json:"state"`       // 获取阶段。
-	ImportState string  `json:"importState"` // 入库阶段。
-	Message     string  `json:"message"`     // 中文状态。
-	Revision    int64   `json:"revision"`    // 操作版本。
-	DownloadID  string  `json:"downloadId"`  // 原 BT 任务编号。
-	LibraryID   int64   `json:"libraryId"`   // 目标库。
-	JobID       int64   `json:"jobId"`       // 当前扫描任务。
-	ItemIDs     []int64 `json:"itemIds"`     // 实际入库条目。
-	Bytes       int64   `json:"bytes"`       // 已确认字节数。
-	CreatedAt   string  `json:"createdAt"`   // 创建时间。
-	UpdatedAt   string  `json:"updatedAt"`   // 更新时间。
+	ID              string                              `json:"id"`                        // 随机任务编号。
+	RequestID       string                              `json:"requestId"`                 // 幂等请求编号。
+	SourceID        string                              `json:"sourceId"`                  // 来源编号。
+	CandidateID     string                              `json:"candidateId"`               // 可选候选编号。
+	Kind            string                              `json:"kind"`                      // bt/web/local/remote/register。
+	Title           string                              `json:"title"`                     // 名称。
+	ContentType     string                              `json:"contentType"`               // 目标类别。
+	State           string                              `json:"state"`                     // 获取阶段。
+	ImportState     string                              `json:"importState"`               // 入库阶段。
+	Message         string                              `json:"message"`                   // 中文状态。
+	Revision        int64                               `json:"revision"`                  // 操作版本。
+	DownloadID      string                              `json:"downloadId"`                // 原 BT 任务编号。
+	LibraryID       int64                               `json:"libraryId"`                 // 目标库。
+	JobID           int64                               `json:"jobId"`                     // 当前扫描任务。
+	ItemIDs         []int64                             `json:"itemIds"`                   // 实际入库条目。
+	Bytes           int64                               `json:"bytes"`                     // 已确认字节数。
+	CreatedAt       string                              `json:"createdAt"`                 // 创建时间。
+	UpdatedAt       string                              `json:"updatedAt"`                 // 更新时间。
+	JMComicProgress *collectioncontract.JMComicProgress `json:"jmcomicProgress,omitempty"` // 执行端动态验证进度，不新增数据库列。
 }
 
 // collectionTaskRecord 附加后台恢复和不可变计划字段。

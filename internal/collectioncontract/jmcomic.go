@@ -37,5 +37,26 @@ func NormalizeJMComicSearch(input *JMComicSearchRequest) error {
 	if input.Page < 1 || input.Page > 1000 {
 		return fmt.Errorf("漫画搜索页码需要在1–1000之间")
 	}
+	if input.OrderBy != "" && input.OrderBy != "mr" && input.OrderBy != "mv" && input.OrderBy != "mp" && input.OrderBy != "tf" {
+		return fmt.Errorf("漫画搜索排序不受支持")
+	}
+	if input.Time != "" && input.Time != "a" && input.Time != "t" && input.Time != "w" && input.Time != "m" {
+		return fmt.Errorf("漫画搜索时间范围不受支持")
+	}
+	return nil
+}
+
+// ValidateJMComicChapters 拒绝无效或重复章节，空数组保留全本语义。
+func ValidateJMComicChapters(ids []string) error {
+	if len(ids) > 10000 {
+		return fmt.Errorf("漫画章节选择超过限制")
+	}
+	seen := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		if !ValidJMComicAlbumID(id) || seen[id] {
+			return fmt.Errorf("漫画章节编号无效或重复")
+		}
+		seen[id] = true
+	}
 	return nil
 }

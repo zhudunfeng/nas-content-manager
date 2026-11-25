@@ -315,10 +315,11 @@ func (s *Service) startHTTP(w http.ResponseWriter, r *http.Request) {
 	input.MaxFiles = previewRequest.MaxFiles
 	input.Profile = previewRequest.Profile
 	input.Path = previewRequest.Path
-	hash := requestHash(input)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if saved, ok := s.ops[input.ID]; ok {
+		canonicalJMComicSelection(&input, saved.Request.ChapterIDs)
+		hash := requestHash(input)
 		if saved.Operation.RequestHash != hash {
 			failJSON(w, 409, "同一操作标识已绑定其他获取意图")
 			return
@@ -331,10 +332,19 @@ func (s *Service) startHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, ok := s.previews[input.PreviewID]
+	if ok {
+		canonicalJMComicSelection(&input, p.Request.ChapterIDs)
+		previewRequest.ChapterIDs = input.ChapterIDs
+	}
 	if !ok || time.Now().After(p.Until) || previewHash(p.Request) != previewHash(previewRequest) {
 		failJSON(w, 409, "预览已过期或参数改变，请重新预览")
 		return
 	}
+	if input.Kind == "jmcomic" && p.Response.JMComic != nil && (p.Response.JMComic.OverBudget || p.Response.JMComic.PageCount > input.MaxFiles) {
+		failJSON(w, 422, "漫画选择超过页数预算，请减少章节后重新预览")
+		return
+	}
+	hash := requestHash(input)
 	stamp := time.Now().UTC().Format(time.RFC3339Nano)
 	op := contract.Operation{ID: input.ID, Kind: input.Kind, State: "queued", Message: "已登记获取意图，等待执行", CreatedAt: stamp, UpdatedAt: stamp, RelativeDir: "staging/" + input.ID, Files: []contract.File{}, RequestHash: hash}
 	saved := savedOperation{Request: input, Operation: op, Preview: p.Response, Attempts: 1}
@@ -568,7 +578,24 @@ func safeOperationID(id string) bool {
 
 // requestPreview 从不可变获取意图抽取预览绑定字段。
 func requestPreview(r contract.OperationRequest) contract.PreviewRequest {
-	return contract.PreviewRequest{Kind: r.Kind, URL: r.URL, Profile: r.Profile, SourceID: r.SourceID, Path: r.Path, MaxBytes: r.MaxBytes, MaxFiles: r.MaxFiles, AlbumID: r.AlbumID, UAVSite: r.UAVSite, VideoID: r.VideoID}
+	return contract.PreviewRequest{Kind: r.Kind, URL: r.URL, Profile: r.Profile, SourceID: r.SourceID, Path: r.Path, MaxBytes: r.MaxBytes, MaxFiles: r.MaxFiles, AlbumID: r.AlbumID, UAVSite: r.UAVSite, VideoID: r.VideoID, ChapterIDs: r.ChapterIDs}
+}
+
+// canonicalJMComicSelection 在集合完全相同时复用已冻结的上游顺序，不改变全本的旧意图。
+func canonicalJMComicSelection(input *contract.OperationRequest, frozen []string) {
+	if input.Kind != "jmcomic" || len(input.ChapterIDs) == 0 || len(input.ChapterIDs) != len(frozen) {
+		return
+	}
+	seen := make(map[string]bool, len(input.ChapterIDs))
+	for _, id := range input.ChapterIDs {
+		seen[id] = true
+	}
+	for _, id := range frozen {
+		if !seen[id] {
+			return
+		}
+	}
+	input.ChapterIDs = append([]string{}, frozen...)
 }
 
 // requestHash 不把短期预览令牌作为业务意图身份。
