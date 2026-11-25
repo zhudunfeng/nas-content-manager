@@ -9,6 +9,15 @@ COPY internal/collectioncontract ./internal/collectioncontract
 COPY internal/collectionworker ./internal/collectionworker
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/nas-collection-worker ./cmd/nas-collection-worker
 
+# UAV上游声明Python>=3.12，使用独立同发行版解释器，保留系统Python与既有漫画环境。
+FROM python:3.12-slim-bookworm AS uav-builder
+COPY deploy/uav-requirements.txt deploy/uav-build-requirements.txt /tmp/
+# 固定提交和原始源码摘要，构建时安装，服务运行时不下载代码。
+ADD --checksum=sha256:88934f8920f836b064212a6d997a0eedb9a8149e38d112569d8c766dae208b41 https://codeload.github.com/Alos21750/UAV-Downloader/tar.gz/d40f09457fbd38dd7dc94580637242afafaf3939 /tmp/uav.tar.gz
+RUN python3 -m venv /opt/uav \
+    && /opt/uav/bin/pip install --no-cache-dir --only-binary=:all: --no-deps --require-hashes -r /tmp/uav-build-requirements.txt -r /tmp/uav-requirements.txt \
+    && /opt/uav/bin/pip install --no-cache-dir --no-build-isolation --no-deps /tmp/uav.tar.gz
+
 # 发行镜像的实际摘要和工具版本清单共同锁定系统工具，不在服务启动时升级。
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates python3 python3-venv ffmpeg rclone tini \
@@ -28,6 +37,10 @@ RUN /opt/collection/bin/pip install --no-cache-dir --no-deps --require-hashes -r
     && dpkg-query -W ca-certificates python3 ffmpeg rclone tini > /app/system-tools.txt \
     && /opt/collection/bin/yt-dlp --version > /app/yt-dlp-version.txt
 COPY --from=builder /out/nas-collection-worker /app/nas-collection-worker
+COPY --from=uav-builder /usr/local/ /usr/local/
+COPY --from=uav-builder /opt/uav/ /opt/uav/
+COPY deploy/uav-requirements.txt deploy/uav-build-requirements.txt /app/
+RUN ldconfig
 COPY docs/third-party-notices.md /app/third-party-notices.md
 # 默认仅在容器内监听，Compose 不发布宿主控制端口。
 ENV NAS_COLLECTION_WORKER_ADDR=:8092
@@ -49,5 +62,9 @@ ENV NAS_COLLECTION_WORKER_FFMPEG=/usr/bin/ffmpeg
 ENV NAS_COLLECTION_WORKER_JMCOMIC_ENABLED=true
 # 漫画能力只运行独立虚拟环境内的固定解释器。
 ENV NAS_COLLECTION_WORKER_JMCOMIC_PYTHON=/opt/jmcomic/bin/python
+# 镜像已安装固定无头依赖，因此默认启用视频插件；原生默认关闭。
+ENV NAS_COLLECTION_WORKER_UAV_ENABLED=true
+# 视频解析只使用独立Python3.12解释器，不加载GUI或AI依赖。
+ENV NAS_COLLECTION_WORKER_UAV_PYTHON=/opt/uav/bin/python
 USER 1000:1000
 ENTRYPOINT ["/usr/bin/tini", "--", "/app/nas-collection-worker"]

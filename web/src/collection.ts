@@ -1,9 +1,9 @@
 import type { CollectionKind, CollectionTask } from './types'
 
 /** 固定来源类型的中文名称。 */
-export const collectionKindLabels: Record<CollectionKind, string> = { rss: 'RSS 订阅', web: '网页音视频', local: '本地目录', remote: '远程文件', external: '外部自动化', jmcomic: 'JMComic 漫画插件' }
+export const collectionKindLabels: Record<CollectionKind, string> = { rss: 'RSS 订阅', web: '网页音视频', local: '本地目录', remote: '远程文件', external: '外部自动化', jmcomic: 'JMComic 漫画插件', uav: 'UAV 视频插件' }
 /** 固定来源类型的本地图标。 */
-export const collectionKindIcons: Record<CollectionKind, string> = { rss: 'rss', web: 'link', local: 'folder', remote: 'storage', external: 'external', jmcomic: 'comic' }
+export const collectionKindIcons: Record<CollectionKind, string> = { rss: 'rss', web: 'link', local: 'folder', remote: 'storage', external: 'external', jmcomic: 'comic', uav: 'video' }
 /** 每个网页批次的显式条目上限。 */
 export const collectionBatchLimit: number = 10
 /** 统一任务和候选列表的每页条数。 */

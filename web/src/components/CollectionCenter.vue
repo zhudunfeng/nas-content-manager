@@ -7,6 +7,7 @@ import type { CollectionCandidate, CollectionCandidatePage, CollectionCapabiliti
 import CollectionAcquireDialog from './CollectionAcquireDialog.vue'
 import CollectionPreviewDialog from './CollectionPreviewDialog.vue'
 import CollectionJMComicDialog from './CollectionJMComicDialog.vue'
+import CollectionUAVDialog from './CollectionUAVDialog.vue'
 import CollectionSourceDialog from './CollectionSourceDialog.vue'
 import CollectionSubscriptionDialog from './CollectionSubscriptionDialog.vue'
 import CollectionTaskDialog from './CollectionTaskDialog.vue'
@@ -64,6 +65,8 @@ const editingSubscription = ref<CollectionSubscription | null>(null)
 const previewDialog = ref<boolean>(false)
 const jmcomicDialog = ref<boolean>(false)
 const jmcomicSourceId = ref<string>('')
+const uavDialog = ref<boolean>(false)
+const uavSourceId = ref<string>('')
 const previewSourceId = ref<string>('')
 const previewKind = ref<CollectionKind>('web')
 const acquiring = ref<CollectionCandidate | null>(null)
@@ -81,14 +84,14 @@ const currentError = computed<string>((): string => tab.value === 'overview' ? '
 const reviewCount = computed<number>((): number => candidates.value.filter((candidate: CollectionCandidate): boolean => ['review', 'pending_review', 'matched'].includes(candidate.decision) && !candidate.taskId).length)
 const enabledSubscriptions = computed<number>((): number => subscriptions.value.filter((subscription: CollectionSubscription): boolean => subscription.enabled).length)
 const enabledSources = computed<number>((): number => sources.value.filter((source: CollectionSource): boolean => source.enabled).length)
-const modalActive = computed<boolean>((): boolean => sourceDialog.value || subscriptionDialog.value || previewDialog.value || jmcomicDialog.value || !!acquiring.value || !!selectedTask.value || !!externalSource.value || !!backfillSource.value || !!rulePreview.value)
+const modalActive = computed<boolean>((): boolean => sourceDialog.value || subscriptionDialog.value || previewDialog.value || jmcomicDialog.value || uavDialog.value || !!acquiring.value || !!selectedTask.value || !!externalSource.value || !!backfillSource.value || !!rulePreview.value)
 
 /** 显示稳定来源名称，删除或不可见的来源保留中性说明。 */
 function sourceName(id: string): string { return sources.value.find((source: CollectionSource): boolean => source.id === id)?.name || '来源记录' }
 /** 将适配器能力转为中文说明。 */
 function capabilityName(kind: string): string {
   const labels: Record<string, string> = { rss: 'RSS 收取', bt: 'BT 下载桥接', web: '网页音视频', local: '本地归档复制', remote: '远程复制', register: '本地只读登记', local_register: '本地只读登记', fetch_web_media: '网页音视频', copy_remote_files: '远程复制', copy_local_files: '本地归档复制', external: '外部成品导入' }
-  return kind === 'jmcomic' ? 'JMComic 漫画搜索下载' : labels[kind] || kind
+  return kind === 'jmcomic' ? 'JMComic 漫画搜索下载' : kind === 'uav' ? 'UAV 视频搜索下载' : labels[kind] || kind
 }
 /** 只在前台且本次请求结束后安排下一轮。 */
 function schedule(): void {
@@ -150,6 +153,7 @@ async function sourceSaved(source: CollectionSource): Promise<void> {
   restart(true)
   if (source.kind === 'external' && source.apiConfigured) { await nextTick(); if (!disposed) openExternal(source) }
   if (source.kind === 'jmcomic' && source.enabled) { await nextTick(); if (!disposed) openJMComic(source) }
+  if (source.kind === 'uav' && source.enabled) { await nextTick(); if (!disposed) openUAV(source) }
 }
 /** 外部管理只打开一个原生对话框，打开时不会创建获取动作。 */
 function openExternal(source: CollectionSource): void { if (!busyId.value && !modalActive.value) externalSource.value = source }
@@ -172,7 +176,7 @@ function openSubscription(subscription: CollectionSubscription | null = null): v
 /** 保存规则后回到列表，建议明确试运行。 */
 function subscriptionSaved(): void { subscriptionDialog.value = false; editingSubscription.value = null; feedback.value = '规则已保存，可以试运行查看命中原因。'; restart(true) }
 /** 打开固定来源或指定类型的逐项预览。 */
-function openPreview(source: CollectionSource | null = null, kind: CollectionKind = 'web'): void { if (source?.kind === 'jmcomic' || kind === 'jmcomic') { openJMComic(source); return }; if (busyId.value || modalActive.value) return; previewSourceId.value = source?.id || ''; previewKind.value = source?.kind || kind; previewDialog.value = true }
+function openPreview(source: CollectionSource | null = null, kind: CollectionKind = 'web'): void { if (source?.kind === 'jmcomic' || kind === 'jmcomic') { openJMComic(source); return }; if (source?.kind === 'uav' || kind === 'uav') { openUAV(source); return }; if (busyId.value || modalActive.value) return; previewSourceId.value = source?.id || ''; previewKind.value = source?.kind || kind; previewDialog.value = true }
 /** 已有漫画来源直接打开搜索；首次使用先完成来源配置。 */
 function openJMComic(source: CollectionSource | null = null): void {
   if (busyId.value || modalActive.value || errors.value.sources) return
@@ -180,6 +184,14 @@ function openJMComic(source: CollectionSource | null = null): void {
   if (!selected) { openSource(null, 'jmcomic'); return }
   jmcomicSourceId.value = selected.id
   jmcomicDialog.value = true
+}
+/** 已有视频插件来源直接打开搜索，首次使用先完成来源配置。 */
+function openUAV(source: CollectionSource | null = null): void {
+  if (busyId.value || modalActive.value || errors.value.sources) return
+  const selected: CollectionSource | undefined = source || sources.value.find((entry: CollectionSource): boolean => entry.kind === 'uav' && entry.enabled)
+  if (!selected) { openSource(null, 'uav'); return }
+  uavSourceId.value = selected.id
+  uavDialog.value = true
 }
 /** 异步试运行期间禁止再开其他弹窗，避免响应到达时嵌套原生对话框。 */
 function openTask(task: CollectionTask): void { if (!busyId.value && !modalActive.value) selectedTask.value = task }
@@ -251,6 +263,7 @@ async function taskCreated(task: CollectionTask): Promise<void> {
   acquiring.value = null
   previewDialog.value = false
   jmcomicDialog.value = false
+  uavDialog.value = false
   await nextTick()
   if (disposed) return
   selectedTask.value = task
@@ -272,7 +285,7 @@ onBeforeUnmount((): void => { disposed = true; clearTimeout(pollTimer); controll
 
 <template>
   <section class="collection-center" aria-label="资源收集中心">
-    <div class="collection-toolbar"><div><h2>从来源到媒体库</h2><p class="field-hint">统一管理发现、获取、校验和扫描。</p></div><div class="collection-actions"><button class="secondary-button" @click="emit('open-downloads')"><Icon name="download" />BT 搜索与下载</button><button class="secondary-button" :disabled="loading || !!errors.sources || !!errors.libraries" @click="openJMComic()"><Icon name="comic" />漫画搜索下载</button><button class="primary-button" :disabled="loading || !!errors.sources" @click="openPreview()"><Icon name="plus" />网页与文件</button><button class="icon-button" :disabled="loading" aria-label="刷新收集状态" @click="restart()"><Icon name="refresh" /></button></div></div>
+    <div class="collection-toolbar"><div><h2>从来源到媒体库</h2><p class="field-hint">统一管理发现、获取、校验和扫描。</p></div><div class="collection-actions"><button class="secondary-button" @click="emit('open-downloads')"><Icon name="download" />BT 搜索与下载</button><button class="secondary-button" :disabled="loading || !!errors.sources || !!errors.libraries" @click="openJMComic()"><Icon name="comic" />漫画搜索下载</button><button class="secondary-button" :disabled="loading || !!errors.sources || !!errors.libraries" @click="openUAV()"><Icon name="video" />视频搜索下载</button><button class="primary-button" :disabled="loading || !!errors.sources" @click="openPreview()"><Icon name="plus" />网页与文件</button><button class="icon-button" :disabled="loading" aria-label="刷新收集状态" @click="restart()"><Icon name="refresh" /></button></div></div>
     <nav class="collection-tabs" aria-label="收集分区"><button v-for="entry in tabs" :key="entry.id" :class="{ active: tab === entry.id }" :aria-current="tab === entry.id ? 'page' : undefined" @click="tab = entry.id">{{ entry.label }}</button></nav>
     <p v-if="feedback" class="collection-feedback" role="status">{{ feedback }}</p>
     <p v-if="actionError" class="error-box" role="alert">{{ actionError }} <button class="text-button" @click="restart(true)">重新读取状态</button></p>
@@ -282,7 +295,7 @@ onBeforeUnmount((): void => { disposed = true; clearTimeout(pollTimer); controll
     <template v-if="tab === 'overview'">
       <div class="collection-stats"><button @click="tab = 'sources'"><span>已启用来源</span><strong>{{ errors.sources ? '—' : enabledSources }}</strong><small>{{ errors.sources || `已配置 ${sources.length} 个来源` }}</small></button><button @click="tab = 'subscriptions'"><span>定时订阅</span><strong>{{ errors.subscriptions ? '—' : enabledSubscriptions }}</strong><small>{{ errors.subscriptions || '启用规则独立调度' }}</small></button><button @click="tab = 'candidates'"><span>当前页待确认</span><strong>{{ errors.candidates ? '—' : reviewCount }}</strong><small>{{ errors.candidates || `当前筛选共 ${candidateTotal} 条候选` }}</small></button><button @click="tab = 'tasks'"><span>收集任务</span><strong>{{ errors.tasks ? '—' : taskTotal }}</strong><small>{{ errors.tasks || '按实际任务保存完整历史' }}</small></button></div>
       <div class="collection-section-heading"><h3>收集入口</h3><button class="text-button" @click="tab = 'sources'">管理来源<Icon name="arrow" :size="16" /></button></div>
-      <div class="collection-entry-grid"><button :disabled="!!errors.sources || !!errors.libraries" @click="openJMComic()"><Icon name="comic" /><strong>JMComic 漫画</strong><span>搜索或输入漫画编号，确认下载后导入漫画库。</span></button><button @click="tab = 'subscriptions'"><Icon name="rss" /><strong>影视与动漫 RSS</strong><span>规则试运行、候选确认，再复用 BT 选文件。</span></button><button @click="openPreview(null, 'web')"><Icon name="link" /><strong>网页视频与音频</strong><span>逐条预览页面，保存视频或提取音频。</span></button><button @click="openPreview(null, 'local')"><Icon name="music" /><strong>本地文件与自有音乐</strong><span>默认只读登记，需要副本时另选归档复制。</span></button><button @click="openPreview(null, 'remote')"><Icon name="storage" /><strong>远程与外部成品</strong><span>使用预配置连接复制，保留来源文件。</span></button></div>
+      <div class="collection-entry-grid"><button :disabled="!!errors.sources || !!errors.libraries" @click="openUAV()"><Icon name="video" /><strong>UAV 视频插件</strong><span>选择固定站点搜索视频，预览后下载并导入视频库。</span></button><button :disabled="!!errors.sources || !!errors.libraries" @click="openJMComic()"><Icon name="comic" /><strong>JMComic 漫画</strong><span>搜索或输入漫画编号，确认下载后导入漫画库。</span></button><button @click="tab = 'subscriptions'"><Icon name="rss" /><strong>影视与动漫 RSS</strong><span>规则试运行、候选确认，再复用 BT 选文件。</span></button><button @click="openPreview(null, 'web')"><Icon name="link" /><strong>网页视频与音频</strong><span>逐条预览页面，保存视频或提取音频。</span></button><button @click="openPreview(null, 'local')"><Icon name="music" /><strong>本地文件与自有音乐</strong><span>默认只读登记，需要副本时另选归档复制。</span></button><button @click="openPreview(null, 'remote')"><Icon name="storage" /><strong>远程与外部成品</strong><span>使用预配置连接复制，保留来源文件。</span></button></div>
       <div class="collection-section-heading"><h3>平台与执行能力</h3><button class="text-button" @click="restart(true)">重新检测</button></div>
       <p v-if="errors.capabilities" class="error-box" role="alert">能力查询失败：{{ errors.capabilities }}</p>
       <template v-else-if="capabilities"><p class="section-note">{{ capabilities.workerReady ? '获取执行端已连接。' : '获取执行端暂不可用。' }} {{ capabilities.workerReason }} 本地只读登记与 BT 使用各自能力。</p><div class="collection-capabilities"><article v-for="capability in capabilities.capabilities" :key="capability.kind"><div><strong>{{ capabilityName(capability.kind) }}</strong><span class="status-pill" :class="{ 'collection-unavailable': !capability.available }">{{ capability.available ? '可用' : '不可用' }}</span></div><p class="field-hint">{{ capability.reason || (capability.available ? '已通过能力检测' : '需要配置相应执行工具') }}{{ capability.version ? ` · ${capability.version}` : '' }}</p></article></div></template>
@@ -293,7 +306,7 @@ onBeforeUnmount((): void => { disposed = true; clearTimeout(pollTimer); controll
     </template>
     <template v-else-if="tab === 'sources'">
       <div class="collection-section-heading"><div><h3>来源配置</h3><p class="field-hint">连接可用、工具就绪与资源可获取分别判断。秘密和私密地址不会回显。</p></div><button class="primary-button" :disabled="!!errors.capabilities" @click="openSource()"><Icon name="plus" />添加来源</button></div>
-      <div v-if="sources.length" class="collection-source-grid"><article v-for="source in sources" :key="source.id" class="collection-card"><div class="collection-section-heading"><div class="collection-card-title"><Icon :name="collectionKindIcons[source.kind]" /><h3>{{ source.name }}</h3></div><span class="status-pill">{{ source.enabled ? '已启用' : '已停用' }}</span></div><p class="field-hint">{{ collectionKindLabels[source.kind] }} · 最近成功：{{ collectionTime(source.lastSuccessAt) }}</p><p v-if="source.path" class="collection-path">相对目录：{{ source.path }}</p><p v-if="source.lastError" class="collection-warning">{{ source.lastError }}</p><p v-else class="field-hint">{{ source.lastSuccessAt ? '最近操作已成功，具体资源需单独预览。' : '尚无成功记录，可先测试连接。' }}</p><div class="collection-actions"><button v-if="source.kind === 'external' && source.apiConfigured" class="primary-button" :disabled="!!busyId" @click="openExternal(source)">管理</button><button v-else class="text-button" :disabled="!!busyId" @click="testSource(source)">{{ busyId === source.id ? '处理中…' : '测试连接' }}</button><button v-if="source.kind === 'rss'" class="text-button" :disabled="!!busyId || !source.enabled" @click="refreshSource(source)">收取新条目</button><button v-if="source.kind === 'rss'" class="text-button" :disabled="!!busyId || !source.enabled" @click="openBackfill(source)">历史回填</button><button v-else-if="source.kind !== 'external' || !source.apiConfigured" class="text-button" :disabled="!source.enabled || !!errors.libraries || (source.kind === 'external' && !source.rootId)" @click="openPreview(source)">{{ source.kind === 'jmcomic' ? '搜索与下载' : '预览导入' }}</button><a v-if="source.kind === 'external' && collectionExternalUrl(source.externalUrl)" class="text-button" :href="collectionExternalUrl(source.externalUrl)" target="_blank" rel="noopener noreferrer">进入外部应用<Icon name="external" :size="14" /></a><button class="text-button" @click="openSource(source)">编辑</button><button class="text-button" :disabled="!!busyId" @click="toggleSource(source)">{{ source.enabled ? '停用' : '启用' }}</button></div></article></div>
+      <div v-if="sources.length" class="collection-source-grid"><article v-for="source in sources" :key="source.id" class="collection-card"><div class="collection-section-heading"><div class="collection-card-title"><Icon :name="collectionKindIcons[source.kind]" /><h3>{{ source.name }}</h3></div><span class="status-pill">{{ source.enabled ? '已启用' : '已停用' }}</span></div><p class="field-hint">{{ collectionKindLabels[source.kind] }} · 最近成功：{{ collectionTime(source.lastSuccessAt) }}</p><p v-if="source.path" class="collection-path">相对目录：{{ source.path }}</p><p v-if="source.lastError" class="collection-warning">{{ source.lastError }}</p><p v-else class="field-hint">{{ source.lastSuccessAt ? '最近操作已成功，具体资源需单独预览。' : '尚无成功记录，可先测试连接。' }}</p><div class="collection-actions"><button v-if="source.kind === 'external' && source.apiConfigured" class="primary-button" :disabled="!!busyId" @click="openExternal(source)">管理</button><button v-else class="text-button" :disabled="!!busyId" @click="testSource(source)">{{ busyId === source.id ? '处理中…' : '测试连接' }}</button><button v-if="source.kind === 'rss'" class="text-button" :disabled="!!busyId || !source.enabled" @click="refreshSource(source)">收取新条目</button><button v-if="source.kind === 'rss'" class="text-button" :disabled="!!busyId || !source.enabled" @click="openBackfill(source)">历史回填</button><button v-else-if="source.kind !== 'external' || !source.apiConfigured" class="text-button" :disabled="!source.enabled || !!errors.libraries || (source.kind === 'external' && !source.rootId)" @click="openPreview(source)">{{ source.kind === 'jmcomic' || source.kind === 'uav' ? '搜索与下载' : '预览导入' }}</button><a v-if="source.kind === 'external' && collectionExternalUrl(source.externalUrl)" class="text-button" :href="collectionExternalUrl(source.externalUrl)" target="_blank" rel="noopener noreferrer">进入外部应用<Icon name="external" :size="14" /></a><button class="text-button" @click="openSource(source)">编辑</button><button class="text-button" :disabled="!!busyId" @click="toggleSource(source)">{{ source.enabled ? '停用' : '启用' }}</button></div></article></div>
       <div v-else-if="!loading && !errors.sources" class="collection-empty"><Icon name="folder" :size="32" /><h3>还没有收集来源</h3><p>可以添加 RSS、网页、本地目录、远程连接或外部成品目录。</p><button class="secondary-button" @click="openSource(null, 'local')">添加本地目录</button></div>
     </template>
     <template v-else-if="tab === 'subscriptions'">
@@ -318,6 +331,7 @@ onBeforeUnmount((): void => { disposed = true; clearTimeout(pollTimer); controll
   <CollectionSubscriptionDialog v-if="subscriptionDialog" :subscription="editingSubscription" :sources="sources" :libraries="libraries" @close="subscriptionDialog = false" @saved="subscriptionSaved" />
   <CollectionPreviewDialog v-if="previewDialog" :sources="sources" :libraries="libraries" :capabilities="errors.capabilities ? null : capabilities" :initial-source-id="previewSourceId" :initial-kind="previewKind" @close="previewDialog = false" @created="restart(true)" @open-task="taskCreated" />
   <CollectionJMComicDialog v-if="jmcomicDialog" :sources="sources" :libraries="libraries" :capabilities="errors.capabilities ? null : capabilities" :initial-source-id="jmcomicSourceId" @close="jmcomicDialog = false" @open-task="taskCreated" />
+  <CollectionUAVDialog v-if="uavDialog" :sources="sources" :libraries="libraries" :capabilities="errors.capabilities ? null : capabilities" :initial-source-id="uavSourceId" @close="uavDialog = false" @open-task="taskCreated" />
   <CollectionAcquireDialog v-if="acquiring" :candidate="acquiring" :libraries="libraries" @close="acquiring = null" @created="taskCreated" />
   <CollectionTaskDialog v-if="selectedTask" :key="selectedTask.id" :initial-task="selectedTask" @close="selectedTask = null" @updated="taskUpdated" @open-item="openItem" @open-download="openDownload" />
   <CollectionExternalPanel v-if="externalSource" :key="externalSource.id" :source="externalSource" @close="externalSource = null" @edit="editExternal" @import="importExternal" />

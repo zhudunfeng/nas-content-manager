@@ -528,3 +528,16 @@ S03.1按`local_complete_target_pending`记账，S03整体仍实施中。真实Li
 - 本轮轻量独立检查记录在 S03 任务 `research/quality-review-usable-20261123.md`；仅检本次交付完整性，不重复计入旧S03.2.2行为数，不代替未来S03.2.3完整门禁。没有新增产品契约，因此正式backend备份spec保持原已验收内容，新增启动说明与本节记录。
 
 当前包是Windows本机开发可用版本；真实NAS/Linux运行、Docker部署、介质故障和断电未作为本轮通过项。策略仍关闭，定时、手动持久运行、历史下载、轮转和恢复准备仍留后续。未自动提交、部署、停止用户实例或修改用户配置。
+
+## 2026-11-25 UAV 四站视频搜索下载插件
+
+新增可选 `uav` 来源，固定适配 Jable、MissAV、Hanime1、Huangguo（黄果）。黄果按实际单集搜索和下载；预览、稳定请求编号、取消/重试、发布与视频扫描沿用原收集链路，SQLite 保持 schema 6。配置与使用见 [uav.md](uav.md)，正式契约见 `.trellis/spec/backend/uav-contract.md`；最终报告位于 `.trellis/tasks/11-25-uav-downloader-plugin/research/mainline-verification.md`。
+
+- 最终 Windows 主服务/worker 位于 `.runtime/bin/uav-final-20261125-2/`。同批产物通过四站协议集成 **77 项**、浏览器 **42 项**、JMComic 回归 **66 项**；统一 baseline 的核心媒体 **44 项**、资源收集 **27 项**、发布边界自检 **83 项**通过。证据分别为 `.runtime/verify/uav-final-{protocol,browser,jmcomic,baseline}-20261125-1/`，浏览器子目录为 `browser-111932`。协议集成使用真实应用/worker/FFmpeg及离线桥接/下载器替身，不代表真实站点传输。发布自检也不代表已生成发行归档。
+- 独立质量复核最终 **13 个测试函数、22 个真实 yt-dlp 下载场景**通过：5 个成功、17 个预期拒绝。覆盖生产认证代理、真实 TLS、CDN 逐跳作用域、AES 密钥、缺片、截断、Range 和 chunked 正常/短/长响应；另以真实 8 秒 TS 和约 1.96 秒可解码截尾反例核验时长门禁。初期另有 9 个跨层契约/处理器测试函数通过，两个阶段分开记账。证据 `.runtime/verify/uav-independent-quality-20261125/`；全部生成的临时单元测试源码已删除，保留非编译文本与日志供复验。
+- 真实固定 UAV 包离线验证四站搜索/解析/空页各 4 例、无效分支 24 例及重定向 2 例；真实原生 HLS/AES 与本地解码通过。实际环境是 Python **3.14.4**、UAV **3.8.4**、yt-dlp **2026.10.26**，不是 Python 3.12 运行验收。Linux CPython 3.12 amd64/arm64 各 20 个锁定 wheel 的选择与哈希下载通过；未执行 Linux Python、容器或 NAS。
+- 最终 Go vet、清源后的全包编译、gofmt、Python AST、Vue 严格类型检查和生产构建通过。Windows 与 Linux amd64/arm64 的主服务/worker 共 6 个产物构建成功；Linux 仅交叉编译。最终工程门禁 `.runtime/verify/uav-final-checks-20261125-3/result.json` 为 passed，关联第 2 轮实际构建日志与摘要；源码及产物无漂移。早期磁盘不足、工具路径和换行检查设置导致的失败均保留，详情见最终报告，不计为通过。
+
+HLS 解码时长下界容差为 `max(0.5 秒, EXTINF 总时长的 2%)`，只能拒绝明显丢尾；直链 MP4 没有可信预期时长，传输/解码成功不能证明原片全长。真实公网搜索下载、Docker 镜像运行和物理 NAS 验收仍未执行。最终自有浏览器/服务已回收；未自动提交、部署或归档任务。
+
+最终主线回读 `.runtime/verify/uav-mainline-final-audit-20261125-1/result.json` 为 passed：结果计数、同批产物、独立复核源码与最终源码一致；临时测试、零长度改动文件和确切最终产物活进程均为空。任务保留为 review，等待用户审阅提交。

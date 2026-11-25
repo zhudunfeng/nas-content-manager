@@ -28,6 +28,8 @@ type Config struct {
 	FFmpeg           string         // NAS_COLLECTION_WORKER_FFMPEG：受信ffmpeg绝对路径或固定工具名，默认ffmpeg。
 	JMComicEnabled   bool           // NAS_COLLECTION_WORKER_JMCOMIC_ENABLED：显式启用固定漫画插件，原生默认false。
 	JMComicPython    string         // NAS_COLLECTION_WORKER_JMCOMIC_PYTHON：安装固定依赖的受信Python，默认python3，Windows默认python。
+	UAVEnabled       bool           // NAS_COLLECTION_WORKER_UAV_ENABLED：显式启用固定视频插件，原生默认false。
+	UAVPython        string         // NAS_COLLECTION_WORKER_UAV_PYTHON：安装固定依赖的受信Python>=3.12，默认python3，Windows默认python。
 	MaxBytes         int64          // NAS_COLLECTION_WORKER_MAX_BYTES：单任务字节上限，默认20GiB。
 	MaxFiles         int            // NAS_COLLECTION_WORKER_MAX_FILES：单任务文件数上限，默认1000。
 	MinFreeMB        int64          // NAS_COLLECTION_WORKER_MIN_FREE_MB：磁盘保留MiB，默认512。
@@ -69,6 +71,15 @@ func LoadConfig() (Config, error) {
 		python = "python"
 	}
 	c.JMComicPython = env("NAS_COLLECTION_WORKER_JMCOMIC_PYTHON", python)
+	switch env("NAS_COLLECTION_WORKER_UAV_ENABLED", "false") {
+	case "true":
+		c.UAVEnabled = true
+	case "false":
+		c.UAVEnabled = false
+	default:
+		return c, fmt.Errorf("NAS_COLLECTION_WORKER_UAV_ENABLED 必须为true或false")
+	}
+	c.UAVPython = env("NAS_COLLECTION_WORKER_UAV_PYTHON", python)
 	for _, field := range []*string{&c.DataDir, &c.TokenFile} {
 		*field, err = filepath.Abs(*field)
 		if err != nil {

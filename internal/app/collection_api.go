@@ -25,6 +25,7 @@ func (a *App) collectionRoutes(mux *http.ServeMux) {
 	register("POST /api/collection/sources/{id}/test", a.collectionTestSource)
 	register("POST /api/collection/sources/{id}/refresh", a.collectionRefreshSource)
 	register("POST /api/collection/sources/{id}/jmcomic/search", a.collectionJMComicSearch)
+	register("POST /api/collection/sources/{id}/uav/search", a.collectionUAVSearch)
 	register("GET /api/collection/subscriptions", a.collectionListSubscriptions)
 	register("POST /api/collection/subscriptions", a.collectionSaveSubscription)
 	register("PATCH /api/collection/subscriptions/{id}", a.collectionSaveSubscription)
@@ -70,7 +71,7 @@ func (a *App) collectionCapabilities(w http.ResponseWriter, r *http.Request) {
 	sources := []collectioncontract.Source{}
 	if err != nil {
 		reason = err.Error()
-		for _, kind := range []string{"web", "local", "remote", "jmcomic"} {
+		for _, kind := range []string{"web", "local", "remote", "jmcomic", "uav"} {
 			caps = append(caps, collectioncontract.Capability{Kind: kind, Reason: reason})
 		}
 	} else {
@@ -97,13 +98,13 @@ func (a *App) collectionSaveSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	input.Name = strings.TrimSpace(input.Name)
-	if len(input.Name) == 0 || len(input.Name) > 120 || strings.ContainsAny(input.Name, "\r\n\x00") || !(input.Kind == "rss" || input.Kind == "web" || input.Kind == "local" || input.Kind == "remote" || input.Kind == "external" || input.Kind == "jmcomic") {
+	if len(input.Name) == 0 || len(input.Name) > 120 || strings.ContainsAny(input.Name, "\r\n\x00") || !(input.Kind == "rss" || input.Kind == "web" || input.Kind == "local" || input.Kind == "remote" || input.Kind == "external" || input.Kind == "jmcomic" || input.Kind == "uav") {
 		fail(w, 400, "请填写有效来源名称和类型")
 		return
 	}
-	if input.Kind == "jmcomic" {
+	if input.Kind == "jmcomic" || input.Kind == "uav" {
 		if input.RootID != "" || input.Path != "" || input.URL != "" || input.AllowPrivate || input.ExternalURL != "" || input.ExternalService != "" || input.Connection != nil || input.ClearConnection {
-			fail(w, 400, "漫画插件使用固定来源，不接受目录、链接或外部连接参数")
+			fail(w, 400, "固定插件来源不接受目录、链接或外部连接参数")
 			return
 		}
 		input.OutputProfile = ""
@@ -288,6 +289,8 @@ func (a *App) collectionTestSource(w http.ResponseWriter, r *http.Request) {
 	message := "来源连接与授权检查通过，未收取历史或创建获取任务"
 	if s.Kind == "jmcomic" {
 		message = "漫画插件与执行端授权检查通过；站点连接将在搜索或预览时实际验证"
+	} else if s.Kind == "uav" {
+		message = "视频插件与执行端授权检查通过；站点连接将在搜索或预览时实际验证"
 	}
 	respond(w, 200, map[string]any{"ok": true, "message": message})
 }

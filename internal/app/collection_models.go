@@ -12,7 +12,7 @@ import (
 // CollectionSource 是来源的公开配置，私密地址只保存于独立秘密文件。
 type CollectionSource struct {
 	ID              string `json:"id"`              // 随机来源编号。
-	Kind            string `json:"kind"`            // rss/web/local/remote/external。
+	Kind            string `json:"kind"`            // rss/web/local/remote/external/jmcomic/uav 固定来源类型。
 	Name            string `json:"name"`            // 来源展示名称。
 	Enabled         bool   `json:"enabled"`         // 是否允许收取和创建新任务。
 	Revision        int64  `json:"revision"`        // 编辑乐观版本。

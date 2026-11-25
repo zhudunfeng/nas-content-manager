@@ -316,7 +316,23 @@ export interface EngineSourceSync {
 }
 
 /** 收集来源的固定类型，不增加媒体分类。 */
-export type CollectionKind = 'rss' | 'web' | 'local' | 'remote' | 'external' | 'jmcomic'
+export type CollectionKind = 'rss' | 'web' | 'local' | 'remote' | 'external' | 'jmcomic' | 'uav'
+/** UAV 首版支持的固定视频站点。 */
+export type CollectionUAVSite = 'jable' | 'missav' | 'hanime1' | 'huangguo'
+/** UAV 只向浏览器公开选择所需的有界元数据。 */
+export interface CollectionUAVItem {
+  /** 当前站点内的视频编号。 */ videoId: string
+  /** 纯文本视频标题。 */ title: string
+  /** 上游提供的时长文本，空值表示未知。 */ duration: string
+}
+/** UAV 只返回当前页，不伪造上游未知总数。 */
+export interface CollectionUAVPage {
+  /** 本次实际选择的固定站点。 */ site: CollectionUAVSite
+  /** 本次实际关键词。 */ query: string
+  /** 从一开始的页码。 */ page: number
+  /** 是否可继续翻页。 */ hasNext: boolean
+  /** 当前页视频元数据。 */ items: CollectionUAVItem[]
+}
 /** JMComic 搜索结果仅包含可展示的漫画信息。 */
 export interface CollectionJMComicItem {
   /** 正整数字符串漫画编号。 */ albumId: string

@@ -36,7 +36,7 @@ interface Props {
 }
 const props = defineProps<Props>()
 const emit = defineEmits<{ close: []; created: []; 'open-task': [task: CollectionTask] }>()
-const availableSources = computed<CollectionSource[]>((): CollectionSource[] => props.sources.filter((source: CollectionSource): boolean => source.enabled && source.kind !== 'rss' && source.kind !== 'jmcomic'))
+const availableSources = computed<CollectionSource[]>((): CollectionSource[] => props.sources.filter((source: CollectionSource): boolean => source.enabled && source.kind !== 'rss' && source.kind !== 'jmcomic' && source.kind !== 'uav'))
 const firstSource: CollectionSource | undefined = availableSources.value.find((source: CollectionSource): boolean => source.id === props.initialSourceId) || availableSources.value.find((source: CollectionSource): boolean => source.kind === props.initialKind) || availableSources.value[0]
 const sourceId = ref<string>(firstSource?.id || '')
 const selectedSource = computed<CollectionSource | undefined>((): CollectionSource | undefined => availableSources.value.find((source: CollectionSource): boolean => source.id === sourceId.value))

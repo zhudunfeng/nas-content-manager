@@ -60,6 +60,7 @@ type Service struct {
 	ytdlpVersion  string                        // 非私密版本说明。
 	rcloneVersion string                        // 非私密版本说明。
 	jmcomicPython string                        // 已解析且通过固定版本探测的受信Python。
+	uavPython     string                        // 已通过固定版本探测的视频插件独立解释器。
 	lease         *workerLease                  // 专用数据根独占锁。
 	closing       bool                          // 已关闭HTTP处理器准入。
 	requests      sync.WaitGroup                // 已获准处理器数量，保护退出后的文件和锁释放。
@@ -163,6 +164,7 @@ func New(ctx context.Context, config Config, logger *slog.Logger) (*Service, err
 		return nil, fmt.Errorf("无法建立网页请求策略代理")
 	}
 	s.initJMComic()
+	s.initUAV()
 	entries, err := os.ReadDir(filepath.Join(config.DataDir, "private-state"))
 	if err != nil {
 		s.Close()
@@ -232,6 +234,7 @@ func (s *Service) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/capabilities", s.capabilitiesHTTP)
 	mux.HandleFunc("POST /v1/previews", s.previewHTTP)
 	mux.HandleFunc("POST /v1/jmcomic/search", s.jmcomicSearchHTTP)
+	mux.HandleFunc("POST /v1/uav/search", s.uavSearchHTTP)
 	mux.HandleFunc("POST /v1/operations", s.startHTTP)
 	mux.HandleFunc("GET /v1/operations", s.listHTTP)
 	mux.HandleFunc("GET /v1/operations/{id}", s.operationHTTP)
@@ -290,7 +293,7 @@ func (s *Service) Capabilities() contract.Capabilities {
 	for _, src := range s.config.Sources {
 		sources = append(sources, contract.Source{ID: src.ID, Kind: src.Kind, Name: src.Name})
 	}
-	return contract.Capabilities{Version: contract.Version, InstanceID: s.instanceID, Capabilities: []contract.Capability{{Kind: "web", Available: webReady, Reason: webReason, Version: s.ytdlpVersion}, {Kind: "remote", Available: remoteReady, Reason: remoteReason, Version: s.rcloneVersion}, {Kind: "local", Available: true, Reason: "", Version: "native-copy-v1"}, s.jmcomicCapability()}, Sources: sources, MaxBytes: s.config.MaxBytes, MaxFiles: s.config.MaxFiles}
+	return contract.Capabilities{Version: contract.Version, InstanceID: s.instanceID, Capabilities: []contract.Capability{{Kind: "web", Available: webReady, Reason: webReason, Version: s.ytdlpVersion}, {Kind: "remote", Available: remoteReady, Reason: remoteReason, Version: s.rcloneVersion}, {Kind: "local", Available: true, Reason: "", Version: "native-copy-v1"}, s.jmcomicCapability(), s.uavCapability()}, Sources: sources, MaxBytes: s.config.MaxBytes, MaxFiles: s.config.MaxFiles}
 }
 
 // startHTTP 先检查幂等记录，再在有效预览和预算约束下保存待执行意图。
@@ -565,7 +568,7 @@ func safeOperationID(id string) bool {
 
 // requestPreview 从不可变获取意图抽取预览绑定字段。
 func requestPreview(r contract.OperationRequest) contract.PreviewRequest {
-	return contract.PreviewRequest{Kind: r.Kind, URL: r.URL, Profile: r.Profile, SourceID: r.SourceID, Path: r.Path, MaxBytes: r.MaxBytes, MaxFiles: r.MaxFiles, AlbumID: r.AlbumID}
+	return contract.PreviewRequest{Kind: r.Kind, URL: r.URL, Profile: r.Profile, SourceID: r.SourceID, Path: r.Path, MaxBytes: r.MaxBytes, MaxFiles: r.MaxFiles, AlbumID: r.AlbumID, UAVSite: r.UAVSite, VideoID: r.VideoID}
 }
 
 // requestHash 不把短期预览令牌作为业务意图身份。

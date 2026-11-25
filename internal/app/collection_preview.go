@@ -126,9 +126,11 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		SourceID string `json:"sourceId"` /* 来源编号。 */
 		URL      string `json:"url"`      /* 单条网页链接。 */
 		Path     string `json:"path"`     /* 来源内相对路径。 */
-		Profile  string `json:"profile"`  /* 网页video/audio输出，漫画插件固定comic。 */
+		Profile  string `json:"profile"`  /* 网页video/audio输出，固定插件只用其内容规格。 */
 		Mode     string `json:"mode"`     /* register/copy。 */
 		AlbumID  string `json:"albumId"`  /* JMComic 固定漫画编号。 */
+		UAVSite  string `json:"uavSite"`  /* UAV 固定站点标识。 */
+		VideoID  string `json:"videoId"`  /* 所选固定站点的视频编号。 */
 	}
 	if !decodeJSON(w, r, &input) {
 		return
@@ -150,6 +152,16 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		input.Profile = "comic"
 	} else if input.AlbumID != "" {
 		fail(w, 400, "漫画编号只能用于漫画插件来源")
+		return
+	}
+	if s.Kind == "uav" {
+		if !collectioncontract.ValidUAVVideoID(input.UAVSite, input.VideoID) || input.URL != "" || input.Path != "" || (input.Profile != "" && input.Profile != "video") {
+			fail(w, 400, "视频插件只接受固定站点和有效视频编号")
+			return
+		}
+		input.Profile = "video"
+	} else if input.UAVSite != "" || input.VideoID != "" {
+		fail(w, 400, "视频站点和编号只能用于视频插件来源")
 		return
 	}
 	if _, err = collectionRelative(input.Path); err != nil {
@@ -189,7 +201,7 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		p.Title = filepath.Base(private.LocalPath)
 		private.Identity = collectionDigest("register\x00" + private.LocalPath + "\x00" + collectionJSON(p.Files))
 		p.Warnings = append(p.Warnings, "只读登记现有媒体，不复制、不改名、不改写原标签；提交前请确认目录内容已完整")
-	} else if s.Kind == "web" || s.Kind == "local" || s.Kind == "remote" || s.Kind == "jmcomic" {
+	} else if s.Kind == "web" || s.Kind == "local" || s.Kind == "remote" || s.Kind == "jmcomic" || s.Kind == "uav" {
 		caps, e := a.collectionWorkerReady(r.Context())
 		if e != nil {
 			collectionFail(w, e)
@@ -207,7 +219,7 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		}
 		// 预览与后续执行保存相同的双方最小预算，避免执行端规范化后改变意图摘要。
 		request := collectioncontract.PreviewRequest{Kind: s.Kind, Profile: input.Profile, SourceID: s.RootID, Path: filepath.ToSlash(filepath.Join(filepath.FromSlash(s.Path), filepath.FromSlash(input.Path))), MaxBytes: min(a.config.Collection.MaxBytes, caps.MaxBytes), MaxFiles: min(a.config.Collection.MaxFiles, caps.MaxFiles)}
-		if s.Kind != "web" && s.Kind != "jmcomic" {
+		if s.Kind != "web" && s.Kind != "jmcomic" && s.Kind != "uav" {
 			request.Profile = ""
 			p.Profile = ""
 		}
@@ -227,6 +239,12 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 			request.Path = ""
 			request.SourceID = ""
 			p.Warnings = append(p.Warnings, "仅下载所选漫画的全部章节；获取完成后通过发布校验与漫画扫描才会入库")
+		} else if s.Kind == "uav" {
+			request.UAVSite = input.UAVSite
+			request.VideoID = input.VideoID
+			request.Path = ""
+			request.SourceID = ""
+			p.Warnings = append(p.Warnings, "仅下载所选视频；实际文件通过独立校验和发布后才会扫描入库")
 		} else {
 			found := false
 			for _, root := range caps.Sources {
@@ -242,7 +260,12 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		var preview collectioncontract.Preview
 		_, err = a.collectionWorkerCall(r.Context(), "POST", "/v1/previews", request, &preview)
 		if err == nil {
-			if preview.Identity == "" || preview.ID == "" || collectionExpired(preview.ExpiresAt) || len(preview.Files) > a.config.Collection.MaxFiles || len(preview.Title) > 512 {
+			titleLimit := 512
+			if s.Kind == "uav" {
+				// 视频标题沿用搜索契约的UTF-8字节预算，避免合法长中文标题无法预览。
+				titleLimit = 1200
+			}
+			if preview.Identity == "" || preview.ID == "" || collectionExpired(preview.ExpiresAt) || len(preview.Files) > a.config.Collection.MaxFiles || len(preview.Title) > titleLimit {
 				err = collectionProblem(502, "执行端预览缺少有效身份或超过限制")
 			} else {
 				p.Kind = s.Kind
@@ -255,7 +278,7 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 				}
 				private.Identity = preview.Identity
 				private.WorkerInstance = caps.InstanceID
-				private.Request = collectioncontract.OperationRequest{Kind: request.Kind, URL: request.URL, Profile: request.Profile, SourceID: request.SourceID, Path: request.Path, MaxBytes: request.MaxBytes, MaxFiles: request.MaxFiles, PreviewID: preview.ID, AlbumID: request.AlbumID}
+				private.Request = collectioncontract.OperationRequest{Kind: request.Kind, URL: request.URL, Profile: request.Profile, SourceID: request.SourceID, Path: request.Path, MaxBytes: request.MaxBytes, MaxFiles: request.MaxFiles, PreviewID: preview.ID, AlbumID: request.AlbumID, UAVSite: request.UAVSite, VideoID: request.VideoID}
 			}
 		}
 	} else {
@@ -338,7 +361,7 @@ func (a *App) collectionCreateTask(w http.ResponseWriter, r *http.Request) {
 			files = append(files, file)
 		}
 	}
-	if p.Kind != "web" && p.Kind != "jmcomic" && len(files) == 0 {
+	if p.Kind != "web" && p.Kind != "jmcomic" && p.Kind != "uav" && len(files) == 0 {
 		fail(w, 422, "预览中没有所选内容类型的文件")
 		return
 	}
@@ -354,6 +377,10 @@ func (a *App) collectionCreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if p.Kind == "jmcomic" && input.ContentType != "comic" {
 		fail(w, 400, "漫画插件的入库类型必须为漫画")
+		return
+	}
+	if p.Kind == "uav" && (p.Profile != "video" || input.ContentType != "video") {
+		fail(w, 400, "视频插件的输出和入库类型必须为视频")
 		return
 	}
 	id, err := newDownloadUUID()

@@ -54,6 +54,8 @@ type PreviewRequest struct {
 	MaxBytes int64  `json:"maxBytes,omitempty"` // 请求字节预算，不能超过执行端上限。
 	MaxFiles int    `json:"maxFiles,omitempty"` // 请求文件预算，不能超过执行端上限。
 	AlbumID  string `json:"albumId,omitempty"`  // JMComic 专用漫画正整数编号。
+	UAVSite  string `json:"uavSite,omitempty"`  // UAV 专用固定站点标识。
+	VideoID  string `json:"videoId,omitempty"`  // UAV 专用站点内视频编号。
 }
 
 // Preview 是有时效且绑定输入版本的预览。
@@ -79,6 +81,8 @@ type OperationRequest struct {
 	MaxFiles  int    `json:"maxFiles,omitempty"` // 本次文件预算。
 	PreviewID string `json:"previewId"`          // 绑定的有效预览。
 	AlbumID   string `json:"albumId,omitempty"`  // JMComic 专用漫画正整数编号。
+	UAVSite   string `json:"uavSite,omitempty"`  // UAV 专用固定站点标识。
+	VideoID   string `json:"videoId,omitempty"`  // UAV 专用站点内视频编号。
 }
 
 // JMComicSearchRequest 只允许有界关键词与页码，不接受站点或命令参数。

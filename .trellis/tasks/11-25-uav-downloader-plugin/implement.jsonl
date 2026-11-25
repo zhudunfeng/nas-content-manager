@@ -1,0 +1,7 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/backend/collection-contract.md", "reason": "复用持久收集发布与入库"}
+{"file": ".trellis/spec/backend/jmcomic-contract.md", "reason": "固定插件协议与旧操作摘要兼容"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "现有界面和单弹窗约定"}
+{"file": ".trellis/spec/backend/uav-contract.md", "reason": "固定四站与Huangguo单集、有限HLS中继契约"}

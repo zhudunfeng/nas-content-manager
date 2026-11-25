@@ -17,15 +17,16 @@ import (
 
 // publicProxy 对网页工具每一次实际连接实施DNS和IP策略，禁止绕过代理重定向到私网。
 type publicProxy struct {
-	server      *http.Server      // 仅绑定本机环回临时端口。
-	transport   *http.Transport   // 禁用环境代理并使用经检查的连接函数。
-	url         string            // 只在工具私密环境中使用的认证代理地址。
-	auth        string            // 随机代理认证值。
-	mu          sync.Mutex        // 保护关闭准入和隧道连接。
-	closed      bool              // 禁止关闭后加入新隧道。
-	connections map[net.Conn]bool // 已劫持的CONNECT连接归属。
-	wg          sync.WaitGroup    // 等待隧道处理结束。
-	slots       chan struct{}     // 限制网页并发连接数。
+	server      *http.Server                // 仅绑定本机环回临时端口。
+	transport   *http.Transport             // 禁用环境代理并使用经检查的连接函数。
+	url         string                      // 只在工具私密环境中使用的认证代理地址。
+	auth        string                      // 随机代理认证值。
+	mu          sync.Mutex                  // 保护关闭准入和隧道连接。
+	closed      bool                        // 禁止关闭后加入新隧道。
+	connections map[net.Conn]bool           // 已劫持的CONNECT连接归属。
+	wg          sync.WaitGroup              // 等待隧道处理结束。
+	slots       chan struct{}               // 限制网页并发连接数。
+	uavRoutes   map[string]uavRelayResource // 当前操作独占的有限HLS资源映射，结束即撤销。
 }
 
 // newPublicProxy 建立默认拒绝私网的本机代理，工具必须显式使用该代理。
@@ -62,6 +63,10 @@ func (p *publicProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	select {
 	case p.slots <- struct{}{}:
 		defer func() { <-p.slots }()
+		if r.URL.Scheme == "http" && r.URL.Host == "uav-media.invalid" {
+			p.serveUAVMedia(w, r)
+			return
+		}
 	case <-r.Context().Done():
 		return
 	default:

@@ -128,6 +128,9 @@ func (s *Service) runTool(ctx context.Context, executable string, args []string,
 
 // validateRequest 规范化固定业务输入并确认来源预算，不执行下载或复制。
 func (s *Service) validateRequest(input *contract.PreviewRequest) error {
+	if input.Kind != "uav" && (input.UAVSite != "" || input.VideoID != "") {
+		return errors.New("视频站点和编号只能用于UAV插件")
+	}
 	if input.Kind != "jmcomic" && input.AlbumID != "" {
 		return errors.New("漫画编号只能用于JMComic插件")
 	}
@@ -141,6 +144,11 @@ func (s *Service) validateRequest(input *contract.PreviewRequest) error {
 		return errors.New("获取预算超过执行端限制")
 	}
 	switch input.Kind {
+	case "uav":
+		if !contract.ValidUAVVideoID(input.UAVSite, input.VideoID) || input.URL != "" || input.SourceID != "" || input.Path != "" || input.AlbumID != "" || (input.Profile != "" && input.Profile != "video") {
+			return errors.New("视频插件仅接受固定站点、视频编号和视频输出")
+		}
+		input.Profile = "video"
 	case "jmcomic":
 		if !validJMComicAlbumID(input.AlbumID) || input.URL != "" || input.SourceID != "" || input.Path != "" || (input.Profile != "" && input.Profile != "comic") {
 			return errors.New("漫画获取仅接受正整数漫画编号和漫画输出")
@@ -228,6 +236,9 @@ func (s *Service) previewHTTP(w http.ResponseWriter, r *http.Request) {
 // preview 根据固定来源类型探测元数据，不自动获取远程文件。
 func (s *Service) preview(ctx context.Context, input contract.PreviewRequest) (contract.Preview, error) {
 	result := contract.Preview{Files: []contract.File{}, Formats: []contract.Format{}}
+	if input.Kind == "uav" {
+		return s.previewUAV(ctx, input)
+	}
 	if input.Kind == "jmcomic" {
 		return s.previewJMComic(ctx, input)
 	}
@@ -422,6 +433,10 @@ func (s *Service) acquire(ctx context.Context, saved savedOperation) (files []co
 		}
 	}()
 	switch input.Kind {
+	case "uav":
+		if err := s.fetchUAV(ctx, input, target, saved.Preview.Identity); err != nil {
+			return nil, err
+		}
 	case "jmcomic":
 		current, err := s.previewJMComic(ctx, requestPreview(input))
 		if err != nil {

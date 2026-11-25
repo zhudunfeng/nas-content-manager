@@ -19,7 +19,7 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits<{ close: []; saved: [source: CollectionSource] }>()
 const kind = ref<CollectionKind>(props.source?.kind || props.initialKind || 'rss')
-const name = ref<string>(props.source?.name || (props.initialKind === 'jmcomic' ? 'JMComic 漫画' : ''))
+const name = ref<string>(props.source?.name || (props.initialKind === 'jmcomic' ? 'JMComic 漫画' : props.initialKind === 'uav' ? 'UAV 视频插件' : ''))
 const enabled = ref<boolean>(props.source?.enabled ?? true)
 const url = ref<string>('')
 const rootId = ref<string>(props.source?.rootId || '')
@@ -68,6 +68,7 @@ function changeKind(): void {
   externalMode.value = 'connect'
   if (kind.value === 'external' && !name.value.trim()) name.value = serviceNames[externalService.value]
   if (kind.value === 'jmcomic' && !name.value.trim()) name.value = 'JMComic 漫画'
+  if (kind.value === 'uav' && !name.value.trim()) name.value = 'UAV 视频插件'
 }
 /** 本地模式改变时重新选择真实配置的目录。 */
 function changeMode(): void { rootId.value = '' }
@@ -128,11 +129,11 @@ async function save(): Promise<void> {
   saving.value = true
   error.value = ''
   const input: CollectionSourceInput = { kind: kind.value, name: name.value.trim(), enabled: enabled.value, rootId: rootId.value, path: path.value.trim(), allowPrivate: allowPrivate.value, refreshMinutes: refreshMinutes.value, outputProfile: outputProfile.value, externalUrl: externalUrl.value.trim(), externalService: kind.value === 'external' ? externalService.value : '' }
-  // 固定漫画来源不继承其他类型表单中已隐藏的目录、链接或私网授权。
-  if (kind.value === 'jmcomic') Object.assign(input, { rootId: '', path: '', allowPrivate: false, outputProfile: '', externalUrl: '' })
+  // 固定插件来源不继承其他类型表单中已隐藏的目录、链接或私网授权。
+  if (kind.value === 'jmcomic' || kind.value === 'uav') Object.assign(input, { rootId: '', path: '', allowPrivate: false, outputProfile: '', externalUrl: '' })
   if (usesAPI.value && (baseUrl.value.trim() || apiKey.value.trim()) && !clearConnection.value) input.connection = { baseUrl: baseUrl.value.trim(), apiKey: apiKey.value.trim() }
   if (kind.value === 'external' && props.source?.apiConfigured && (clearConnection.value || !externalService.value)) input.clearConnection = true
-  if (url.value.trim()) input.url = url.value.trim()
+  if (kind.value === 'rss' && url.value.trim()) input.url = url.value.trim()
   if (props.source) input.revision = props.source.revision
   try {
     const result = await api<{ source: CollectionSource }>(`/collection/sources${props.source ? `/${encodeURIComponent(props.source.id)}` : ''}`, props.source ? 'PATCH' : 'POST', input, controller.signal)
@@ -177,6 +178,7 @@ onBeforeUnmount((): void => { controller.abort(); url.value = ''; baseUrl.value 
       </template>
       <p v-if="kind === 'web'" class="section-note">网页来源使用固定获取工具。具体链接在“网页与文件”中逐条预览；首期不递归播放列表、不上传 Cookie。</p>
       <p v-if="kind === 'jmcomic'" class="section-note">使用 JMComic-Crawler-Python 固定插件搜索与下载漫画。保存后可按关键词或编号预览，再确认导入漫画库；不需要填写站点地址或账号。插件依赖和网络能力由独立获取执行端检测。</p>
+      <p v-if="kind === 'uav'" class="section-note">使用 UAV-Downloader 固定插件搜索 Jable、MissAV、Hanime1 或 Huangguo（黄果），选择视频预览后确认下载并导入视频库；无需填写站点地址或账号。插件依赖由独立获取执行端检测，站点连通性在搜索时验证。</p>
       <label v-if="kind === 'web'">默认输出<select v-model="outputProfile" :disabled="saving"><option value="video">保存视频</option><option value="audio">提取音频</option></select><span class="field-hint">每次预览时仍可明确选择输出类型。</span></label>
       <label v-if="kind === 'local'">导入方式<select v-model="localMode" :disabled="saving" @change="changeMode"><option value="register">只读登记已有文件（默认）</option><option value="copy">归档副本至受管目录</option></select><span class="field-hint">只读登记直接扫描原目录；归档复制需要执行端的预配置本地目录。</span></label>
       <template v-if="usesDirectory && kind !== 'external'">
