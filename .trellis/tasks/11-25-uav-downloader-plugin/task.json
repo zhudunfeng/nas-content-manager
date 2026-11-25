@@ -2,7 +2,7 @@
   "id": "uav-downloader-plugin",
   "name": "uav-downloader-plugin",
   "title": "集成 UAV-Downloader 视频搜索下载插件",
-  "description": "固定适配Jable、MissAV、Hanime1、Huangguo四站搜索、单视频/单集解析、作用域受控下载及原收集发布入库。",
+  "description": "固定适配Jable、MissAV、Hanime1、Huangguo和SupJav五站搜索、单视频/单集解析、作用域受控下载及原收集发布入库。",
   "status": "review",
   "dev_type": "fullstack",
   "scope": null,
@@ -20,7 +20,7 @@
   "subtasks": [],
   "children": [],
   "parent": null,
-  "relatedFiles": ["docs/uav.md", "docs/verification.md", ".trellis/spec/backend/uav-contract.md"],
-  "notes": "四站含黄果单集集成完成；独立质量门、最终构建与离线集成/浏览器回归通过，待用户审阅提交。真实公网、Docker和物理NAS未验收。",
+  "relatedFiles": ["docs/uav.md", "docs/verification.md", ".trellis/spec/backend/uav-contract.md", ".trellis/tasks/11-25-uav-downloader-plugin/research/supjav-mainline-verification.md"],
+  "notes": "2026-11-25 SupJav 增量本地完成：五站协议102项、浏览器47项、JMComic66项及核心/收集/发布基线通过，独立44个真实下载器场景通过；公网、Docker与目标NAS待验，未提交部署或归档。",
   "meta": {"verification": "local_complete_target_pending"}
 }

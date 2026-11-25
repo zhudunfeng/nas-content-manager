@@ -21,7 +21,7 @@
 - 可选搜种：接入已有 Prowlarr／Jackett，聚合关键词搜索、来源／类别筛选、排序与分页，选择结果后进入原安全下载流程。
 - 多来源资源收集：RSS候选与订阅、网页视频/提取音频、本地只读登记、归档复制和预配置远程目录复制；获取与实际入库分别展示。配置方式见[资源收集](docs/collection.md)。
 - 可选 JMComic 漫画插件：关键词分页搜索、编号预览下载，复用资源收集任务与漫画库阅读；部署和使用见[漫画搜索下载](docs/jmcomic.md)。
-- 可选 UAV 视频插件：搜索 Jable、MissAV、Hanime1、Huangguo（黄果），预览选定视频并下载到视频库；复用原任务、发布和播放器，部署见[视频搜索下载](docs/uav.md)。
+- 可选 UAV 视频插件：搜索 Jable、MissAV、Hanime1、Huangguo（黄果）、SupJav，预览选定视频并下载到视频库；复用原任务、发布和播放器，部署见[视频搜索下载](docs/uav.md)。
 - 外部自动化整合：三步连接 MoviePilot、AutoBangumi、Sonarr/Radarr，按服务能力管理订阅与任务；MoviePilot 3.2.8 提供搜索、订阅、下载控制、复制整理、刮削和媒体库索引刷新，完成目录另行预览导入。
 - 平台部署资源组件：Linux NAS 托管模式与 Windows Docker 完整模式可从来源弹窗部署上述四个组件，展示镜像层进度并恢复任务；完成首次配置后接入原 API 管理。启用与目录说明见[组件部署](docs/components.md)。
 

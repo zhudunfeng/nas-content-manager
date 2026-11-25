@@ -69,6 +69,7 @@ class BrowserCheck:
         if self.page.locator('html').get_attribute('data-theme') != theme:
             self.page.get_by_role('button', name='切换到浅色主题' if theme == 'light' else '切换到深色主题').click()
         self.open_search()
+        self.page.get_by_label('视频站点', exact=False).select_option('supjav')
         self.search('fixture')
         metrics: dict[str, Any] = self.page.evaluate('''() => {
           const dialog = document.querySelector('dialog[open]');
@@ -108,7 +109,7 @@ class BrowserCheck:
         self.page.get_by_label('视频站点', exact=False).select_option('hanime1')
         expect(self.page.get_by_label('视频下载预览')).to_have_count(0)
         self.check(self.page.get_by_role('button', name='确认下载并入库').count() == 0, '切换站点清除原视频预览和确认入口')
-        for site in ('missav', 'hanime1'):
+        for site in ('missav', 'hanime1', 'supjav'):
             self.page.get_by_label('视频站点', exact=False).select_option(site)
             self.search('fixture')
             self.check(self.page.locator('.uav-results article').count() == 2, site + '通过实际界面选择与后端搜索展示结果')
@@ -116,6 +117,20 @@ class BrowserCheck:
         self.search('fixture')
         self.check(self.page.locator('.uav-results article').count() == 2 and self.page.get_by_text('huangguo-42-ep-1', exact=False).count() > 0, '黄果选项返回规范单集结果')
         self.page.screenshot(path=str(self.output / 'uav-huangguo.png'), full_page=True)
+        self.import_and_play('黄果', 'uav-player.png')
+        self.open_search()
+        self.page.get_by_label('视频站点', exact=False).select_option('supjav')
+        self.search('fixture')
+        self.check(self.page.get_by_text('编号 1101', exact=False).count() > 0, 'SupJav真实界面使用规范视频编号')
+        self.page.get_by_role('button', name='下一页', exact=True).click()
+        expect(self.page.get_by_text('后续页样例视频', exact=True)).to_be_visible()
+        self.check(self.page.get_by_role('button', name='下一页', exact=True).is_disabled(), 'SupJav后续页按服务端结果禁用下一页')
+        self.search('fixture')
+        self.page.screenshot(path=str(self.output / 'uav-supjav.png'), full_page=True)
+        self.import_and_play('SupJav', 'uav-supjav-player.png')
+
+    def import_and_play(self, label: str, screenshot: str) -> None:
+        """将当前结果经真实任务导入并验证原播放器，适用于各视频站点。"""
         self.page.get_by_role('button', name='选择并预览').first.click()
         expect(self.page.get_by_text('视频插件固定导入视频库，入库后使用现有播放器。')).to_be_visible()
         self.page.get_by_role('button', name='确认下载并入库', exact=True).click()
@@ -125,8 +140,8 @@ class BrowserCheck:
         self.page.get_by_role('button', name='开始播放', exact=True).click()
         expect(self.page.locator('.video-stage video')).to_be_visible()
         self.page.wait_for_function('''() => { const media = document.querySelector('.video-stage video'); return media && media.readyState >= 2 && Number.isFinite(media.duration) && media.duration > 0 && media.videoWidth > 0 }''')
-        self.check(self.page.locator('.video-stage video').evaluate('(media) => media.duration >= 1.9 && media.videoWidth === 160'), '黄果样例通过真实任务入库后在原播放器加载时长和视频画面')
-        self.page.screenshot(path=str(self.output / 'uav-player.png'), full_page=True)
+        self.check(self.page.locator('.video-stage video').evaluate('(media) => media.duration >= 1.9 && media.videoWidth === 160'), label + '样例通过真实任务入库后在原播放器加载时长和视频画面')
+        self.page.screenshot(path=str(self.output / screenshot), full_page=True)
         self.page.keyboard.press('Escape')
         self.page.wait_for_timeout(1200)
         self.page.goto(self.page.url.split('#', 1)[0] + '#collection')
@@ -236,7 +251,7 @@ def main() -> None:
             finally:
                 browser.close()
     finally:
-        report: dict[str, Any] = {'passed': passed, 'checks': check.assertions if check else [], 'pageErrors': errors, 'sites': ['jable', 'missav', 'hanime1', 'huangguo'], 'realApplication': True, 'realWorker': True, 'realFFmpeg': True, 'upstreamProtocolFixture': True, 'controlledUIResponses': True, 'pythonBridgeExecuted': False, 'realYtdlpExecuted': False, 'realSiteSearch': False, 'realSiteDownload': False}
+        report: dict[str, Any] = {'passed': passed, 'checks': check.assertions if check else [], 'pageErrors': errors, 'sites': ['jable', 'missav', 'hanime1', 'huangguo', 'supjav'], 'realApplication': True, 'realWorker': True, 'realFFmpeg': True, 'upstreamProtocolFixture': True, 'controlledUIResponses': True, 'pythonBridgeExecuted': False, 'realYtdlpExecuted': False, 'realSiteSearch': False, 'realSiteDownload': False}
         (output / 'result.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
         print(json.dumps({'passed': passed, 'assertions': len(report['checks']), 'evidence': str(output)}, ensure_ascii=False), flush=True)
 

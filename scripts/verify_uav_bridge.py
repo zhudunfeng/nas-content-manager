@@ -1,6 +1,8 @@
 """真实锁定UAV解析器与原生HLS离线验证；站点传输被固定样例替代。"""
 from __future__ import annotations
 
+import base64
+import codecs
 import http.server
 import importlib.metadata
 import io
@@ -43,12 +45,34 @@ def transport(session: Any, method: str, url: str, **kwargs: Any) -> Any:
     assert kwargs["allow_redirects"] is False
     CALLS.append({"url": url, "method": method.upper(), "headers": dict(kwargs.get("headers", {}))})
     parsed = urlsplit(url)
-    site = "jable" if parsed.hostname in {"jable.tv", "fs1.app"} else "missav" if str(parsed.hostname).startswith("missav") else "huangguo" if parsed.hostname == "huangguoai.com" else "hanime1"
+    site = "jable" if parsed.hostname in {"jable.tv", "fs1.app"} else "missav" if str(parsed.hostname).startswith("missav") else "huangguo" if parsed.hostname == "huangguoai.com" else "supjav" if parsed.hostname == "supjav.com" else "hanime1"
     query = parse_qs(parsed.query)
-    search_page = "/search" in parsed.path
+    search_page = "/search" in parsed.path or site == "supjav" and "s" in query
     status: int = 200
     headers: dict[str, str] = {"Content-Type": "text/html; charset=utf-8"}
-    if parsed.path == "/redirect-fixture":
+    if parsed.hostname == "lk1.supremejav.com":
+        name = query["c"][0][::-1]
+        assert name in {"EVS", "FST", "VAS", "LUC", "VOE", "TV", "ST"}
+        url = f"https://{name.lower()}.example.com/e/{name}"
+        if name in {"EVS", "LUC"}:
+            body = "<script>eval(function(p,a,c,k,e,d){}('source=https://media.example.com/" + name.lower() + ".m3u8',36,0,''.split('|')))</script>"
+        elif name == "FST":
+            body = '<script>var links={"hls4":"https://media.example.com/fst.txt"}; player({sources:[{file:links.hls4,type:"hls"}]});</script>'
+        elif name == "VAS":
+            body = '<script>fetch("/api/stream")</script>'
+        elif name == "VOE":
+            data = base64.b64encode(json.dumps({"source": "https://media.example.com/voe.m3u8"}).encode()).decode()[::-1]
+            shifted = ''.join(chr(ord(char) + 3) for char in data)
+            encoded = codecs.encode(base64.b64encode(shifted.encode()).decode(), 'rot13')
+            body = '<script type="application/json">' + json.dumps([encoded]) + '</script>'
+        elif name == "TV":
+            body = 'var urlPlay="https://media.example.com/tv.m3u8";'
+        else:
+            body = "getElementById('robotlink').innerHTML = '//' + ('xxxmedia.example.com/get_video?id=fixture').substring(3);" if MODE != "supjav-all-failed" else "unavailable"
+    elif parsed.hostname == "vas.example.com" and parsed.path == "/api/stream":
+        assert method.upper() == "POST" and kwargs.get("json") == {"filecode": "VAS", "device": "web", "codecs": []}
+        body = json.dumps({"streaming_url": "https://media.example.com/vas.m3u8"})
+    elif parsed.path == "/redirect-fixture":
         body = "intermediate-body-must-not-mix"
         status, headers["Location"] = 302, "https://media.example.com/final-fixture"
     elif parsed.path == "/final-fixture":
@@ -70,6 +94,12 @@ def transport(session: Any, method: str, url: str, **kwargs: Any) -> Any:
             body = '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=100000\n' + variant + '\n'
         else:
             body = '#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nsegment.ts\n' + ('' if MODE == "live" else '#EXT-X-ENDLIST\n')
+            if MODE in {"supjav-direct", "supjav-all-failed"} or MODE == "supjav-fallback" and parsed.path == "/evs.m3u8":
+                body = "unsupported provider media"
+            elif MODE == "supjav-byterange":
+                body = body.replace('#EXTINF', '#EXT-X-BYTERANGE:188@0\n#EXTINF')
+            elif MODE == "supjav-aes":
+                body = body.replace('#EXTINF', '#EXT-X-KEY:METHOD=AES-128,URI="media.key",IV=0x1\n#EXTINF')
             if MODE == "gap":
                 body = body.replace('#EXTINF', '#EXT-X-GAP\n#EXTINF')
             elif MODE == "parts":
@@ -88,7 +118,16 @@ def transport(session: Any, method: str, url: str, **kwargs: Any) -> Any:
     elif search_page and MODE == "broken":
         body = '<html><body>unexpected upstream layout</body></html>'
     elif search_page and MODE == "empty":
-        body = '<main><section class="hg-list-page"></section></main>' if site == "huangguo" else '<main class="container grid"><div id="list_videos_common_videos_list">No videos found</div></main>'
+        body = '<main><section class="hg-list-page"></section></main>' if site == "huangguo" else '<body class="search-no-results"><section class="no-results">Nothing found</section></body>' if site == "supjav" else '<main class="container grid"><div id="list_videos_common_videos_list">No videos found</div></main>'
+    elif search_page and site == "supjav":
+        assert parsed.path == "/page/2/" and query.get("s") == ["fixture"]
+        body = '<div class="post"><a href="https://supjav.com/zh/123.html" title="测试视频">测试视频</a></div><a href="/page/3/?s=fixture">next</a>'
+        if MODE == "supjav-wrong-page":
+            body = body.replace('/page/3/?s=fixture', '/page/3/?s=other')
+        elif MODE == "supjav-legacy-page":
+            body = body.replace('/page/3/?s=fixture', '?s=fixture&page=3')
+        elif MODE == "supjav-fragment-page":
+            body = body.replace('/page/3/?s=fixture', '/page/3/?s=fixture#other')
     elif search_page and site == "huangguo":
         assert parsed.path == "/search/video/fixture/2/"
         body = '<main><section class="hg-list-page"><div class="hg-card-grid"><div class="hg-drama-card"><a class="hg-drama-card__cover-link" href="/video/42/"></a><h3 class="hg-drama-card__title"><a>测试剧集</a></h3></div></div><a href="/search/video/fixture/3/">next</a></section></main>'
@@ -101,6 +140,11 @@ def transport(session: Any, method: str, url: str, **kwargs: Any) -> Any:
     elif search_page:
         assert query.get("page") == ["2"]
         body = '<div class="video-item-container"><a class="video-link" href="/watch?v=123"></a><div class="title">测试视频</div><div class="duration">01:02</div></div><a href="?query=fixture&page=3">next</a>'
+    elif site == "supjav":
+        names = [MODE.removeprefix("supjav-only-")] if MODE.startswith("supjav-only-") else ["EVS", "FST", "VAS", "LUC", "VOE", "TV", "ST"]
+        if MODE == "supjav-byterange":
+            names = ["EVS"]
+        body = '<h1>测试视频</h1>' + ''.join(f'<a class="btn-server" data-link="{name}">{name}</a>' for name in names)
     elif site == "huangguo":
         episode = int(re.search(r"/ep-([0-9]+)/", parsed.path)[1]) if "/ep-" in parsed.path else 1
         data = {"id": "42", "ep": episode, "title": "测试剧集", "videoSrc": "", "videoApi": "", "videoKey": "", "videoIv": ""}
@@ -121,7 +165,7 @@ def transport(session: Any, method: str, url: str, **kwargs: Any) -> Any:
         response = Response()
     else:
         response = requests.Response()
-    assert method.upper() == "GET" or parsed.path.startswith("/api/videos/")
+    assert method.upper() == "GET" or parsed.path.startswith("/api/videos/") or parsed.path == "/api/stream"
     response.status_code = status
     response.url = url
     response.encoding = "utf-8"
@@ -134,12 +178,12 @@ def transport(session: Any, method: str, url: str, **kwargs: Any) -> Any:
 
 
 def bridge_checks() -> dict[str, Any]:
-    """核验真实隔离探测、四站搜索/详情、明确空结果与坏页失败。"""
+    """核验真实隔离探测、五站搜索/详情、明确空结果与坏页失败。"""
     global MODE
     import requests
     from curl_cffi import requests as curl_requests
     from uav_downloader.core import config
-    from uav_downloader.sites import jabletv, missav, hanime1, huangguo
+    from uav_downloader.sites import jabletv, missav, hanime1, huangguo, supjav
 
     source = ROOT / "internal/collectionworker/uav_bridge.py"
     probe = subprocess.run([sys.executable, "-I", "-B", "-c", source.read_text(encoding="utf-8")], input=b'{"action":"probe"}', capture_output=True, cwd=BASE, timeout=20, check=True)
@@ -153,8 +197,8 @@ def bridge_checks() -> dict[str, Any]:
     curl_requests.Session.request = transport
     socket.socket.connect = deny_network
     socket.getaddrinfo = fixture_dns
-    modules = {"jable": jabletv, "missav": missav, "hanime1": hanime1, "huangguo": huangguo}
-    counts = {"search": 0, "resolve": 0, "empty": 0, "bad": 0, "transportRedirect": 0}
+    modules = {"jable": jabletv, "missav": missav, "hanime1": hanime1, "huangguo": huangguo, "supjav": supjav}
+    counts = {"search": 0, "resolve": 0, "empty": 0, "bad": 0, "transportRedirect": 0, "supjavProvider": 0, "supjavFallback": 0, "supjavPagination": 0, "supjavInput": 0}
     try:
         responses = namespace["install_transport"]("http://worker:fixture@127.0.0.1:12345", config)
         for site in modules:
@@ -165,7 +209,7 @@ def bridge_checks() -> dict[str, Any]:
             if site == "huangguo":
                 assert [item["videoId"] for item in result["items"]] == ["huangguo-42-ep-1", "huangguo-42-ep-3"]
             counts["search"] += 1
-            resolved = namespace["resolve"]({"site": site, "videoId": "huangguo-42-ep-3" if site == "huangguo" else "123" if site == "hanime1" else "test-123"}, modules)
+            resolved = namespace["resolve"]({"site": site, "videoId": "huangguo-42-ep-3" if site == "huangguo" else "123" if site in {"hanime1", "supjav"} else "test-123"}, modules)
             assert resolved["mediaUrl"].startswith("https://variant.example.com/" if site == "huangguo" else "https://media.example.com/")
             assert bool(resolved["manifest"]) == (site != "hanime1")
             if site == "huangguo":
@@ -184,6 +228,61 @@ def bridge_checks() -> dict[str, Any]:
             try:
                 namespace["search"]({"site": site, "query": "fixture", "page": 2}, modules, responses)
                 raise AssertionError("坏页被错误接受")
+            except (ValueError, RuntimeError):
+                counts["bad"] += 1
+        for index, provider in enumerate(("EVS", "FST", "VAS", "LUC", "VOE", "TV", "ST")):
+            MODE = "supjav-only-" + provider
+            resolved = namespace["resolve"]({"site": "supjav", "videoId": "123"}, modules)
+            assert resolved["sourceIndex"] == index and bool(resolved["manifest"]) == (provider != "ST")
+            assert resolved["headers"]["Referer"] == ("https://supjav.com/" if provider == "TV" else f"https://{provider.lower()}.example.com/e/{provider}")
+            if provider == "FST":
+                assert resolved["mediaUrl"].endswith("fst.txt")
+            counts["supjavProvider"] += 1
+        for MODE, expected in (("supjav-fallback", 1), ("supjav-direct", 6), ("supjav-aes", 0)):
+            resolved = namespace["resolve"]({"site": "supjav", "videoId": "123"}, modules)
+            assert resolved["sourceIndex"] == expected
+            if MODE == "supjav-aes":
+                assert "METHOD=AES-128" in resolved["manifest"]
+            counts["supjavFallback"] += 1
+        MODE = "normal"
+        for offset in range(7):
+            resolved = namespace["resolve"]({"site": "supjav", "videoId": "123", "sourceOffset": offset}, modules)
+            assert resolved["sourceIndex"] == offset
+            counts["supjavFallback"] += 1
+        for MODE in ("supjav-all-failed", "supjav-byterange"):
+            try:
+                namespace["resolve"]({"site": "supjav", "videoId": "123"}, modules)
+                raise AssertionError("SupJav坏线路或字节范围被接受")
+            except ValueError:
+                counts["bad"] += 1
+        for MODE in ("supjav-wrong-page", "supjav-legacy-page", "supjav-fragment-page"):
+            result = namespace["search"]({"site": "supjav", "query": "fixture", "page": 2}, modules, responses)
+            assert not result["hasNext"]
+            counts["supjavPagination"] += 1
+        for offset in (-1, 7, True, "1", None):
+            try:
+                namespace["resolve"]({"site": "supjav", "videoId": "123", "sourceOffset": offset}, modules)
+                raise AssertionError("SupJav异常线路偏移被接受")
+            except ValueError:
+                counts["supjavInput"] += 1
+        for site in ("jable", "missav", "hanime1", "huangguo"):
+            try:
+                namespace["resolve"]({"site": site, "videoId": "123", "sourceOffset": 0}, modules)
+                raise AssertionError("其它站点显式线路偏移被接受")
+            except ValueError:
+                counts["supjavInput"] += 1
+        for video_id in ("0", "01", "1234567890123", "-1", "123.html"):
+            assert not namespace["valid_id"]("supjav", video_id)
+            counts["supjavInput"] += 1
+        for video_id in ("1", "123456789012"):
+            assert namespace["valid_id"]("supjav", video_id)
+            assert namespace["canonical_url"]("supjav", video_id) == "https://supjav.com/" + video_id + ".html"
+            counts["supjavInput"] += 1
+        assert namespace["item_id"]("supjav", "https://supjav.com/ja/123.html") == "123"
+        for invalid_url in ("https://supjav.com/123.html?token=private", "https://supjav.com/category/123.html", "https://foreign.example.com/123.html"):
+            try:
+                namespace["item_id"]("supjav", invalid_url)
+                raise AssertionError("SupJav异常链接被接受")
             except ValueError:
                 counts["bad"] += 1
         for MODE in ("live", "gap", "parts", "drm", "keyformat", "skip", "server-control", "part-inf", "preload-hint", "rendition-report", "session-key", "content-steering", "external-audio", "unknown-tag", "http-segment"):

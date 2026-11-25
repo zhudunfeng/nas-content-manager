@@ -11,7 +11,7 @@ import (
 
 // UAVSearchRequest 仅接受固定站点、有界关键词和页码。
 type UAVSearchRequest struct {
-	Site  string `json:"site"`  // 固定 jable、missav、hanime1 或 huangguo。
+	Site  string `json:"site"`  // 固定 jable、missav、hanime1、huangguo 或 supjav。
 	Query string `json:"query"` // 1–120 个字符的搜索关键词。
 	Page  int    `json:"page"`  // 从1开始的结果页，最大1000。
 }
@@ -40,7 +40,7 @@ var uavHuangguoID = regexp.MustCompile(`^huangguo-([1-9][0-9]{0,18})-ep-([1-9][0
 
 // ValidUAVSite 只接受已明确审核的固定站点。
 func ValidUAVSite(site string) bool {
-	return site == "jable" || site == "missav" || site == "hanime1" || site == "huangguo"
+	return site == "jable" || site == "missav" || site == "hanime1" || site == "huangguo" || site == "supjav"
 }
 
 // ValidUAVVideoID 在主服务与执行端共用严格站点编号规则。
@@ -54,7 +54,7 @@ func ValidUAVVideoID(site string, id string) bool {
 		_, episodeErr := strconv.ParseUint(parts[2], 10, 31)
 		return seriesErr == nil && episodeErr == nil
 	}
-	if site == "hanime1" {
+	if site == "hanime1" || site == "supjav" {
 		return ValidJMComicAlbumID(id)
 	}
 	if !uavSlug.MatchString(id) {

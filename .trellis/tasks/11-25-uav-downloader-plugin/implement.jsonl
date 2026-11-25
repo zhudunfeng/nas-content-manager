@@ -4,4 +4,5 @@
 {"file": ".trellis/spec/backend/collection-contract.md", "reason": "复用持久收集发布与入库"}
 {"file": ".trellis/spec/backend/jmcomic-contract.md", "reason": "固定插件协议与旧操作摘要兼容"}
 {"file": ".trellis/spec/frontend/app-contract.md", "reason": "现有界面和单弹窗约定"}
-{"file": ".trellis/spec/backend/uav-contract.md", "reason": "固定四站与Huangguo单集、有限HLS中继契约"}
+{"file": ".trellis/spec/backend/uav-contract.md", "reason": "固定五站与Huangguo单集、有限HLS中继契约"}
+{"file": ".trellis/tasks/11-25-uav-downloader-plugin/research/supjav-upstream.md", "reason": "SupJav多线路、匹配请求头和解密后TS清理"}

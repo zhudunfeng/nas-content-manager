@@ -318,7 +318,7 @@ export interface EngineSourceSync {
 /** 收集来源的固定类型，不增加媒体分类。 */
 export type CollectionKind = 'rss' | 'web' | 'local' | 'remote' | 'external' | 'jmcomic' | 'uav'
 /** UAV 首版支持的固定视频站点。 */
-export type CollectionUAVSite = 'jable' | 'missav' | 'hanime1' | 'huangguo'
+export type CollectionUAVSite = 'jable' | 'missav' | 'hanime1' | 'huangguo' | 'supjav'
 /** UAV 只向浏览器公开选择所需的有界元数据。 */
 export interface CollectionUAVItem {
   /** 当前站点内的视频编号。 */ videoId: string

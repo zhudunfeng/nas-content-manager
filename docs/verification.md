@@ -541,3 +541,14 @@ S03.1按`local_complete_target_pending`记账，S03整体仍实施中。真实Li
 HLS 解码时长下界容差为 `max(0.5 秒, EXTINF 总时长的 2%)`，只能拒绝明显丢尾；直链 MP4 没有可信预期时长，传输/解码成功不能证明原片全长。真实公网搜索下载、Docker 镜像运行和物理 NAS 验收仍未执行。最终自有浏览器/服务已回收；未自动提交、部署或归档任务。
 
 最终主线回读 `.runtime/verify/uav-mainline-final-audit-20261125-1/result.json` 为 passed：结果计数、同批产物、独立复核源码与最终源码一致；临时测试、零长度改动文件和确切最终产物活进程均为空。任务保留为 review，等待用户审阅提交。
+
+## 2026-11-25 SupJav 第五站增量
+
+在已提交四站的基础上接入 SupJav，支持关键词分页搜索、规范数字编号、元数据预览、持久下载任务、视频库扫描及原播放器。自动按 EVS/FST/VAS/LUC/VOE/TV/ST 尝试线路；传输或内容错误可清理暂存后换源，取消、存储/预算、异常暂存和进程回收错误会终止。上游、依赖和 schema 6 保持原固定版本。
+
+- 同批最终产物位于 `.runtime/bin/supjav-20261125-1/`，通过五站协议集成 **102 项**、浏览器 **47 项**、JMComic **66 项**；核心媒体 **44 项**、资源收集 **27 项**、发布边界自检 **83 项**通过。对应证据为 `.runtime/verify/supjav-{protocol,browser,jmcomic,baseline}-20261125-1/`。浏览器覆盖四种宽度和明暗主题，黄果及 SupJav 样例实际入库并由原播放器打开；主线已查看手机、SupJav 搜索和播放器截图。桥接/下载器协议替身与真实站点证据分开记账。
+- 固定真实 UAV 包离线检查：五站 search/resolve/empty 各 **5**，bad **30**、重定向 **2**；SupJav 七种 provider、**10** 个 fallback、**3** 个分页反例及 **16** 个私有输入/编号边界通过，证据 `.runtime/verify/supjav-implementation-20261125-1/bridge.log`。
+- 独立复核 **18 个顶层测试、68 个子场景**通过，其中 **44 个真实下载器场景**分为 SupJav **22** 和原 relay **22**。真实生产获取链路覆盖普通/PNG 包装 TS、AES 显式/默认 IV、轮换密钥、损坏尾包、短传输、缺片及原 Range/CDN 范围；修复并复测 TS 适配字段长度的三个结构反例。日志、非编译源码文本与摘要见 `.runtime/verify/supjav-quality-20261125-1/`。进程回收失败传播仅静态追踪，未做实际故障注入。
+- 前端严格类型检查与生产构建、清理单元测试后的全仓 Go vet/编译及 6 个 Windows/Linux amd64/arm64 主服务/worker 构建均通过；Linux 仅交叉编译。工程门禁分别为 `.runtime/verify/supjav-{frontend,build}-20261125-1/`，最终格式、AST、Trellis 上下文、源码/产物摘要和进程清理审计见 `.runtime/verify/supjav-final-audit-20261125-1/`。新增临时单元测试源码已删除，保留可复验文本。
+
+固定下载器不逐字节验证 AES 的 PKCS#7 填充；若改变填充后仍得到相同 TS 明文，后续结构与解码校验无法识别。仍未执行真实公网站点/CDN 搜索下载、Docker、Linux 运行或物理 NAS 验收。完整本轮报告为 `.trellis/tasks/11-25-uav-downloader-plugin/research/supjav-mainline-verification.md`，任务保留 review；未自动提交、部署或归档。

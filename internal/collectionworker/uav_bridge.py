@@ -32,7 +32,7 @@ def clean_text(value: Any, limit: int = 300) -> str:
 
 def valid_id(site: str, value: str) -> bool:
     """与Go共享严格编号约束，拒绝路径、语言前缀和栏目编号。"""
-    if site == "hanime1":
+    if site in {"hanime1", "supjav"}:
         return re.fullmatch(r"[1-9][0-9]{0,11}", value) is not None
     if site == "huangguo":
         match = re.fullmatch(r"huangguo-([1-9][0-9]{0,18})-ep-([1-9][0-9]{0,9})", value)
@@ -59,16 +59,19 @@ def canonical_url(site: str, video_id: str) -> str:
     if site == "huangguo":
         match = re.fullmatch(r"huangguo-([0-9]+)-ep-([0-9]+)", video_id)
         return f"https://huangguoai.com/video/{match[1]}/" + (f"ep-{match[2]}/" if match[2] != "1" else "")
-    return {"jable": f"https://jable.tv/videos/{video_id}/", "missav": f"https://missav.ai/{video_id}", "hanime1": f"https://hanime1.me/watch?v={video_id}"}[site]
+    return {"jable": f"https://jable.tv/videos/{video_id}/", "missav": f"https://missav.ai/{video_id}", "hanime1": f"https://hanime1.me/watch?v={video_id}", "supjav": f"https://supjav.com/{video_id}.html"}[site]
 
 
 def item_id(site: str, value: str) -> str:
     """校验上游搜索链接域名并只提取规范编号，不向浏览器返回链接。"""
     parsed = urlsplit(value)
-    hosts = {"jable": {"jable.tv", "fs1.app"}, "missav": {"missav.ai", "missav.ws", "missav.live", "missav123.com"}, "hanime1": {"hanime1.me", "www.hanime1.me"}, "huangguo": {"huangguoai.com", "www.huangguoai.com"}}
+    hosts = {"jable": {"jable.tv", "fs1.app"}, "missav": {"missav.ai", "missav.ws", "missav.live", "missav123.com"}, "hanime1": {"hanime1.me", "www.hanime1.me"}, "huangguo": {"huangguoai.com", "www.huangguoai.com"}, "supjav": {"supjav.com"}}
     if parsed.scheme != "https" or parsed.hostname not in hosts[site] or parsed.username or parsed.password or parsed.port not in {None, 443} or parsed.fragment:
         raise ValueError("搜索链接来源异常")
-    if site == "huangguo":
+    if site == "supjav":
+        match = re.fullmatch(r"/(?:(?:zh|ja)/)?([1-9][0-9]{0,11})\.html", parsed.path)
+        video_id = match[1] if match and not parsed.query else ""
+    elif site == "huangguo":
         from uav_downloader.core.video_identity import huangguo_video_code
         video_id = huangguo_video_code(value)
     elif site == "hanime1":
@@ -173,6 +176,8 @@ def empty_page(response: Any, site: str) -> bool:
         # 黄果上游以空hg-list-page表达真实空页，不要求额外空文案。
         container = soup.select_one("main .hg-list-page")
         return container is not None and not container.select(".hg-drama-card")
+    if site == "supjav":
+        return bool(soup.select_one("body.search-no-results, section.no-results")) and not soup.select('div.post a[href*=".html"]')
     selectors = {"jable": "[id^=list_videos]", "missav": "main, .grid, [class*=grid]", "hanime1": "#content, #search-result, .search-result, .container", "huangguo": "main, .container, [data-search], .search-results"}
     return bool(soup.select_one(selectors[site])) and any(marker in soup.get_text(" ", strip=True).casefold() for marker in EMPTY_MARKERS)
 
@@ -202,6 +207,9 @@ def search(input_data: dict[str, Any], modules: dict[str, Any], responses: list[
         url = browser.page_url(f"https://missav.ai/search/{quote(query, safe='')}", page)
     elif site == "hanime1":
         browser = module.Hanime1Browser
+        url = browser.page_url(browser.search_url(query), page)
+    elif site == "supjav":
+        browser = module.SupJavBrowser
         url = browser.page_url(browser.search_url(query), page)
     else:
         browser = module.HuangguoBrowser
@@ -249,14 +257,16 @@ def search(input_data: dict[str, Any], modules: dict[str, Any], responses: list[
         params = parse_qs(candidate.query)
         next_value = params.get("from" if site == "jable" else "page", [""])[0]
         # 只承认同一搜索路径中下一页的真实链接，不能由条数猜测。
-        if candidate.hostname == urlsplit(str(response.url)).hostname and candidate.path == urlsplit(url).path and next_value == str(page + 1):
+        if site != "supjav" and candidate.hostname == urlsplit(str(response.url)).hostname and candidate.path == urlsplit(url).path and next_value == str(page + 1):
             has_next = True
         if site == "huangguo" and candidate.hostname == "huangguoai.com" and candidate.path == urlsplit(browser.page_url(browser.search_url(query), page + 1)).path:
+            has_next = True
+        if site == "supjav" and candidate.scheme == "https" and candidate.hostname == "supjav.com" and candidate.path == urlsplit(browser.page_url(browser.search_url(query), page + 1)).path and params.get("s") == [query] and not candidate.fragment and not candidate.username and not candidate.password and candidate.port in {None, 443}:
             has_next = True
     return {"site": site, "query": query, "page": page, "hasNext": has_next and page < 1000, "items": result}
 
 
-def resolve_manifest(url: str, headers: dict[str, str], media_get: Any = None) -> tuple[str, str]:
+def resolve_manifest(url: str, headers: dict[str, str], media_get: Any = None, ts_only: bool = False) -> tuple[str, str]:
     """选择最多三层HLS最高质量变体，拒绝直播、外部音轨和不完整清单。"""
     import requests
     import m3u8
@@ -302,6 +312,8 @@ def resolve_manifest(url: str, headers: dict[str, str], media_get: Any = None) -
                     raise ValueError("HLS仅支持HTTPS清单与资源")
             if media_get is not None and (segment.init_section or urlsplit(segment.absolute_uri).path.lower().endswith((".m4s", ".mp4"))):
                 raise ValueError("黄果仅支持普通MPEG-TS有限HLS")
+            if ts_only and (segment.init_section or segment.byterange or urlsplit(segment.absolute_uri).path.lower().endswith((".m4s", ".mp4"))):
+                raise ValueError("SupJav仅支持无字节范围的普通MPEG-TS有限HLS")
         # 只返回解析器规范化清单，使每个标准URI都可被父进程登记和重写。
         normalized = playlist.dumps()
         if len(normalized.encode("utf-8")) > MAX_MANIFEST:
@@ -310,15 +322,46 @@ def resolve_manifest(url: str, headers: dict[str, str], media_get: Any = None) -
     raise ValueError("HLS嵌套层级超限")
 
 
+def resolve_supjav(crawler: Any, video_id: str, source_offset: int = 0) -> dict[str, Any]:
+    """优先逐条核验固定HLS线路，最后独立使用ST直链及其实际来源头。"""
+    deadline = time.monotonic() + 22
+    sources = list(getattr(crawler, "_hls_sources", []) or [])
+    if len(sources) > 6:
+        raise ValueError("SupJav播放线路超过允许范围")
+    slots = {"EVS": 0, "FST": 1, "VAS": 2, "LUC": 3, "VOE": 4, "TV": 5}
+    for name, raw_url, raw_headers in sources:
+        if name not in {"EVS", "FST", "VAS", "LUC", "VOE", "TV"} or time.monotonic() >= deadline:
+            raise ValueError("SupJav播放线路或解析时限无效")
+        if slots[name] < source_offset:
+            continue
+        try:
+            headers = {key: http_url(str(value)) for key, value in dict(raw_headers).items() if key in {"Referer", "Origin"}}
+            headers.setdefault("Referer", "https://supjav.com/")
+            media_url, manifest = resolve_manifest(http_url(str(raw_url)), headers, ts_only=True)
+            return {"site": "supjav", "videoId": video_id, "title": clean_text(crawler.target_name()), "mediaUrl": media_url, "headers": headers, "manifest": manifest, "sourceIndex": slots[name]}
+        except Exception:
+            # 某条线路失效或媒体格式不受支持时继续固定候选，异常正文不能进入协议。
+            continue
+    direct = getattr(crawler, "_direct_url", None)
+    if direct and time.monotonic() < deadline:
+        return {"site": "supjav", "videoId": video_id, "title": clean_text(crawler.target_name()), "mediaUrl": http_url(str(direct)), "headers": {"Referer": http_url(str(getattr(crawler, "_direct_referer", None) or "https://supjav.com/"))}, "manifest": "", "sourceIndex": 6}
+    raise ValueError("SupJav目前没有可用的受支持播放线路")
+
+
 def resolve(input_data: dict[str, Any], modules: dict[str, Any]) -> dict[str, Any]:
     """只实例化固定详情解析器，拒绝上游吞掉的解析失败或权限不足。"""
     site = str(input_data.get("site", ""))
     video_id = str(input_data.get("videoId", ""))
+    source_offset = input_data.get("sourceOffset", 0)
+    if not isinstance(source_offset, int) or isinstance(source_offset, bool) or not 0 <= source_offset <= 6 or site != "supjav" and "sourceOffset" in input_data:
+        raise ValueError("播放线路偏移无效")
     url = canonical_url(site, video_id)
-    classes = {"jable": modules["jable"].SiteJableTV, "missav": modules["missav"].SiteMissAV, "hanime1": modules["hanime1"].SiteHanime1, "huangguo": modules["huangguo"].SiteHuangguo}
+    classes = {"jable": modules["jable"].SiteJableTV, "missav": modules["missav"].SiteMissAV, "hanime1": modules["hanime1"].SiteHanime1, "huangguo": modules["huangguo"].SiteHuangguo, "supjav": modules["supjav"].SiteSupJav}
     crawler = classes[site](url, savepath=os.getcwd(), silence=True, max_workers=1, resolution="highest")
     if getattr(crawler, "_last_error", None) or not crawler.is_url_vaildate():
         raise ValueError("视频不可用或解析失败")
+    if site == "supjav":
+        return resolve_supjav(crawler, video_id, source_offset)
     direct_url = getattr(crawler, "_direct_url", None)
     media_url = http_url(str(direct_url or getattr(crawler, "_m3u8url", "")))
     headers = {key: http_url(str(value)) for key, value in dict(getattr(crawler, "_extra_headers", {}) or {}).items() if key in {"Referer", "Origin"}}
@@ -340,7 +383,7 @@ def main() -> None:
     if len(raw) > 8192:
         raise ValueError("请求过大")
     input_data = json.loads(raw)
-    if not isinstance(input_data, dict) or set(input_data) - {"action", "site", "query", "page", "videoId", "proxy"}:
+    if not isinstance(input_data, dict) or set(input_data) - {"action", "site", "query", "page", "videoId", "proxy", "sourceOffset"} or "sourceOffset" in input_data and input_data.get("action") != "resolve":
         raise ValueError("请求格式无效")
     if sys.version_info < (3, 12) or importlib.metadata.version("uav-downloader") != VERSION:
         raise ValueError("固定依赖版本不符")
@@ -350,8 +393,8 @@ def main() -> None:
     # 将上游的打印直接丢弃，防止带签名链接、异常正文或凭据进入父进程输出。
     with open(os.devnull, "w", encoding="utf-8") as sink, contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink):
         from uav_downloader.core import config
-        from uav_downloader.sites import jabletv, missav, hanime1, huangguo
-        modules = {"jable": jabletv, "missav": missav, "hanime1": hanime1, "huangguo": huangguo}
+        from uav_downloader.sites import jabletv, missav, hanime1, huangguo, supjav
+        modules = {"jable": jabletv, "missav": missav, "hanime1": hanime1, "huangguo": huangguo, "supjav": supjav}
         if input_data.get("action") == "probe":
             import requests, m3u8, cloudscraper, curl_cffi
             from Crypto.Cipher import AES

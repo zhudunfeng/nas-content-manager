@@ -44,6 +44,7 @@ type request struct {
     Query string `json:"query"` // 已验证关键词。
     Page int `json:"page"` // 已验证页码。
     VideoID string `json:"videoId"` // 规范视频编号。
+    SourceOffset int `json:"sourceOffset"` // 仅私有SupJav解析使用的线路起点。
     ID string `json:"id"` // 固定下载意图携带的规范视频编号。
     URL string `json:"url"` // 仅下载器协议的私有媒体地址。
 }
@@ -77,6 +78,14 @@ func main() {
         id := input.ID
         if id == "" { id = strings.TrimSuffix(path.Base(media.Path),".mp4") }
         record(directory,"download",id)
+        if id == "1105" { os.Exit(4) }
+        if id == "1104" {
+            flag := filepath.Join(directory,"supjav-first-download-failed")
+            if _, err := os.Stat(flag); os.IsNotExist(err) {
+                if os.WriteFile(flag,[]byte("controlled failure"),0600) != nil { os.Exit(5) }
+                os.Exit(4)
+            }
+        }
         if id == "1008" { if _, err := os.Stat(filepath.Join(directory,"fail-download")); err == nil { os.Exit(4) } }
         if id == "1009" { time.Sleep(45*time.Second) }
         outputPath = strings.ReplaceAll(outputPath,"%(ext)s","mp4")
@@ -106,6 +115,7 @@ func main() {
             items = append(items,map[string]any{"videoId":"1002","title":"第二部样例视频","duration":""})
         } else if input.Query != "empty" && input.Page == 2 { items = append(items,map[string]any{"videoId":"1003","title":"后续页样例视频","duration":"00:02"}) }
         if input.Site == "huangguo" { for _, item := range items { item["videoId"] = "huangguo-42-ep-" + map[string]string{"1001":"1","1002":"2","1003":"3"}[item["videoId"].(string)] } }
+        if input.Site == "supjav" { for _, item := range items { item["videoId"] = map[string]string{"1001":"1101","1002":"1102","1003":"1103"}[item["videoId"].(string)] } }
         output = map[string]any{"site":input.Site,"query":input.Query,"page":input.Page,"hasNext":input.Query!="empty"&&input.Page==1,"items":items}
     case "resolve":
         if os.Getenv("HTTPS_PROXY") == "" { os.Exit(3) }
@@ -115,6 +125,15 @@ func main() {
         if input.Site == "huangguo" {
             output.(map[string]any)["mediaUrl"] = "https://example.com/uav/fixture.m3u8"
             output.(map[string]any)["manifest"] = "#EXTM3U\n#EXT-X-TARGETDURATION:2\n#EXT-X-MEDIA-SEQUENCE:0\n#EXTINF:2,\nhttps://example.com/uav/segment.ts\n#EXT-X-ENDLIST\n"
+        }
+        if input.Site == "supjav" {
+            if input.SourceOffset < 0 || input.SourceOffset > 6 { os.Exit(2) }
+            output.(map[string]any)["sourceIndex"] = 6
+            if (input.VideoID == "1104" || input.VideoID == "1105") && input.SourceOffset == 0 {
+                output.(map[string]any)["sourceIndex"] = 0
+                output.(map[string]any)["mediaUrl"] = "https://example.com/uav/fixture.m3u8"
+                output.(map[string]any)["manifest"] = "#EXTM3U\n#EXT-X-TARGETDURATION:2\n#EXT-X-MEDIA-SEQUENCE:0\n#EXTINF:2,\nhttps://example.com/uav/segment.ts\n#EXT-X-ENDLIST\n"
+            }
         }
     default:
         os.Exit(2)
@@ -201,7 +220,7 @@ class UAVHarness(CollectionHarness):
         client.check(Client(self.base).request(f'/api/items/{item_id}/file')[0] == 401, '已发布视频继续要求会话鉴权')
 
     def run_uav(self) -> None:
-        """覆盖四站搜索、黄果单集、严格参数、持久任务、恢复和旧类型兼容。"""
+        """覆盖五站搜索、黄果单集、SupJav导入、严格参数和持久任务恢复。"""
         source = self.initialize()
         client = self.client
         endpoint = '/api/collection/sources/' + source['id'] + '/uav/search'
@@ -213,13 +232,18 @@ class UAVHarness(CollectionHarness):
         capability = next(item for item in caps['capabilities'] if item['kind'] == 'uav')
         client.check(caps['workerReady'] and capability['available'] and capability['version'] == '3.8.4', '真实worker确认固定桥接版本、下载依赖与共享根')
         client.check(client.json('/api/collection/sources/' + source['id'] + '/test', 'POST', {})['ok'], 'UAV来源测试复用真实插件能力探测')
-        for site in ('jable', 'missav', 'hanime1', 'huangguo'):
+        for site in ('jable', 'missav', 'hanime1', 'huangguo', 'supjav'):
             first = client.json(endpoint, 'POST', dict(search, site=site))
             client.check(first['site'] == site and first['page'] == 1 and first['hasNext'] and len(first['items']) == 2 and 'total' not in first, site + '搜索只返回当前页和下一页提示，不编造总数')
             if site == 'huangguo':
                 client.check([item['videoId'] for item in first['items']] == ['huangguo-42-ep-1', 'huangguo-42-ep-2'], '黄果搜索以作品和集号组成的规范单集编号选择')
                 later = client.json(endpoint, 'POST', dict(search, site=site, page=2))
                 client.check(not later['hasNext'] and later['items'][0]['videoId'] == 'huangguo-42-ep-3', '黄果后续页保留实际单集编号与分页语义')
+            if site == 'supjav':
+                later = client.json(endpoint, 'POST', dict(search, site=site, page=2))
+                client.check(first['items'][0]['videoId'] == '1101' and not later['hasNext'] and later['items'][0]['videoId'] == '1103', 'SupJav搜索保留规范视频编号和真实分页契约')
+                client.check(client.json(endpoint, 'POST', dict(search, site=site, query='empty'))['items'] == [], 'SupJav空搜索返回空数组')
+                client.check(client.request(endpoint, 'POST', dict(search, site=site, query='error'))[0] == 502, 'SupJav站点失败不伪装成空结果')
         second = client.json(endpoint, 'POST', dict(search, page=2))
         client.check(not second['hasNext'] and second['items'][0]['videoId'] == '1003' and isinstance(second['items'][0]['duration'], str), '第二页保持视频编号和时长的字符串类型')
         client.check(client.json(endpoint, 'POST', dict(search, query='empty'))['items'] == [], '成功空搜索返回空数组')
@@ -230,6 +254,8 @@ class UAVHarness(CollectionHarness):
             client.check(client.request('/api/collection/previews', 'POST', {'sourceId': source['id'], 'uavSite': 'jable', 'videoId': video_id})[0] == 400, '预览编号不能携带URL路径或非规范文本')
         for video_id in ('42', 'huangguo-42', 'huangguo-42-ep-0', 'huangguo-042-ep-1', 'huangguo-42-ep-01', 'huangguo-9223372036854775808-ep-1', 'huangguo-42-ep-2147483648'):
             client.check(client.request('/api/collection/previews', 'POST', {'sourceId': source['id'], 'uavSite': 'huangguo', 'videoId': video_id})[0] == 400, '黄果拒绝整剧、缺集号、前导零及越界编号')
+        for video_id in ('0', '01', '-1', 'abc123', '1101.html', 'https://supjav.com/1101.html', '１２'):
+            client.check(client.request('/api/collection/previews', 'POST', {'sourceId': source['id'], 'uavSite': 'supjav', 'videoId': video_id})[0] == 400, 'SupJav拒绝非规范数字编号和网址输入')
         for extra in ({'url': 'https://example.com'}, {'rootId': 'fixture-local'}, {'allowPrivate': True}, {'externalUrl': 'https://example.com'}, {'path': 'escape'}):
             body: dict[str, Any] = {'kind': 'uav', 'name': '拒绝无关配置', 'enabled': True, 'rootId': '', 'path': '', 'allowPrivate': False, 'refreshMinutes': 30, 'outputProfile': 'video', 'externalUrl': ''}
             body.update(extra)
@@ -257,6 +283,20 @@ class UAVHarness(CollectionHarness):
         huangguo_imported = self.wait_collection(huangguo_task['id'], lambda item: item['importState'] == 'imported' or item['state'] == 'failed')
         self.verify_video(huangguo_imported)
         client.check(self.download_count('huangguo-42-ep-1') == 1, '黄果任务只下载选择的单集，复用原发布入库门禁')
+        supjav_preview = self.preview(source, '1101', 'supjav')
+        client.check(supjav_preview['files'] == [] and self.download_count('1101') == 0 and 'mediaUrl' not in supjav_preview and 'headers' not in supjav_preview, 'SupJav预览仅含公开元数据且不下载媒体')
+        supjav_task, supjav_accepted = self.create(source, '1101', 'supjav')
+        client.check(client.json('/api/collection/tasks', 'POST', supjav_accepted)['task']['id'] == supjav_task['id'], 'SupJav重复提交定位同一持久任务')
+        supjav_imported = self.wait_collection(supjav_task['id'], lambda item: item['importState'] == 'imported' or item['state'] == 'failed')
+        self.verify_video(supjav_imported)
+        client.check(self.download_count('1101') == 1, 'SupJav只获取所选视频并完成原发布扫描流程')
+        fallback, _ = self.create(source, '1104', 'supjav')
+        fallback = self.wait_collection(fallback['id'], lambda item: item['importState'] == 'imported' or item['state'] == 'failed')
+        self.verify_video(fallback)
+        client.check(self.download_count('1104') == 2, 'SupJav首线路获取失败后清理旧产物并改用后续线路')
+        exhausted, _ = self.create(source, '1105', 'supjav')
+        exhausted = self.wait_collection(exhausted['id'], lambda item: item['state'] == 'failed')
+        client.check(self.download_count('1105') == 2 and not exhausted['itemIds'] and not (self.worker_root / 'complete' / exhausted['id']).exists(), 'SupJav全部候选线路获取失败时不发布或入库')
         for video_id in ('1006', '1007'):
             failed, _ = self.create(source, video_id)
             failed = self.wait_collection(failed['id'], lambda item: item['state'] == 'failed')
@@ -290,6 +330,7 @@ class UAVHarness(CollectionHarness):
         restored = client.json('/api/collection/tasks/' + task['id'])['task']
         client.check(restored['itemIds'] == imported['itemIds'] and restored['importState'] == 'imported', '主服务与worker重启后视频任务关联仍保留')
         client.check(client.json('/api/collection/tasks', 'POST', accepted)['task']['id'] == task['id'] and self.download_count('1001') == 1, '重启后原请求不会再次下载')
+        client.check(client.json('/api/collection/tasks', 'POST', supjav_accepted)['task']['id'] == supjav_task['id'] and self.download_count('1101') == 1 and client.json('/api/collection/tasks/' + supjav_task['id'])['task']['itemIds'] == supjav_imported['itemIds'], 'SupJav重启后保留原任务和入库关联且不重复获取')
         client.check(client.json('/api/collection/tasks/' + original['id'])['task']['importState'] == 'imported', '旧本地收集任务重启后保持兼容')
         self.stop_worker()
         self.worker_env['NAS_COLLECTION_WORKER_UAV_ENABLED'] = 'false'
@@ -349,7 +390,7 @@ def main() -> None:
     finally:
         harness.close()
         if not args.serve:
-            result: dict[str, Any] = {'passed': passed, 'assertions': harness.client.passed, 'sites': ['jable', 'missav', 'hanime1', 'huangguo'], 'realApplication': True, 'realWorker': True, 'realFFmpeg': True, 'pythonBridgeExecuted': False, 'realYtdlpExecuted': False, 'upstreamProtocolFixture': True, 'relayRegistrationExecuted': True, 'realRelayTransferExecuted': False, 'realSiteSearch': False, 'realSiteDownload': False, 'dockerExecuted': False}
+            result: dict[str, Any] = {'passed': passed, 'assertions': harness.client.passed, 'sites': ['jable', 'missav', 'hanime1', 'huangguo', 'supjav'], 'realApplication': True, 'realWorker': True, 'realFFmpeg': True, 'pythonBridgeExecuted': False, 'realYtdlpExecuted': False, 'upstreamProtocolFixture': True, 'relayRegistrationExecuted': True, 'realRelayTransferExecuted': False, 'realSiteSearch': False, 'realSiteDownload': False, 'dockerExecuted': False}
             (root / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
 
 

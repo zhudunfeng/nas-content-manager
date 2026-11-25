@@ -6,6 +6,7 @@
 
 ## Requirements
 
+- 2026-11-25 用户明确追加 SupJav：提供站点选择、关键词分页搜索、单视频预览、下载入库，复用现有稳定请求编号及受控网络下载流程。
 - 研究上游真实搜索与下载接口、许可证及运行依赖，固定可审核的适配方式。
 - 复用已有来源管理、鉴权、预览、持久任务、取消、发布与视频库入库机制。
 - 提供视频关键词搜索、结果选择与下载入口，前后端契约一致。
@@ -30,6 +31,10 @@
 
 ## Research References
 
+- research/supjav-upstream.md（追加 SupJav 的规范 ID、多线路解析与固定依赖研究）
+- research/supjav-implementation.md（第五站真实解析器、私有线路偏移与 TS 清理验证）
+- research/supjav-quality.md（独立真实下载器矩阵、结构反例修复与错误分类）
+- research/supjav-mainline-verification.md（本次 SupJav 同批构建、应用/浏览器及原功能回归）
 - research/uav-upstream.md
 - research/integration-architecture.md
 - research/huangguo-upstream.md（用户追加站点的专项适配）
@@ -42,12 +47,12 @@
 
 - 任意插件代码上传执行、完整插件市场。
 - 绕过付费或账号权限限制。
-- 首版以外站点、账号/cookie输入、播放列表递归和自动批量下载。
+- 五站以外站点、账号/cookie输入、播放列表递归和自动批量下载。
 - 黄果超过100单集的搜索页及超出当前搜索时限的整页展开，明确失败，不静默截断。
 
 ## Technical Approach
 
-- 固定 `uav` 来源与能力，首版适配 `jable`、`missav`、`hanime1`、`huangguo`。搜索请求选择站点，不伪造未知总数。
+- 固定 `uav` 来源与能力，适配 `jable`、`missav`、`hanime1`、`huangguo`、`supjav`。搜索请求选择站点，不伪造未知总数。
 - UAV-Downloader 固定上游提交 `d40f09457fbd38dd7dc94580637242afafaf3939`，只在独立 worker 运行审核后的无头搜索/详情桥接。
 - 保留原 schema 6。共享持久请求新增 `uavSite,omitempty` 和 `videoId,omitempty`，旧类型序列化与摘要不变。
 - 主服务接口 `POST /api/collection/sources/{id}/uav/search`；worker 对应 `/v1/uav/search`。预览输入 `{sourceId,uavSite,videoId}`，输出沿原 `preview`，固定 `kind=uav,profile=video`。
@@ -68,3 +73,23 @@
 1. 调研上游和现有收集链路，确定固定适配协议与依赖。
 2. 实现执行端、主服务、前端及部署文档。
 3. 进行 Trellis 独立复核、构建与集成验证，记录实际验证范围。
+
+## SupJav Increment — 2026-11-25
+
+用户已授权直接接入 SupJav。原四站验收记录保留；新增第五站，不升级固定上游提交，不改变原数据库及任务 API。
+
+### Requirements and Decisions
+
+- 搜索、预览、下载与原站点使用同一交互和错误反馈；搜索结果不暴露站外媒体地址、封面或凭据。
+- 调研固定上游真实支持的播放线路，优先选择可由现有受控下载链路验证的线路；按确定顺序回退，所有线路均失败时明确失败。
+- 不增加任意线路 URL、脚本、Cookie 或下载参数输入；不引入完整上游下载队列。
+- 考虑站点空结果、非规范视频编号、无可用线路、错误页面、分页与重定向，保留旧四站行为。
+- 本次扩展仅接入第五站；自动监控、批量抓取和自动追更不在范围内。
+
+### Acceptance Criteria
+
+- [x] 固定上游 SupJav 接口及支持线路研究落盘，代码规范和配置无漂移。
+- [x] Go、Python 和 Vue 均识别 SupJav 规范编号，完成搜索与单视频预览/持久任务传递。
+- [x] SupJav 真实解析器离线覆盖搜索、空页、分页、多线路解析及失败；媒体仍通过原受控下载和校验。
+- [x] 真实应用/执行端离线集成与浏览器验证 SupJav 下载、入库及原播放器；四站回归通过。
+- [x] Go vet/编译、前端类型检查和构建通过，清除新增临时单元测试，同步文档及真实验收边界。

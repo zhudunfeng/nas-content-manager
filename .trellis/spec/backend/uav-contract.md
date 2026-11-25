@@ -4,7 +4,7 @@
 
 The optional `uav` collection source adds a fixed Python integration across the Vue UI, Go application, worker, process boundary and deployment image. Read this contract with [Collection contract](./collection-contract.md). It does not introduce a plugin upload/command interface or a database migration: SQLite remains schema 6.
 
-Supported sites are **jable, missav, hanime1 and huangguo**. The source identity is UAV-Downloader 3.8.4 at commit `d40f09457fbd38dd7dc94580637242afafaf3939` (Apache-2.0). The source archive SHA-256 is `88934f8920f836b064212a6d997a0eedb9a8149e38d112569d8c766dae208b41`. Never fetch mutable upstream code from a request or worker startup.
+Supported sites are **jable, missav, hanime1, huangguo and supjav**. The source identity is UAV-Downloader 3.8.4 at commit `d40f09457fbd38dd7dc94580637242afafaf3939` (Apache-2.0). The source archive SHA-256 is `88934f8920f836b064212a6d997a0eedb9a8149e38d112569d8c766dae208b41`. Never fetch mutable upstream code from a request or worker startup.
 
 Huangguo results represent individual episodes. A series is expanded within the search budget; exceeding the supported result/time bounds must fail explicitly rather than silently omit episodes. Account, Cookie and paid-access workflows, other upstream sites, the upstream GUI/queue and recursive batch downloads are outside this adapter.
 
@@ -15,10 +15,12 @@ Huangguo results represent individual episodes. A series is expanded within the 
 func NormalizeUAVSearch(input UAVSearchRequest) (UAVSearchRequest, error)
 // ValidateUAVSearchResponse 校验严格有界的桥接结果。
 func ValidateUAVSearchResponse(input UAVSearchRequest, output UAVSearchResponse) error
-// ValidUAVSite 只接受四个固定站点。
+// ValidUAVSite 只接受五个固定站点。
 func ValidUAVSite(site string) bool
 // ValidUAVVideoID 校验站点对应的规范视频或单集编号。
 func ValidUAVVideoID(site string, id string) bool
+// normalizeSupJavTS 在原生解密后原地清理已知PNG包装，返回实际删除字节数。
+func normalizeSupJavTS(ctx context.Context, name string) (int64, error)
 ```
 
 - Application: `POST /api/collection/sources/{id}/uav/search` (existing session and same-origin protection).
@@ -50,6 +52,7 @@ func ValidUAVVideoID(site string, id string) bool
 - Jable: lowercase ASCII slug `[a-z0-9][a-z0-9_-]{0,199}`.
 - MissAV: ASCII slug of the same maximum length, containing a digit; `dm` followed only by digits is excluded as a category.
 - Hanime1: `[1-9][0-9]{0,11}`.
+- SupJav: `[1-9][0-9]{0,11}`. Canonical URL is `https://supjav.com/<id>.html`; accepted search URLs may have a single `zh` or `ja` path prefix. Credentials, ports, queries, fragments, categories and noncanonical numbers must not become video IDs.
 - Huangguo: `huangguo-<series>-ep-<episode>`; positive decimal values without leading zeros, series ≤9223372036854775807, episode ≤2147483647. EP1 uses the upstream series root URL; later episodes use `/video/<series>/ep-<episode>/`. Bare series IDs are invalid. Search expands actual episode links, never synthesizes missing episode numbers.
 
 ### Preview, submission and persistence
@@ -77,6 +80,16 @@ Private request/snapshot structs carry `uavSite,omitempty` and `videoId,omitempt
 - The fixed yt-dlp process receives `--load-info-json -`, a fixed `media.download` path, native HTTP/HLS only and inline `hls_media_playlist_data` when present. It must not refetch a different/live playlist or fall back to network FFmpeg. `--fixup never` and a nonexistent operation-owned `--ffmpeg-location` enforce the latter.
 - After acquisition, FFmpeg remuxes the local file to `media.mp4`, verifies a video stream and fully decodes it. HLS must reach the sum of finite positive EXTINF durations minus `max(0.5 seconds, 2% of expected duration)`, using decoded `out_time_us`; clean packet-boundary truncation can otherwise still decode successfully. This lower bound detects obvious missing tails, but does not prove semantic completeness or losses within tolerance. Direct MP4 has no trusted expected duration here: successful HTTP transfer and decode alone cannot prove the upstream original's full length. Its protocol whitelist is `file,pipe,crypto,data`; it does not receive remote input. Reserve half the task byte budget for the temporary original plus remux copy. Delete the original after successful processing; exactly one regular MP4 must pass the existing independent manifest and publication gate.
 - All processes retain operation cancellation/timeouts, process-tree ownership, concurrency slots, disk reserve, staging/file/byte budgets and no-overwrite publication. Generic web acquisition format/protocol restrictions must remain unchanged.
+
+### SupJav candidate fallback and local TS normalization
+
+The fixed provider order is EVS/FST/VAS/LUC/VOE/TV, followed by ST progressive MP4. Select each candidate with its own permitted Referer/Origin; ST uses `_direct_referer`, never the first HLS candidate's headers. FST URLs are HLS even when they end in `.txt` or have no extension. Each candidate must pass the existing finite-manifest validator. SupJav additionally rejects init maps/fMP4 and BYTERANGE.
+
+Only the private bridge uses `sourceOffset` (integer 0–6 on SupJav resolve input) and `sourceIndex` (selected provider slot, 0–6 on resolve output). The worker independently checks monotonic progress and format/slot compatibility; these selectors are not public inputs, identity components or durable fields. After a candidate transport/content failure, release its relay scope, verify staging budgets, delete only the expected owned regular downloader/remux files, check disk reserve and resolve the next slot. Never splice partial candidates or restart timeout/budget accounting. Cancellation, storage/budget failures, unexpected staging entries, process cleanup failures and changed identity terminate without fallback. A task retry retains the existing durable operation.
+
+Keep AES keys and IV handling in the locked native downloader. It decrypts and removes padding before concatenating each fragment. Before offline FFmpeg, normalize **only SupJav HLS** locally: process complete 188-byte TS packets; unknown corruption and partial trailing packets fail. Only an exact PNG signature at an expected packet boundary may trigger resynchronization, at most 8000 bytes forward, followed by five valid TS packets. Require valid sync, transport error and adaptation/payload control fields: adaptation-only length must equal 183, while adaptation with payload must have length ≤182. Do not treat arbitrary corruption as removable metadata. Use a fixed buffer and `WriteAt` to compact the operation-owned file without a second full-size TS copy, then truncate only after successful EOF. Check cancellation throughout; local write, truncate, sync and close failures terminate without fallback. Continue through the existing full decode, positive-frame and duration gate before publication.
+
+This validates TS structure and received decodable content, not content authenticity. In particular, the pinned downloader's padding removal does not validate every PKCS#7 padding byte; a changed nonfinal padding byte which leaves identical TS plaintext cannot be detected by the local normalizer. Do not claim strict AES padding validation or semantic completeness.
 
 ### Finite HLS relay and Huangguo CDN scope
 
@@ -123,11 +136,11 @@ Reuse existing worker yt-dlp, FFmpeg, token, roots and resource-limit configurat
 
 ## 6. Tests Required
 
-1. Shared/app/worker boundary checks: four IDs including integer extremes, Unicode/control/query/page limits, duplicate/oversized responses, selectors and schema-6 compatibility. Compare old web/local/remote/JMComic operation JSON and digest bytes, not just struct equality. Long Chinese preview regression must preserve generic web's 512-byte rule.
-2. `scripts/verify_uav_bridge.py`: actual pinned Python imports and upstream parsing, four-site search/resolve/empty/bad cases, Huangguo actual episode expansion and numeric query/pagination, private protocol, explicit proxy use and no real site sockets. Use actual fixed yt-dlp to verify inline finite HLS and fatal incomplete/DRM behavior.
+1. Shared/app/worker boundary checks: five site IDs including integer extremes, Unicode/control/query/page limits, duplicate/oversized responses, selectors and schema-6 compatibility. Compare old web/local/remote/JMComic operation JSON and digest bytes, not just struct equality. Long Chinese preview regression must preserve generic web's 512-byte rule.
+2. `scripts/verify_uav_bridge.py`: actual pinned Python imports and upstream parsing, five-site search/resolve/empty/bad cases, Huangguo actual episode expansion and numeric query/pagination, SupJav seven-provider static parsers, matching headers, manifest fallback, FST non-m3u8 suffixes and private offset bounds. Check explicit proxy use and no real site sockets. Use actual fixed yt-dlp to verify inline finite HLS and fatal incomplete/DRM behavior.
 3. Relay boundary checks: exact origin/default port/case/subdomain, extension gates, same-/cross-origin redirects, private address rejection, finite registration/unknown paths, cleanup/cancel, no CDN values in yt-dlp intent, and standard TLS verification. Use the real locked downloader for exact Range responses, ignored/wrong/short/overlong ranges including unknown-length chunked replies, and an otherwise decodable cleanly truncated TS tail. Check the actual decoded-duration lower bound, not just process exit status.
-4. `scripts/verify_uav.py`: real app/worker/FFmpeg with explicitly labeled offline bridge/downloader protocol fixtures; four-site search, Huangguo single-episode preview/download/import, actual MP4 Range, auth/origin, failure/cancel/retry/restart, unavailable states, legacy collection.
-5. `scripts/verify_uav_browser.py`: real isolated app endpoints, four-site selection, Huangguo task/player, 375/768/1024/1440 widths, both themes, no overflow, keyboard/focus, stale response isolation and explicitly labeled controlled expiry/unknown-submission cases.
+4. `scripts/verify_uav.py`: real app/worker/FFmpeg with explicitly labeled offline bridge/downloader protocol fixtures; five-site search, Huangguo single-episode and SupJav preview/download/import, candidate transport fallback/all-failed, actual MP4 Range, auth/origin, failure/cancel/retry/restart, unavailable states, legacy collection.
+5. `scripts/verify_uav_browser.py`: real isolated app endpoints, five-site selection, Huangguo and SupJav task/player, 375/768/1024/1440 widths, both themes, no overflow, keyboard/focus, stale response isolation and explicitly labeled controlled expiry/unknown-submission cases. Real locked downloader/production relay must separately cover plain/wrapped TS and AES, explicit/default IV and key changes; normalizer must reject unknown/internal corruption, >8000-byte wrappers, insufficient sync and partial tails. Distinguish downloader, protocol-fixture and UI evidence.
 6. Go vet/build, frontend strict typecheck/build, collection/JMComic and core/release regression. Linux cross-compilation or wheel hash selection must not be described as Docker/NAS runtime validation. Live-site access, Docker and target NAS require separate evidence.
 
 Run tools through `python -B scripts/project_env.py -- ...`; browser processes inherit the project environment before startup. Delete newly generated temporary unit tests after executing them per AGENTS.md, retain reusable integration harnesses and truthful evidence under `.runtime/verify`.

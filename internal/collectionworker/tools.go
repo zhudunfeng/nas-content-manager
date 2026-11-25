@@ -115,12 +115,15 @@ func (s *Service) runTool(ctx context.Context, executable string, args []string,
 	command.Stderr = stderr
 	runErr, cleanupErr := runWorkerProcess(command)
 	if cleanupErr != nil {
-		return nil, errors.New("执行进程未能完整退出")
+		return nil, errUAVProcess
 	}
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
 	if runErr != nil {
+		if (executable == s.ytdlp || executable == s.ffmpeg) && uavToolStorageFailure(stderr.data.Bytes()) {
+			return nil, errUAVStorage
+		}
 		return nil, errors.New("获取工具执行失败，来源可能不支持、需要认证或网络不可用")
 	}
 	return stdout.data.Bytes(), nil

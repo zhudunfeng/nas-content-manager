@@ -31,23 +31,25 @@ var uavBridge string
 
 // uavInput 是私有固定动作请求，代理仅由执行端注入。
 type uavInput struct {
-	Action  string `json:"action"`            // 固定probe/search/resolve动作。
-	Site    string `json:"site,omitempty"`    // 已验证站点。
-	Query   string `json:"query,omitempty"`   // 有界搜索关键词。
-	Page    int    `json:"page,omitempty"`    // 有界搜索页码。
-	VideoID string `json:"videoId,omitempty"` // 规范视频编号。
-	Proxy   string `json:"proxy,omitempty"`   // 本实例受控公网代理。
+	Action       string `json:"action"`                 // 固定probe/search/resolve动作。
+	Site         string `json:"site,omitempty"`         // 已验证站点。
+	Query        string `json:"query,omitempty"`        // 有界搜索关键词。
+	Page         int    `json:"page,omitempty"`         // 有界搜索页码。
+	VideoID      string `json:"videoId,omitempty"`      // 规范视频编号。
+	Proxy        string `json:"proxy,omitempty"`        // 本实例受控公网代理。
+	SourceOffset int    `json:"sourceOffset,omitempty"` // SupJav私有固定线路起点，不接受公开请求或持久化。
 }
 
 // uavMedia 只在私有进程之间流转播放信息，不返回浏览器或日志。
 type uavMedia struct {
-	Site     string            `json:"site"`               // 固定站点。
-	VideoID  string            `json:"videoId"`            // 规范视频编号。
-	Title    string            `json:"title"`              // 纯文本标题。
-	MediaURL string            `json:"mediaUrl"`           // 临时HTTP(S)媒体地址。
-	Headers  map[string]string `json:"headers"`            // 仅允许Referer和Origin。
-	Manifest string            `json:"manifest,omitempty"` // 已验证有限HLS媒体清单，直链为空。
-	CDN      *uavCDN           `json:"cdn,omitempty"`      // 仅黄果使用的短期CDN作用域，不写持久状态。
+	Site        string            `json:"site"`                  // 固定站点。
+	VideoID     string            `json:"videoId"`               // 规范视频编号。
+	Title       string            `json:"title"`                 // 纯文本标题。
+	MediaURL    string            `json:"mediaUrl"`              // 临时HTTP(S)媒体地址。
+	Headers     map[string]string `json:"headers"`               // 仅允许Referer和Origin。
+	Manifest    string            `json:"manifest,omitempty"`    // 已验证有限HLS媒体清单，直链为空。
+	CDN         *uavCDN           `json:"cdn,omitempty"`         // 仅黄果使用的短期CDN作用域，不写持久状态。
+	SourceIndex int               `json:"sourceIndex,omitempty"` // SupJav私有线路槽位，0–5为固定HLS，6为ST直链。
 }
 
 // uavCDN 保存只允许发往原始媒体源指定资源类型的短期访问头。
@@ -171,11 +173,19 @@ func (s *Service) uavSearchHTTP(w http.ResponseWriter, r *http.Request) {
 
 // resolveUAV 独立核验解析身份、临时地址和请求头白名单。
 func (s *Service) resolveUAV(ctx context.Context, site string, id string) (uavMedia, error) {
+	return s.resolveUAVSource(ctx, site, id, 0)
+}
+
+// resolveUAVSource 仅允许执行端在SupJav固定线路中向前重试，候选信息不进入公开协议。
+func (s *Service) resolveUAVSource(ctx context.Context, site string, id string, sourceOffset int) (uavMedia, error) {
 	var media uavMedia
+	if sourceOffset < 0 || sourceOffset > 6 || site != "supjav" && sourceOffset != 0 {
+		return media, errors.New("视频播放线路无效")
+	}
 	if !s.uavCapability().Available {
 		return media, errors.New(s.uavCapability().Reason)
 	}
-	if err := s.callUAV(ctx, uavInput{Action: "resolve", Site: site, VideoID: id}, &media); err != nil {
+	if err := s.callUAV(ctx, uavInput{Action: "resolve", Site: site, VideoID: id, SourceOffset: sourceOffset}, &media); err != nil {
 		return media, err
 	}
 	if media.Site != site || media.VideoID != id || len(media.Title) > 1200 || len(media.Manifest) > 512<<10 || !validUAVURL(media.MediaURL) || len(media.Headers) > 2 {
@@ -194,6 +204,13 @@ func (s *Service) resolveUAV(ctx context.Context, site string, id string) (uavMe
 	}
 	if site == "huangguo" && media.Manifest == "" {
 		return media, errors.New("黄果只支持有限HLS单集视频")
+	}
+	if site == "supjav" {
+		if media.SourceIndex < sourceOffset || media.SourceIndex > 6 || (media.SourceIndex == 6) != (media.Manifest == "") || strings.Contains(media.Manifest, "#EXT-X-MAP:") || strings.Contains(media.Manifest, "#EXT-X-BYTERANGE:") {
+			return media, errors.New("SupJav播放线路或普通TS清单无效")
+		}
+	} else if media.SourceIndex != 0 {
+		return media, errors.New("视频解析含跨站线路字段")
 	}
 	return media, nil
 }
@@ -227,13 +244,43 @@ func (s *Service) previewUAV(ctx context.Context, input contract.PreviewRequest)
 
 // fetchUAV 原生获取后离线封装和全程解码，任何失败均不发布。
 func (s *Service) fetchUAV(ctx context.Context, input contract.OperationRequest, target string, identity string) error {
-	media, err := s.resolveUAV(ctx, input.UAVSite, input.VideoID)
-	if err != nil {
-		return err
+	for offset := 0; offset <= 6; {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		media, err := s.resolveUAVSource(ctx, input.UAVSite, input.VideoID, offset)
+		if err != nil {
+			return err
+		}
+		if uavIdentity(media) != identity {
+			return errors.New("视频身份已改变，请重新预览")
+		}
+		err = s.fetchUAVMedia(ctx, input, target, media)
+		if err == nil {
+			return nil
+		}
+		if input.UAVSite != "supjav" || media.SourceIndex >= 6 || ctx.Err() != nil || !errors.Is(err, errUAVCandidate) {
+			return err
+		}
+		// 先确认预算与自有暂存安全，清除上一线路残留后才能使用下一线路，禁止拼接不同媒体。
+		if budgetErr := s.checkWriteBudget(target, input.MaxBytes, input.MaxFiles); budgetErr != nil {
+			return budgetErr
+		}
+		if cleanErr := cleanUAVCandidate(target); cleanErr != nil {
+			return cleanErr
+		}
+		if reserveErr := s.reserveSpace(input.MaxBytes); reserveErr != nil {
+			return reserveErr
+		}
+		s.logger.Warn("SupJav播放线路未通过获取校验，正在尝试下一线路", "operation", input.ID, "sourceIndex", media.SourceIndex)
+		offset = media.SourceIndex + 1
 	}
-	if uavIdentity(media) != identity {
-		return errors.New("视频身份已改变，请重新预览")
-	}
+	return errors.New("SupJav所有支持的播放线路均未完成获取")
+}
+
+// fetchUAVMedia 仅下载和验证一个已解析线路，每次失败均保留受控错误分类。
+func (s *Service) fetchUAVMedia(ctx context.Context, input contract.OperationRequest, target string, media uavMedia) error {
+	var err error
 	expectedSeconds, durationErr := uavHLSSeconds(media.Manifest)
 	if durationErr != nil {
 		return durationErr
@@ -266,23 +313,51 @@ func (s *Service) fetchUAV(ctx context.Context, input contract.OperationRequest,
 	// 禁用下载器发现FFmpeg，任何原生HLS不支持特性都不能回退为联网进程。
 	args = append(args, "--load-info-json", "-", "--output", "media.download", "--fixup", "never", "--ffmpeg-location", filepath.Join(target, ".no-network-ffmpeg"), "--no-overwrites", "--no-continue", "--concurrent-fragments", "1", "--max-filesize", fmt.Sprint(input.MaxBytes/2), "--no-write-info-json", "--no-write-thumbnail", "--no-write-subs")
 	if _, err = s.runTool(ctx, s.ytdlp, args, target, bytes.NewReader(data), 64<<10, true); err != nil {
-		return err
+		if ctx.Err() != nil || errors.Is(err, errUAVStorage) || errors.Is(err, errUAVProcess) {
+			return err
+		}
+		return fmt.Errorf("%w：视频传输失败", errUAVCandidate)
 	}
 	source := filepath.Join(target, "media.download")
 	destination := filepath.Join(target, "media.mp4")
 	stat, err := os.Lstat(source)
-	if err != nil || !stat.Mode().IsRegular() || stat.Size() < 1 || stat.Size() > input.MaxBytes/2 {
-		return errors.New("视频下载产物缺失或超过离线处理预算")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("%w：视频下载产物缺失", errUAVCandidate)
+		}
+		return errors.New("视频下载产物无法读取")
+	}
+	if !stat.Mode().IsRegular() || stat.Size() > input.MaxBytes/2 {
+		return errors.New("视频下载产物不安全或超过离线处理预算")
+	}
+	if stat.Size() < 1 {
+		return fmt.Errorf("%w：视频下载产物为空", errUAVCandidate)
+	}
+	if input.UAVSite == "supjav" && media.Manifest != "" {
+		stripped, normalizeErr := normalizeSupJavTS(ctx, source)
+		if normalizeErr != nil {
+			return normalizeErr
+		}
+		s.logger.Info("SupJav视频已完成本地TS格式校验", "operation", input.ID, "removedPrefixBytes", stripped)
 	}
 	offline := []string{"-nostdin", "-hide_banner", "-loglevel", "error", "-xerror", "-err_detect", "explode", "-protocol_whitelist", "file,pipe,crypto,data", "-i", source}
 	remux := append(append([]string{}, offline...), "-map", "0:v:0", "-map", "0:a?", "-c", "copy", "-movflags", "+faststart", "-f", "mp4", "-n", destination)
 	if _, err = s.runTool(ctx, s.ffmpeg, remux, target, nil, 4096, false); err != nil {
-		return errors.New("视频离线封装失败，拒绝发布")
+		if ctx.Err() != nil || errors.Is(err, errUAVStorage) || errors.Is(err, errUAVProcess) {
+			return err
+		}
+		return fmt.Errorf("%w：视频离线封装失败，拒绝发布", errUAVCandidate)
 	}
 	decode := []string{"-nostdin", "-hide_banner", "-loglevel", "error", "-nostats", "-progress", "pipe:1", "-stats_period", "86400", "-xerror", "-err_detect", "explode", "-protocol_whitelist", "file,pipe,crypto,data", "-i", destination, "-map", "0:v:0", "-map", "0:a?", "-f", "null", "-"}
 	decoded, decodeErr := s.runTool(ctx, s.ffmpeg, decode, target, nil, 4096, false)
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	if errors.Is(decodeErr, errUAVStorage) || errors.Is(decodeErr, errUAVProcess) {
+		return decodeErr
+	}
 	if decodeErr != nil || !uavDecodedFrames(decoded) || !uavDecodedDuration(decoded, expectedSeconds) {
-		return errors.New("视频完整解码校验失败，拒绝发布")
+		return fmt.Errorf("%w：视频完整解码校验失败，拒绝发布", errUAVCandidate)
 	}
 	if err = os.Remove(source); err != nil {
 		return errors.New("视频临时产物无法清理，拒绝发布")

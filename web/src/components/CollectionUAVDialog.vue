@@ -132,7 +132,7 @@ onBeforeUnmount((): void => { clearSearch(); controller.abort(); clearInterval(e
       <p class="muted">选择站点并搜索视频，预览后确认下载到视频库。每次只下载所选视频。</p>
       <div class="collection-field-grid">
         <label>视频插件来源<select v-model="sourceId" :disabled="busy || !!input"><option value="" disabled>选择已启用的视频来源</option><option v-for="source in sources" :key="source.id" :value="source.id">{{ source.name }}</option></select></label>
-        <label>视频站点<select v-model="site" :disabled="busy || !!input"><option value="jable">Jable</option><option value="missav">MissAV</option><option value="hanime1">Hanime1</option><option value="huangguo">Huangguo（黄果）</option></select></label>
+        <label>视频站点<select v-model="site" :disabled="busy || !!input"><option value="jable">Jable</option><option value="missav">MissAV</option><option value="hanime1">Hanime1</option><option value="huangguo">Huangguo（黄果）</option><option value="supjav">SupJav</option></select></label>
       </div>
       <p v-if="unavailableReason" class="error-box" role="alert">{{ unavailableReason }}</p>
       <form class="uav-search" @submit.prevent="search()">

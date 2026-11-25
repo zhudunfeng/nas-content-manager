@@ -178,7 +178,7 @@ onBeforeUnmount((): void => { controller.abort(); url.value = ''; baseUrl.value 
       </template>
       <p v-if="kind === 'web'" class="section-note">网页来源使用固定获取工具。具体链接在“网页与文件”中逐条预览；首期不递归播放列表、不上传 Cookie。</p>
       <p v-if="kind === 'jmcomic'" class="section-note">使用 JMComic-Crawler-Python 固定插件搜索与下载漫画。保存后可按关键词或编号预览，再确认导入漫画库；不需要填写站点地址或账号。插件依赖和网络能力由独立获取执行端检测。</p>
-      <p v-if="kind === 'uav'" class="section-note">使用 UAV-Downloader 固定插件搜索 Jable、MissAV、Hanime1 或 Huangguo（黄果），选择视频预览后确认下载并导入视频库；无需填写站点地址或账号。插件依赖由独立获取执行端检测，站点连通性在搜索时验证。</p>
+      <p v-if="kind === 'uav'" class="section-note">使用 UAV-Downloader 固定插件搜索 Jable、MissAV、Hanime1、Huangguo（黄果）或 SupJav，选择视频预览后确认下载并导入视频库；无需填写站点地址或账号。插件依赖由独立获取执行端检测，站点连通性在搜索时验证。</p>
       <label v-if="kind === 'web'">默认输出<select v-model="outputProfile" :disabled="saving"><option value="video">保存视频</option><option value="audio">提取音频</option></select><span class="field-hint">每次预览时仍可明确选择输出类型。</span></label>
       <label v-if="kind === 'local'">导入方式<select v-model="localMode" :disabled="saving" @change="changeMode"><option value="register">只读登记已有文件（默认）</option><option value="copy">归档副本至受管目录</option></select><span class="field-hint">只读登记直接扫描原目录；归档复制需要执行端的预配置本地目录。</span></label>
       <template v-if="usesDirectory && kind !== 'external'">
