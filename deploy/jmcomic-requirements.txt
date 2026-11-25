@@ -1,0 +1,72 @@
+# JMComic基础依赖精确版本及官方PyPI wheel SHA256，不包含可执行插件额外依赖。
+# 仅接纳CPython3.11–3.14的Linux amd64/arm64与Windows amd64 wheel；变更须重新验收协议。
+# 使用：pip install --only-binary=:all: --no-deps --require-hashes -r deploy/jmcomic-requirements.txt
+
+# jmcomic：Linux amd64/arm64及Windows amd64适用wheel，Python要求>=3.9。
+jmcomic==2.7.12 \
+    --hash=sha256:127af57c476b22dead1c706ff897ce64b46de71295f7a43680f7c294f1a77bae
+
+# curl-cffi：Linux amd64/arm64及Windows amd64适用wheel，Python要求>=3.10。
+curl-cffi==0.17.0 \
+    --hash=sha256:4c3993c7df155d622869b82a56adb018440587fd3faffeaf8d01cc016d2e1357 \
+    --hash=sha256:aa91d26234516ddb9eb97310d5fe1705aa6f677f101d57ffdb76d5f75439506e \
+    --hash=sha256:af0782d5e340b65fd76701630f0284a8f8243d77df5f2637efd09a4b009f4e24
+
+# pillow：Linux amd64/arm64及Windows amd64适用wheel，Python要求>=3.11。
+pillow==13.0.0 \
+    --hash=sha256:19b66ca0a4d25cc0200b381ce824c7ea090db61427315e73cfb05dbf1b35c369 \
+    --hash=sha256:42d63be3af4f9b951b199b0a9d23365d37ab14687e6d77b74940432c8515c4ca \
+    --hash=sha256:5933fcea5a5ba64c686f55c886a115cbfd92f2900460784a1e79909fdbafd7b6 \
+    --hash=sha256:5f56499c1a74d2b862beb0c33b8016f99d095858455df9d21583bbbc1c15b582 \
+    --hash=sha256:7c88c10dd432f3b39ccdafc9ed81d0c21b8fd634502574da76d1bfa4fe2c76d0 \
+    --hash=sha256:8bf295fe459343bc6093c8e5e0df60bfa189e0fcb775a22e2c2488fdeccc6c0d \
+    --hash=sha256:9dda0788a9932776a75d8bcc020076edc308ce2508b51f6739a45e3158b3fc42 \
+    --hash=sha256:a625df9a2a5597fa5e5266e01aefc82604bb85d291e3547981e863560d75da6c \
+    --hash=sha256:d7710eb676e9bb68965cb045be0d333b4c0d7f9dfbaa7fbf121385b1588683d3 \
+    --hash=sha256:e91c2b1cbeae768c98752e67e717e283d68dae45717b41f2d91eaee648e37b7d \
+    --hash=sha256:f7cbb7a64e7ec664775195e4f81923bc8a93d9451b963f844e59118f63147a7a \
+    --hash=sha256:ff3fe9eb621fbb9db4c4be33ab946f6bac5f98ab50ca8d3260503653656c961b
+
+# pycryptodome：Linux amd64/arm64及Windows amd64适用wheel，Python要求>=3.9。
+pycryptodome==4.6.0 \
+    --hash=sha256:0500c66f8cc33db5450f24aedd10a6e430e4d83c377dbd8ca0e845ae27b4312f \
+    --hash=sha256:3c43c2adbcdde07eaaed06eeef4e9e1efb0e30c88e586a9360958522d0e13ad3 \
+    --hash=sha256:b82b105408dc80872fb5dd2003867e2e3e641d5a014bc655ba27d28fc5adef1b
+
+# pyyaml：Linux amd64/arm64及Windows amd64适用wheel，Python要求>=3.10。
+pyyaml==6.0.4 \
+    --hash=sha256:0a3a351f04dc124f9357512bdb80ac37cd1750cf1371da33e7cbb96d80ac865f \
+    --hash=sha256:0db75f402e99c25239003a499c214a61947b4ef5312af34711d4c63e5c179318 \
+    --hash=sha256:131d11bd9b60d705a6388366d77ed67850995a4d2be85fe149785a257c17e531 \
+    --hash=sha256:1d2f08c122727c86f8303bb1dd45159ca1de1f2d68798e671ec46974e321008e \
+    --hash=sha256:41b4669c3a8fd5750e594dff59d3e62d40e321fec467b50449603710ed0a68f3 \
+    --hash=sha256:45e37dd647db9d67b757444c74060c064ace5fdaa08f42bf4fda3812275d423e \
+    --hash=sha256:50588147ab2c6a59b5f990a4905db80899a6c2bd197e046a6201f1e67587e794 \
+    --hash=sha256:622aa875fa6533f25fedcffe23079357d65a690d462200afed5d8e9d0e01ebee \
+    --hash=sha256:71bb5b87465d88d1dfc577115af6d435bff9b26f2512936f610c26aa55966028 \
+    --hash=sha256:93bfb2459195406a518e2f487a9bbf01df240175f31e06f5a252ac6734c7bbf0 \
+    --hash=sha256:c604dc2613c417130479cdd6e55c2faa691b6365aa82b3dafddfcecc2eaf1ac7 \
+    --hash=sha256:ed9b957abb12f6ffcd92d5db32fa3ffd4e4a8423d80ddd51b4efa63b42f6a76b
+
+# cffi：Linux amd64/arm64及Windows amd64适用wheel，Python要求>=3.10。
+cffi==2.1.1 \
+    --hash=sha256:1aa5645c30469b09530c4ebca77ebf8f17618293c58f8549cb1a543a50236e7d \
+    --hash=sha256:3222ba5d678f80a030e6afbcc33dc1ae5cb45facabb61cee2c7016b8432fde48 \
+    --hash=sha256:3311ed60d36f83378794e1009ac6258bafbf81f7888b4caa7b35a521e3f95813 \
+    --hash=sha256:34e261f78cb6ceaaa36f42f2613f4380d94d9c759a9c73c769ee6e0247364632 \
+    --hash=sha256:42f6930c31dc7f50732c9ae793c2786c7b6b044195967bbdde40bb9be81c4cc0 \
+    --hash=sha256:58acb8ab8e295e6c5ea12f888cbb13cf21511ef2a3303a23f4325c29d17fe5c1 \
+    --hash=sha256:68e62fe11f30d5ca8289242866f0a5291402d8529ca2178ab8afc5c9694ae890 \
+    --hash=sha256:a931079504ecc49efed7744c476a5c343a92fabf66dec2db95edb1b2fdc770e2 \
+    --hash=sha256:b0431303acaea1089ad4b3e9ce4e6518193def1118d4073ca848635ee4ea2e96 \
+    --hash=sha256:c1453022f490d2459a11819d83ad1d586e9ff65a12ac3e705ffebd46d3685dcf \
+    --hash=sha256:f16c709686a78c727bbbf059f92b0bf41c6fc60deec706d2dc19f529175a6125 \
+    --hash=sha256:f53e442b08449d42821fa4a4fba000095af9f62742a500f978a9f557ec44339a
+
+# certifi：Linux amd64/arm64及Windows amd64适用wheel，Python要求>=3.7。
+certifi==2026.11.20 \
+    --hash=sha256:7422df25243767b9877031a2248cb14d09ddac9beee846f4cef3d5c9191d488f
+
+# pycparser：Linux amd64/arm64及Windows amd64适用wheel，Python要求>=3.11。
+pycparser==3.12 \
+    --hash=sha256:a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e

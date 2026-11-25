@@ -218,7 +218,7 @@ func (a *App) runCollectionTask(ctx context.Context, t collectionTaskRecord) {
 		}
 		selected := []CollectionFile{}
 		for _, file := range all {
-			if matchesType(t.ContentType, file.Path) {
+			if matchesType(t.ContentType, file.Path) || t.ContentType == "comic" && isImage(file.Path) {
 				selected = append(selected, file)
 			}
 		}

@@ -13,6 +13,7 @@ The first release uses Vue 3 SFCs, strict TypeScript, Vite, and local CSS/SVG. T
 1. Read [Application contract](./app-contract.md), `docs/api.md`, and the task's visual design.
 2. Inspect actual neighboring components, shared types, and API helpers.
 3. Preserve Chinese method/field/config comments, explicit types, and accessible controls.
+4. For the JMComic search/download dialog and its source form, also read [JMComic plugin contract](../backend/jmcomic-contract.md); preserve stable submission IDs and metadata invalidation.
 
 ## Quality Check
 

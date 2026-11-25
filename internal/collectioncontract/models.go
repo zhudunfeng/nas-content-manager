@@ -46,13 +46,14 @@ type Format struct {
 
 // PreviewRequest 是无任意命令参数的预览输入。
 type PreviewRequest struct {
-	Kind     string `json:"kind"`               // web、remote 或 local。
+	Kind     string `json:"kind"`               // web、remote、local 或固定漫画插件 jmcomic。
 	URL      string `json:"url,omitempty"`      // 仅网页类型的公共 HTTP(S) 链接。
-	Profile  string `json:"profile,omitempty"`  // 网页输出 video 或 audio。
+	Profile  string `json:"profile,omitempty"`  // 网页输出 video/audio，漫画插件固定 comic。
 	SourceID string `json:"sourceId,omitempty"` // 执行端预配置的来源标识。
 	Path     string `json:"path,omitempty"`     // 来源下允许的相对路径。
 	MaxBytes int64  `json:"maxBytes,omitempty"` // 请求字节预算，不能超过执行端上限。
 	MaxFiles int    `json:"maxFiles,omitempty"` // 请求文件预算，不能超过执行端上限。
+	AlbumID  string `json:"albumId,omitempty"`  // JMComic 专用漫画正整数编号。
 }
 
 // Preview 是有时效且绑定输入版本的预览。
@@ -60,7 +61,7 @@ type Preview struct {
 	ID         string   `json:"id"`         // 随机预览标识。
 	Title      string   `json:"title"`      // 安全展示标题。
 	Identity   string   `json:"identity"`   // 不含私密链接的来源身份摘要。
-	Files      []File   `json:"files"`      // 已验证文件清单，网页下载前可为空。
+	Files      []File   `json:"files"`      // 已验证文件清单，网页或漫画下载前可为空。
 	Formats    []Format `json:"formats"`    // 固定输出配置。
 	TotalBytes int64    `json:"totalBytes"` // 已知总字节数；未知时为零。
 	ExpiresAt  string   `json:"expiresAt"`  // UTC 预览失效时间。
@@ -71,12 +72,35 @@ type OperationRequest struct {
 	ID        string `json:"id"`                 // 调用方持久保存的 UUID 幂等标识。
 	Kind      string `json:"kind"`               // 固定获取类型。
 	URL       string `json:"url,omitempty"`      // 仅后台私密请求中的链接，不在响应回显。
-	Profile   string `json:"profile,omitempty"`  // 固定视频/音频配置。
+	Profile   string `json:"profile,omitempty"`  // 固定视频、音频或漫画输出配置。
 	SourceID  string `json:"sourceId,omitempty"` // 已授权来源标识。
 	Path      string `json:"path,omitempty"`     // 来源相对路径。
 	MaxBytes  int64  `json:"maxBytes,omitempty"` // 本次字节预算。
 	MaxFiles  int    `json:"maxFiles,omitempty"` // 本次文件预算。
 	PreviewID string `json:"previewId"`          // 绑定的有效预览。
+	AlbumID   string `json:"albumId,omitempty"`  // JMComic 专用漫画正整数编号。
+}
+
+// JMComicSearchRequest 只允许有界关键词与页码，不接受站点或命令参数。
+type JMComicSearchRequest struct {
+	Query string `json:"query"` // 1–120 个字符的关键词或漫画编号。
+	Page  int    `json:"page"`  // 从 1 开始的结果页，最大 1000。
+}
+
+// JMComicSearchItem 是不含远程链接和凭据的漫画搜索结果。
+type JMComicSearchItem struct {
+	AlbumID string   `json:"albumId"` // 上游漫画正整数编号。
+	Title   string   `json:"title"`   // 作为文本展示的漫画标题。
+	Tags    []string `json:"tags"`    // 有界标签，未知时为空数组。
+}
+
+// JMComicSearchResponse 保存一次有界的搜索结果页。
+type JMComicSearchResponse struct {
+	Query   string              `json:"query"`   // 已规范化的请求关键词。
+	Page    int                 `json:"page"`    // 当前结果页。
+	Total   int                 `json:"total"`   // 上游报告的有限结果数量。
+	HasNext bool                `json:"hasNext"` // 是否存在下一页。
+	Items   []JMComicSearchItem `json:"items"`   // 最多 100 条结果，空结果为数组。
 }
 
 // Operation 是不含秘密的持久操作事实。

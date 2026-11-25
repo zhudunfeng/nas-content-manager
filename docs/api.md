@@ -237,6 +237,17 @@ Task response fields match the managed-engine DTOs above; collection task action
 
 `ENGINE_COLLECTION_ENABLED` defaults false. Linux managed Compose and desktop schema-v3 overlays enable it. Four products use separate owned private configuration volumes and explicitly authorized `/downloads` plus `/data` mounts; app can register only the read-only `/collection-media/library` subtree. GET never creates/adopts volumes. Conflict stops deployment without takeover. Components still require their own initial setup and the existing authenticated source test; container completion does not activate external business capabilities or import media. Exact executable contract and validation cases: [component deployment contract](../.trellis/spec/backend/collection-component-contract.md).
 
+## Optional JMComic comic plugin
+
+The fixed `jmcomic` source kind uses the existing authenticated collection API and does not add a schema migration. Source configuration uses `name` and `enabled`; it accepts no site URL, account, Python/YAML, executable or output-directory override. Capability `kind:'jmcomic'` reports actual optional worker readiness. Missing plugin dependencies do not disable other collection types.
+
+- `POST /api/collection/sources/{id}/jmcomic/search` body `{query:string,page:number}` → `{query,page,total,hasNext,items:[{albumId:string,title:string,tags:string[]}]}`. Query is trimmed, requires 1–120 Unicode characters and rejects controls. Page 0 defaults to 1; valid pages are 1–1000. Only an enabled JMComic source can search. Results contain text and numeric IDs, without upstream links or image URLs. Empty success returns `items:[]`; unavailable or failed upstream requests return a Chinese error.
+- Existing `POST /api/collection/previews` additionally accepts `{sourceId,albumId:string}` for this source; `albumId` must match `[1-9][0-9]{0,11}`. The server selects `kind:'jmcomic',profile:'comic'`. The usual `{preview:CollectionPreview}` binds canonical album identity, source revision, worker identity, budgets and expiry. Search/preview do not download page images.
+- Existing `POST /api/collection/tasks` accepts the original `{requestId,previewId,contentType:'comic',createLibrary,libraryId}`. Other content types are rejected. A preview may have no files before acquisition; download completeness, actual raster files and budget facts are validated before normal publication/import.
+- Existing task events, cancel/retry/import retry and item/comic/page APIs apply. Accepted UUID retries return the original task, including after preview expiry; conflicting intent returns 409.
+
+The private worker adds authenticated `POST /v1/jmcomic/search` and the optional `albumId` field to preview/operation requests. Omit empty album IDs when serializing original operation types, preserving their existing hashes. Enable/configuration and dependency installation: [jmcomic.md](jmcomic.md).
+
 ## Release boundary
 
 Deliver five content workflows, including music. Large-file direct playback/Range is required. Remux/HLS, hardware acceleration, audio transcoding, playlists/lyrics, CBR/PDF and AI remain optional later capabilities, and the UI must explain unsupported audio/video formats rather than silently pretend they work. No fabricated demo records appear in real libraries.

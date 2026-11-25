@@ -316,7 +316,21 @@ export interface EngineSourceSync {
 }
 
 /** 收集来源的固定类型，不增加媒体分类。 */
-export type CollectionKind = 'rss' | 'web' | 'local' | 'remote' | 'external'
+export type CollectionKind = 'rss' | 'web' | 'local' | 'remote' | 'external' | 'jmcomic'
+/** JMComic 搜索结果仅包含可展示的漫画信息。 */
+export interface CollectionJMComicItem {
+  /** 正整数字符串漫画编号。 */ albumId: string
+  /** 纯文本标题。 */ title: string
+  /** 有界纯文本标签。 */ tags: string[]
+}
+/** JMComic 每次只返回当前页，不在浏览器无限积累结果。 */
+export interface CollectionJMComicPage {
+  /** 本次实际查询。 */ query: string
+  /** 一开始的页码。 */ page: number
+  /** 上游已知结果总数。 */ total: number
+  /** 是否可继续翻页。 */ hasNext: boolean
+  /** 当前页漫画清单。 */ items: CollectionJMComicItem[]
+}
 /** 固定外部服务；空值保留仅入口和成品目录模式。 */
 export type CollectionExternalService = '' | 'moviepilot' | 'autobangumi' | 'sonarr' | 'radarr'
 /** 一个可检测的收集能力。 */

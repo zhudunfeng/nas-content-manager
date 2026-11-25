@@ -126,8 +126,9 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		SourceID string `json:"sourceId"` /* 来源编号。 */
 		URL      string `json:"url"`      /* 单条网页链接。 */
 		Path     string `json:"path"`     /* 来源内相对路径。 */
-		Profile  string `json:"profile"`  /* video/audio 输出。 */
+		Profile  string `json:"profile"`  /* 网页video/audio输出，漫画插件固定comic。 */
 		Mode     string `json:"mode"`     /* register/copy。 */
+		AlbumID  string `json:"albumId"`  /* JMComic 固定漫画编号。 */
 	}
 	if !decodeJSON(w, r, &input) {
 		return
@@ -141,6 +142,16 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, "来源已停用")
 		return
 	}
+	if s.Kind == "jmcomic" {
+		if !collectioncontract.ValidJMComicAlbumID(input.AlbumID) || input.URL != "" || input.Path != "" || (input.Profile != "" && input.Profile != "comic") {
+			fail(w, 400, "漫画插件只接受正整数漫画编号")
+			return
+		}
+		input.Profile = "comic"
+	} else if input.AlbumID != "" {
+		fail(w, 400, "漫画编号只能用于漫画插件来源")
+		return
+	}
 	if _, err = collectionRelative(input.Path); err != nil {
 		collectionFail(w, err)
 		return
@@ -151,7 +162,7 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 	if input.Profile == "" {
 		input.Profile = "video"
 	}
-	if input.Profile != "video" && input.Profile != "audio" {
+	if input.Profile != "video" && input.Profile != "audio" && !(s.Kind == "jmcomic" && input.Profile == "comic") {
 		fail(w, 400, "输出规格必须为视频或音频")
 		return
 	}
@@ -178,7 +189,7 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		p.Title = filepath.Base(private.LocalPath)
 		private.Identity = collectionDigest("register\x00" + private.LocalPath + "\x00" + collectionJSON(p.Files))
 		p.Warnings = append(p.Warnings, "只读登记现有媒体，不复制、不改名、不改写原标签；提交前请确认目录内容已完整")
-	} else if s.Kind == "web" || s.Kind == "local" || s.Kind == "remote" {
+	} else if s.Kind == "web" || s.Kind == "local" || s.Kind == "remote" || s.Kind == "jmcomic" {
 		caps, e := a.collectionWorkerReady(r.Context())
 		if e != nil {
 			collectionFail(w, e)
@@ -196,7 +207,7 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 		}
 		// 预览与后续执行保存相同的双方最小预算，避免执行端规范化后改变意图摘要。
 		request := collectioncontract.PreviewRequest{Kind: s.Kind, Profile: input.Profile, SourceID: s.RootID, Path: filepath.ToSlash(filepath.Join(filepath.FromSlash(s.Path), filepath.FromSlash(input.Path))), MaxBytes: min(a.config.Collection.MaxBytes, caps.MaxBytes), MaxFiles: min(a.config.Collection.MaxFiles, caps.MaxFiles)}
-		if s.Kind != "web" {
+		if s.Kind != "web" && s.Kind != "jmcomic" {
 			request.Profile = ""
 			p.Profile = ""
 		}
@@ -211,6 +222,11 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 			request.URL = input.URL
 			request.Path = ""
 			request.SourceID = ""
+		} else if s.Kind == "jmcomic" {
+			request.AlbumID = input.AlbumID
+			request.Path = ""
+			request.SourceID = ""
+			p.Warnings = append(p.Warnings, "仅下载所选漫画的全部章节；获取完成后通过发布校验与漫画扫描才会入库")
 		} else {
 			found := false
 			for _, root := range caps.Sources {
@@ -239,7 +255,7 @@ func (a *App) collectionCreatePreview(w http.ResponseWriter, r *http.Request) {
 				}
 				private.Identity = preview.Identity
 				private.WorkerInstance = caps.InstanceID
-				private.Request = collectioncontract.OperationRequest{Kind: request.Kind, URL: request.URL, Profile: request.Profile, SourceID: request.SourceID, Path: request.Path, MaxBytes: request.MaxBytes, MaxFiles: request.MaxFiles, PreviewID: preview.ID}
+				private.Request = collectioncontract.OperationRequest{Kind: request.Kind, URL: request.URL, Profile: request.Profile, SourceID: request.SourceID, Path: request.Path, MaxBytes: request.MaxBytes, MaxFiles: request.MaxFiles, PreviewID: preview.ID, AlbumID: request.AlbumID}
 			}
 		}
 	} else {
@@ -318,11 +334,11 @@ func (a *App) collectionCreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	files := []CollectionFile{}
 	for _, file := range p.Files {
-		if matchesType(input.ContentType, file.Path) {
+		if matchesType(input.ContentType, file.Path) || input.ContentType == "comic" && isImage(file.Path) {
 			files = append(files, file)
 		}
 	}
-	if p.Kind != "web" && len(files) == 0 {
+	if p.Kind != "web" && p.Kind != "jmcomic" && len(files) == 0 {
 		fail(w, 422, "预览中没有所选内容类型的文件")
 		return
 	}
@@ -334,6 +350,10 @@ func (a *App) collectionCreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if p.Kind == "web" && ((p.Profile == "audio" && input.ContentType != "music") || (p.Profile == "video" && input.ContentType != "video")) {
 		fail(w, 400, "网页输出与目标类型不一致：音频应选择音乐，视频应选择视频")
+		return
+	}
+	if p.Kind == "jmcomic" && input.ContentType != "comic" {
+		fail(w, 400, "漫画插件的入库类型必须为漫画")
 		return
 	}
 	id, err := newDownloadUUID()

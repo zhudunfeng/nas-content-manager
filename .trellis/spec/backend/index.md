@@ -24,6 +24,7 @@ The first release is a standard-library Go HTTP service with pure-Go SQLite. Its
 12. For database snapshots, read-only validation, temporary backup ownership or future persistent backup consumers, read [Database snapshot contract](./backup-contract.md).
 13. For schema-6 backup storage, current snapshot column probes or offline account version compatibility, read [Backup storage contract](./backup-storage-contract.md).
 14. For dedicated backup roots, strict metadata, protection-path isolation or platform no-overwrite publication, read [Backup root and publication contract](./backup-publish-contract.md).
+15. For the fixed JMComic adapter, Python bridge, comic search or directory-image import, read [JMComic plugin contract](./jmcomic-contract.md).
 
 ## Quality Check
 
@@ -41,6 +42,7 @@ Run `go vet ./...`, `go test ./...`, `go build ./cmd/nas`, and the isolated `scr
 | [Engine bootstrap contract](./engine-bootstrap-contract.md) | Optional private helper, fixed Docker templates, durable recovery and managed runtime activation | Implemented |
 | [Cross-platform contract](./cross-platform-contract.md) | Shared lifecycle, Windows launcher, embedded assets, immutable desktop deployments and releases | Implemented |
 | [Collection contract](./collection-contract.md) | Multi-source collection, durable worker, publication and exact import coverage | Implemented |
+| [JMComic plugin contract](./jmcomic-contract.md) | Optional fixed Python adapter, bounded search, complete comic publication and original reader handoff | Implemented locally; target pending |
 | [External collection contract](./external-collection-contract.md) | Schema v4, typed external automation, durable intents and MoviePilot workflows | Implemented |
 | [Component deployment contract](./collection-component-contract.md) | Fixed Docker components, private volume ownership, persistent deployment and desktop v3 | Implemented |
 | [Regression baseline contract](./baseline-contract.md) | Isolated verifier orchestration, truthful evidence and target acceptance boundaries | Implemented |

@@ -19,10 +19,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     && chown nas:nas /collection /run/nas-collection \
     && chmod 700 /run/nas-collection
 COPY deploy/collection-requirements.txt /app/collection-requirements.txt
+COPY deploy/jmcomic-requirements.txt /app/jmcomic-requirements.txt
+# 漫画适配器使用独立环境和完整哈希锁，仅安装基础依赖，不安装上游插件扩展。
+RUN python3 -m venv /opt/jmcomic \
+    && /opt/jmcomic/bin/pip install --no-cache-dir --only-binary=:all: --no-deps --require-hashes -r /app/jmcomic-requirements.txt \
+    && /opt/jmcomic/bin/pip check
 RUN /opt/collection/bin/pip install --no-cache-dir --no-deps --require-hashes -r /app/collection-requirements.txt \
     && dpkg-query -W ca-certificates python3 ffmpeg rclone tini > /app/system-tools.txt \
     && /opt/collection/bin/yt-dlp --version > /app/yt-dlp-version.txt
 COPY --from=builder /out/nas-collection-worker /app/nas-collection-worker
+COPY docs/third-party-notices.md /app/third-party-notices.md
 # 默认仅在容器内监听，Compose 不发布宿主控制端口。
 ENV NAS_COLLECTION_WORKER_ADDR=:8092
 # 私有作业状态、隔离暂存和不可变产物的持久根。
@@ -39,5 +45,9 @@ ENV NAS_COLLECTION_WORKER_YTDLP=/opt/collection/bin/yt-dlp
 ENV NAS_COLLECTION_WORKER_RCLONE=/usr/bin/rclone
 # 视频合并/提取音频使用镜像中的固定工具。
 ENV NAS_COLLECTION_WORKER_FFMPEG=/usr/bin/ffmpeg
+# 镜像包含已锁定依赖，因此默认启用漫画能力；原生执行端仍默认关闭。
+ENV NAS_COLLECTION_WORKER_JMCOMIC_ENABLED=true
+# 漫画能力只运行独立虚拟环境内的固定解释器。
+ENV NAS_COLLECTION_WORKER_JMCOMIC_PYTHON=/opt/jmcomic/bin/python
 USER 1000:1000
 ENTRYPOINT ["/usr/bin/tini", "--", "/app/nas-collection-worker"]

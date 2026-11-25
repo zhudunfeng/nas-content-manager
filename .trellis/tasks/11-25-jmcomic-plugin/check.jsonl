@@ -1,0 +1,5 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/spec/backend/collection-contract.md", "reason": "检查安全获取与精确入库"}
+{"file": ".trellis/tasks/11-25-jmcomic-plugin/research/integration-architecture.md", "reason": "跨层DTO与兼容边界"}
+{"file": ".trellis/spec/backend/jmcomic-contract.md", "reason": "核对漫画桥接与跨层边界"}

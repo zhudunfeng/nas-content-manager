@@ -1,6 +1,19 @@
 # 功能验证记录
 
-最新验证日期：**2026-11-23（Asia/Shanghai）**。各章节保留相应实施日期和历史结果。本记录区分已经执行的检查与目标设备待验事项，不将编译成功、稀疏文件或短视频样本视为完整 NAS 性能验收。
+最新验证日期：**2026-11-25（Asia/Shanghai）**。各章节保留相应实施日期和历史结果。本记录区分已经执行的检查与目标设备待验事项，不将编译成功、稀疏文件或短视频样本视为完整 NAS 性能验收。
+
+## JMComic 漫画插件验证（2026-11-25）
+
+新增固定的可选 `jmcomic` 来源，复用原资源收集任务、发布、漫画库扫描和阅读，不改变 schema 6。本轮没有执行真实漫画站点搜索或下载，没有运行 Docker 或连接真实 NAS。
+
+- `scripts/verify_jmcomic.py` 使用真实 Go 主服务与 worker、明确的上游协议样例，**66 项断言全部通过**。覆盖鉴权／同源、分页／空／错、参数白名单、元数据预览、固定漫画分类、稳定请求重试、两章四图发布入库及鉴权阅读、不完整／非图片产物隔离、失败重试、实际获取中的取消、重启、旧本地收集兼容、禁用／缺依赖／离线降级。协议样例没有执行真实 Python 桥接。
+- 真实安装 `jmcomic==2.7.12` 及固定依赖，`pip check` 通过；`scripts/verify_jmcomic_bridge.py` 保留实际选项、API 搜索逻辑、下载器及图像转换，只替换域名发现、外部元数据、搜索响应和图片传输。**11 个离线检查点通过**，包括分页、数字搜索重定向、两章四图的 3 JPEG／1 GIF 解码、部分失败、文件数／字节预算拒绝、脱敏协议与显式代理绑定；真实网络调用为 0。真实 Go worker 使用真实虚拟环境和脱敏子进程环境完成探测，能力返回 `available=true,version=2.7.12`。
+- 独立传输补验使用真实 curl-cffi、生产 `runTool` 环境及认证公网代理：随机端口 HTTP／HTTPS 哨兵请求被端口白名单拒绝，哨兵连接数为 0；标准 80／443 环回请求被 IP 策略拒绝，另有 6 项 `publicDial` 私网地址拒绝断言通过。随机端口哨兵本身不作为单独的 IP 拒绝证据。没有公网请求；证据在 `.runtime/verify/jmcomic-real-proxy-20261125T012540798742400/report.json`，临时测试和自有代理／哨兵／子进程均已清理。
+- `scripts/verify_jmcomic_browser.py` **38 项断言通过**：375／768／1024／1440 px、明暗主题、内边距和无横向溢出、Escape焦点恢复、来源类型切换清理、分页／空／错、编号变更清除预览、固定漫画目标、任务跳转、实际入库图片阅读翻页。迟到搜索隔离通过；第1000页、长文本、过期和未知提交重试使用明确标注的 UI 可控响应，不能当作后端证据。浏览器无未处理页面异常。
+- 独立 Trellis 复核修复来源表单隐藏字段残留、第1000页越界导航、布尔配置范围不符，并通过输入边界、历史 JSON 字节快照和身份摘要绑定三组临时行为回归。生成的临时单元测试已清除；保留可重复的集成脚本。最终空套件 `go test ./...` 只计编译。
+- Go vet、包编译、Windows 主服务与 worker 构建、Vue 严格 typecheck 和 Vite 生产构建通过；无 CGO 的 Linux amd64／arm64 主服务与 worker 交叉编译通过。Linux CPython 3.11 两种架构的依赖 wheel 解析与完整哈希下载通过，未在 Linux 运行依赖或二进制。最终 Windows 二进制的原回归 **core 52／collection 27／release 83 项**全部通过；core 包含 5 GiB 稀疏文件的偏移协议检查，不能代表真实性能。结果清单在 `.runtime/verify/baseline-20261125T011700441856Z-12dba1/run-manifest.json`。初次基线因缺少显式 FFmpeg 路径被标记 blocked，补齐参数后重新执行，没有把该次阻塞当作通过。
+
+使用与启用步骤见 [JMComic 部署说明](jmcomic.md)。依赖与桥接证据、独立审查及浏览器复现见[后端验证](../.trellis/tasks/11-25-jmcomic-plugin/research/backend-validation.md)、[质量报告](../.trellis/tasks/11-25-jmcomic-plugin/research/quality-check.md)和[页面验收](../.trellis/tasks/11-25-jmcomic-plugin/research/browser-validation.md)。真实站点可访问性、接口变化、Docker 镜像构建／启动、NAS 权限与存储网络仍待目标环境验收。隔离浏览器与样例服务已关闭，不自动提交或归档。
 
 ## 搜种扩展验证（2026-11-18）
 

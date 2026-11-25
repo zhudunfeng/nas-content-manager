@@ -127,7 +127,7 @@ func (a *App) collectionValidateFiles(root string, relativeDir string, files []C
 	var total int64
 	for _, file := range files {
 		safe, e := collectionRelative(file.Path)
-		supported := matchesType(contentType, safe)
+		supported := matchesType(contentType, safe) || contentType == "comic" && isImage(safe)
 		if contentType == "" {
 			for _, kind := range []string{"video", "music", "image", "comic", "novel"} {
 				supported = supported || matchesType(kind, safe)

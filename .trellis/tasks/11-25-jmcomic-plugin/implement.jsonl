@@ -1,0 +1,7 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/backend/collection-contract.md", "reason": "复用收集执行与发布入库契约"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "现有弹窗与UI契约"}
+{"file": ".trellis/tasks/11-25-jmcomic-plugin/research/jmcomic-upstream.md", "reason": "锁定上游真实API与依赖协议"}
+{"file": ".trellis/spec/backend/jmcomic-contract.md", "reason": "固定漫画插件API、依赖、图片完整性与兼容契约"}

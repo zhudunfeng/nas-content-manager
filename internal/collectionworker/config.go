@@ -26,6 +26,8 @@ type Config struct {
 	YTDLP            string         // NAS_COLLECTION_WORKER_YTDLP：受信yt-dlp绝对路径或固定工具名，默认yt-dlp。
 	Rclone           string         // NAS_COLLECTION_WORKER_RCLONE：受信rclone绝对路径或固定工具名，默认rclone。
 	FFmpeg           string         // NAS_COLLECTION_WORKER_FFMPEG：受信ffmpeg绝对路径或固定工具名，默认ffmpeg。
+	JMComicEnabled   bool           // NAS_COLLECTION_WORKER_JMCOMIC_ENABLED：显式启用固定漫画插件，原生默认false。
+	JMComicPython    string         // NAS_COLLECTION_WORKER_JMCOMIC_PYTHON：安装固定依赖的受信Python，默认python3，Windows默认python。
 	MaxBytes         int64          // NAS_COLLECTION_WORKER_MAX_BYTES：单任务字节上限，默认20GiB。
 	MaxFiles         int            // NAS_COLLECTION_WORKER_MAX_FILES：单任务文件数上限，默认1000。
 	MinFreeMB        int64          // NAS_COLLECTION_WORKER_MIN_FREE_MB：磁盘保留MiB，默认512。
@@ -54,6 +56,19 @@ func LoadConfig() (Config, error) {
 		return c, fmt.Errorf("必须配置获取服务专用令牌文件")
 	}
 	var err error
+	switch env("NAS_COLLECTION_WORKER_JMCOMIC_ENABLED", "false") {
+	case "true":
+		c.JMComicEnabled = true
+	case "false":
+		c.JMComicEnabled = false
+	default:
+		return c, fmt.Errorf("NAS_COLLECTION_WORKER_JMCOMIC_ENABLED 必须为true或false")
+	}
+	python := "python3"
+	if runtime.GOOS == "windows" {
+		python = "python"
+	}
+	c.JMComicPython = env("NAS_COLLECTION_WORKER_JMCOMIC_PYTHON", python)
 	for _, field := range []*string{&c.DataDir, &c.TokenFile} {
 		*field, err = filepath.Abs(*field)
 		if err != nil {

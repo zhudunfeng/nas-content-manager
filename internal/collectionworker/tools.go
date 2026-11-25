@@ -128,6 +128,9 @@ func (s *Service) runTool(ctx context.Context, executable string, args []string,
 
 // validateRequest 规范化固定业务输入并确认来源预算，不执行下载或复制。
 func (s *Service) validateRequest(input *contract.PreviewRequest) error {
+	if input.Kind != "jmcomic" && input.AlbumID != "" {
+		return errors.New("漫画编号只能用于JMComic插件")
+	}
 	if input.MaxBytes == 0 {
 		input.MaxBytes = s.config.MaxBytes
 	}
@@ -138,6 +141,11 @@ func (s *Service) validateRequest(input *contract.PreviewRequest) error {
 		return errors.New("获取预算超过执行端限制")
 	}
 	switch input.Kind {
+	case "jmcomic":
+		if !validJMComicAlbumID(input.AlbumID) || input.URL != "" || input.SourceID != "" || input.Path != "" || (input.Profile != "" && input.Profile != "comic") {
+			return errors.New("漫画获取仅接受正整数漫画编号和漫画输出")
+		}
+		input.Profile = "comic"
 	case "web":
 		if input.SourceID != "" || input.Path != "" {
 			return errors.New("网页获取不能携带文件来源参数")
@@ -220,6 +228,9 @@ func (s *Service) previewHTTP(w http.ResponseWriter, r *http.Request) {
 // preview 根据固定来源类型探测元数据，不自动获取远程文件。
 func (s *Service) preview(ctx context.Context, input contract.PreviewRequest) (contract.Preview, error) {
 	result := contract.Preview{Files: []contract.File{}, Formats: []contract.Format{}}
+	if input.Kind == "jmcomic" {
+		return s.previewJMComic(ctx, input)
+	}
 	if input.Kind == "web" {
 		return s.previewWeb(ctx, input)
 	}
@@ -411,6 +422,17 @@ func (s *Service) acquire(ctx context.Context, saved savedOperation) (files []co
 		}
 	}()
 	switch input.Kind {
+	case "jmcomic":
+		current, err := s.previewJMComic(ctx, requestPreview(input))
+		if err != nil {
+			return nil, err
+		}
+		if saved.Preview.Identity != current.Identity {
+			return nil, errors.New("漫画章节或页数已改变，请重新预览")
+		}
+		if err = s.fetchJMComic(ctx, input, target, saved.Preview.Identity); err != nil {
+			return nil, err
+		}
 	case "local":
 		src, _ := s.source(input.Kind, input.SourceID)
 		current, err := localFiles(ctx, src, input.Path, input.MaxBytes, input.MaxFiles)

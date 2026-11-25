@@ -11,6 +11,7 @@ interface Props {
   /** 当前可选择的媒体库。 */ libraries: Library[]
   /** 提交中锁定目标，避免改变幂等意图。 */ disabled?: boolean
   /** 网页输出固定对应视频或音乐分类。 */ fixedType?: boolean
+  /** 固定媒体分类时使用的业务说明。 */ fixedTypeHint?: string
 }
 const props = defineProps<Props>()
 const emit = defineEmits<{ 'update:contentType': [value: ContentType]; 'update:createLibrary': [value: boolean]; 'update:libraryId': [value: number] }>()
@@ -38,7 +39,7 @@ function changeCreate(event: Event): void {
   <fieldset class="collection-target" :disabled="disabled">
     <legend>入库目标</legend>
     <div class="collection-field-grid">
-      <label>内容类型<select :value="contentType" :disabled="fixedType" @change="changeType"><option v-for="(label, key) in typeLabels" :key="key" :value="key">{{ label }}</option></select><span class="field-hint">{{ fixedType ? '网页输出已对应到视频或音乐；可在输出类型中更改。' : '决定媒体的索引和播放方式。' }}</span></label>
+      <label>内容类型<select :value="contentType" :disabled="fixedType" @change="changeType"><option v-for="(label, key) in typeLabels" :key="key" :value="key">{{ label }}</option></select><span class="field-hint">{{ fixedType ? fixedTypeHint || '网页输出已对应到视频或音乐；可在输出类型中更改。' : '决定媒体的索引和播放方式。' }}</span></label>
       <label v-if="!createLibrary">已有媒体库<select :value="libraryId" required @change="changeLibrary"><option :value="0" disabled>请选择同类媒体库</option><option v-for="library in matchingLibraries" :key="library.id" :value="library.id">{{ library.name }}</option></select><span class="field-hint">只显示当前内容类型的媒体库。</span></label>
     </div>
     <label class="collection-check"><input type="checkbox" :checked="createLibrary" @change="changeCreate" /><span>创建独立媒体库<span class="field-hint">由服务端按收集目录创建并扫描；已有库路径需符合当前导入方式。</span></span></label>
