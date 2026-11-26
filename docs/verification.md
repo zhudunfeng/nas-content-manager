@@ -603,6 +603,15 @@ HLS 解码时长下界容差为 `max(0.5 秒, EXTINF 总时长的 2%)`，只能�
 最终高级协议证据为 `.runtime/verify/jmcomic-advanced-20261125T073227515799Z-1ec0d7/`；原漫画、UAV 与 baseline 分别为 `.runtime/verify/jmadvanced-final-{jmcomic,uav,baseline}-20261125-1/`。早期 fixture 格式、Windows 快照替换冲突及辅助工具路径失败均保留并说明修复，未混入最终通过数量。真实公网站点、账号、Docker、Linux 运行及物理 NAS 未实测；账号／Cookie／收藏夹、PDF／ZIP 与任意上游插件仍未开放。本轮自有服务和浏览器已关闭，临时单元测试源码已删除，任务进入 review；未自动提交、部署或归档。
 
 
+## 2026-11-26 Windows 程序同级 .env 配置
+
+Windows 桌面现在读取真实 `栖库.exe` 同级的可选 UTF-8 `.env`。明确 CLI > 进程环境变量（按存在性，包含空值）> `.env` > 保存配置 > 默认值。桌面配置、BT、共享应用与托管 worker 使用同一启动快照，不修改全局环境；程序内重检不重新读取文件。托管 worker 允许项与固定路径、Docker 空 env-file 合同保持不变。Windows 专用源码示例 `.env.windows.example` 在发行包中命名为 `.env.example`，不附带活动 `.env`。
+
+- 临时 Go 行为测试 5 组（含 24 个解析子用例）通过，覆盖有界解析、空值/大小写优先、快照独立、app 与 v1 迁移、worker 允许项和路径边界。测试源码已精确删除；清理后全包 Go test/编译和 vet 通过。独立复核重复 vet/test、gofmt 和 Python AST，并独立重跑新 `.env` 集成 11 组全部通过。
+- 真实 Windows `.env` 集成 11 组通过：EXE/CWD/profile 定位、BOM/CRLF/中文路径、CLI/环境/文件优先、变量不展开、格式/编码/大小/文件锁错误、不泄露值、实际 app 参数、真实视频 worker 开关与配额、固定路径保护、内部快照和坏文件 status/quit。`true` 的本地缺依赖状态与 `false`/空值被区别验证，不将缺依赖宣称为视频已就绪。
+- 同批内嵌桌面 EXE 通过原桌面 20 类回归及 10 种图标，原托管 worker 11 类回归；发布边界 131 项及实际开发归档 24 份文件校验通过。原生慢流/空闲退出 0.112/0.028 秒。Windows 示例字节与源码一致、归档不含真实 `.env`；两脚本 AST 及 Linux amd64/arm64 的主服务、worker、桌面占位入口共 6 个交叉构建和桌面包编译通过。
+- 证据目录 `.runtime/verify/windows-dotenv/`；设计、实现和独立检查报告在 `.trellis/tasks/11-26-windows-dotenv/research/`。仅验证离线 Windows 应用/worker 与配置，不包含完整私有 Python/FFmpeg 依赖、真实站点、Docker 部署、Linux 实际运行或干净 VM 验收。未自动提交、部署或归档。
+
 ## 2026-11-26 Windows 程序同级用户配置目录
 
 Windows 桌面默认 profile 改为真实 `栖库.exe` 旁的 `qiku-data/profiles/native`，原生数据库默认位于其 `data`；Docker 本机 profile 独立，业务命名卷不变。显式目录与保存配置优先级不变；不自动迁移旧 C 盘数据，无权限时明确提示 `--profile`，不回退用户目录。升级保留完整 `qiku-data`，移动程序不改写已保存的绝对业务/媒体路径。

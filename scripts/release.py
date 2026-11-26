@@ -352,6 +352,8 @@ def build(args: argparse.Namespace) -> Path:
             if platform == "windows":
                 for name in ("bt.windows.example.json", "torrent-search.sources.example.json"):
                     shutil.copyfile(ROOT / name, stage / name)
+                # 发布 Windows 专用示例，不复制仓库内可能含秘密的真实 .env 或 Compose 示例。
+                shutil.copyfile(ROOT / ".env.windows.example", stage / ".env.example")
             for name in ("windows.md", "release.md", "collection.md", "components.md", "jmcomic.md", "jmcomic-windows.md", "uav.md", "uav-windows.md", "bt-windows.md", "engines.md", "downloads.md", "torrent-search.md"):
                 source = ROOT / "docs" / name
                 if source.is_file():
@@ -363,6 +365,7 @@ def build(args: argparse.Namespace) -> Path:
             if platform == "windows":
                 notice += "Windows用户配置、日志和本机组件状态默认保存在栖库.exe旁的qiku-data/profiles/模式；原生业务数据默认在该配置目录的data下，不再默认使用C盘用户目录。\n可用--profile指定可写配置目录，原生业务数据另可用--data-dir指定。程序目录只读时会明确报错，不自动回退用户目录。\n升级前退出并备份，原位置更新时保留整个qiku-data。旧版用户目录不自动迁移；移动程序不会自动改写已保存的绝对业务或媒体路径。\n"
                 notice += "Windows原生BT可连接已安装的qBittorrent与Jackett/Prowlarr，按docs/bt-windows.md配置bt.json后双击使用。\n"
+                notice += "可复制程序旁.env.example为.env，按中文说明配置视频/漫画开关及现有NAS_参数；命令行优先于进程环境变量，进程环境变量优先于.env。修改后从托盘退出再启动；升级保留.env，详情见docs/windows.md。\n"
             if args.development_without_tools:
                 notice += "注意：这是未携带FFmpeg的开发验证包，不是完整离线发布版。\n"
             notice += "已携带固定私有漫画运行时，可在桌面设置中启用托管获取。\n" if jmcomic_runtime else "这是漫画基础包；已发布漫画可读，在线获取需另配受信运行时或外接执行端。\n"

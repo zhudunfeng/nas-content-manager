@@ -114,7 +114,12 @@ func profilePath(o Options) (string, error) {
 
 // loadConfig 有界读取严格格式，损坏配置不覆盖、不偷偷生成新数据库。
 func loadConfig(profile string, mode string) (Config, bool, error) {
-	c := Config{SchemaVersion: 2, Mode: mode, DataDir: filepath.Join(profile, "data"), MediaRoots: []string{}, Port: 8090, AutoOpen: true, DockerContext: "desktop-linux", ImageManifest: "release-images.json", CollectionMode: defaultCollectionMode(mode)}
+	return loadConfigWithLookup(profile, mode, os.Getenv)
+}
+
+// loadConfigWithLookup 通过同一启动快照读取默认方式和旧版迁移配置，不改变全局环境。
+func loadConfigWithLookup(profile string, mode string, lookup func(string) string) (Config, bool, error) {
+	c := Config{SchemaVersion: 2, Mode: mode, DataDir: filepath.Join(profile, "data"), MediaRoots: []string{}, Port: 8090, AutoOpen: true, DockerContext: "desktop-linux", ImageManifest: "release-images.json", CollectionMode: defaultCollectionModeWithLookup(mode, lookup)}
 	file, err := os.Open(filepath.Join(profile, "desktop.json"))
 	if errors.Is(err, os.ErrNotExist) {
 		id := make([]byte, 16)
@@ -156,7 +161,7 @@ func loadConfig(profile string, mode string) (Config, bool, error) {
 		}
 		// 旧配置只保留显式外接语义，不能因程序升级自动接管获取服务。
 		saved.CollectionMode = "disabled"
-		if hasExternalCollectionEnvironment() {
+		if hasExternalCollectionEnvironmentWithLookup(lookup) {
 			saved.CollectionMode = "external"
 		}
 		saved.SchemaVersion = 2
@@ -180,13 +185,18 @@ func loadConfig(profile string, mode string) (Config, bool, error) {
 
 // applyOptions 按显式参数、环境变量、本机配置的顺序合并，不修改全局环境。
 func applyOptions(c Config, o Options) (Config, error) {
-	if value := os.Getenv("NAS_DATA_DIR"); value != "" {
+	return applyOptionsWithLookup(c, o, os.Getenv)
+}
+
+// applyOptionsWithLookup 按命令行、进程环境、文件快照和保存配置的顺序合并。
+func applyOptionsWithLookup(c Config, o Options, lookup func(string) string) (Config, error) {
+	if value := lookup("NAS_DATA_DIR"); value != "" {
 		c.DataDir = value
 	}
-	if value := os.Getenv("NAS_MEDIA_ROOTS"); value != "" {
+	if value := lookup("NAS_MEDIA_ROOTS"); value != "" {
 		c.MediaRoots = filepath.SplitList(value)
 	}
-	if value := os.Getenv("NAS_ADDR"); value != "" {
+	if value := lookup("NAS_ADDR"); value != "" {
 		host, port, err := net.SplitHostPort(value)
 		if err != nil || host != "127.0.0.1" {
 			return c, errors.New("桌面模式 NAS_ADDR 必须为 127.0.0.1:端口；局域网服务请使用原生 nas CLI")
@@ -211,7 +221,7 @@ func applyOptions(c Config, o Options) (Config, error) {
 	if o.ImageManifest != "" {
 		c.ImageManifest = o.ImageManifest
 	}
-	if value := os.Getenv("NAS_DESKTOP_COLLECTION_MODE"); value != "" {
+	if value := lookup("NAS_DESKTOP_COLLECTION_MODE"); value != "" {
 		c.CollectionMode = value
 	}
 	if o.CollectionMode != "" {

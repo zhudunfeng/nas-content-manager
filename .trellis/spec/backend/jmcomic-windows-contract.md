@@ -51,7 +51,9 @@ dependencies, accepts a script/command or selects a Python argument.
   must remain read-only.
 - New native profiles prefer explicit external configuration; otherwise select
   `managed` only when the adjacent worker and manifest are present. CLI overrides
-  `NAS_DESKTOP_COLLECTION_MODE`, which overrides saved mode. Docker cannot use
+  process `NAS_DESKTOP_COLLECTION_MODE`, which overrides executable-adjacent
+  `.env`, which overrides saved mode. The [cross-platform contract](./cross-platform-contract.md#windows-executable-adjacent-dotenv-source)
+  defines the immutable desktop source, explicit-empty semantics and worker allowlist. Docker cannot use
   native `managed` mode. Incomplete explicit external tuples must produce their
   original validation error, not be silently replaced by a managed connection.
 - Dedicated state is `<profile>/collection-managed/{owner.json,data,secrets,tmp}`;

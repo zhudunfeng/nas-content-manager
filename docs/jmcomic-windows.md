@@ -10,6 +10,10 @@ Windows 原生入口可托管独立获取 worker，由 worker 调用随包私有
 
 解压后保持整个程序目录结构。不要直接从 ZIP 运行，不要只复制 Python EXE 或把开发虚拟环境复制到另一台电脑充当运行包。默认 profile 位于程序目录下的 `qiku-data`，因此该目录需要可写；若程序目录只读，使用 `--profile` 指定可写位置。配置、下载、检查点、秘密与日志保存在 profile 中。
 
+## 程序同级配置
+
+可在 `栖库.exe` 同级 UTF-8 `.env` 中设置 `NAS_DESKTOP_COLLECTION_MODE=managed` 和 `NAS_COLLECTION_WORKER_JMCOMIC_ENABLED=true`。它们分别表示本机托管模式和漫画插件开关；需已有完整漫画运行时。高级可信 Python 覆盖使用 `NAS_COLLECTION_WORKER_JMCOMIC_PYTHON`，保持绝对路径。每个参数也可继续用进程环境变量配置，环境变量优先于 `.env`；命令行仍最高。修改后从托盘退出再启动，重检不重新读文件。语法、示例与范围见 [Windows 配置说明](windows.md#程序同级-env-配置)。
+
 ## 启用与使用
 
 1. 解压可信完整漫画包，核对发行摘要，然后运行 `栖库.exe`。

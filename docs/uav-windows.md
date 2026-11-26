@@ -15,6 +15,19 @@ Windows 原生桌面入口通过同一个托管获取 worker 调用独立 UAV �
 
 托盘「本机获取组件」显示总体状态，漫画和视频分别显示「已就绪」「依赖未就绪」或「未配置」；worker 整体失败时显示「未检测」。操作为「启用本机资源获取」「停用本机资源获取」「重新检测获取组件」。关闭浏览器不结束后台服务；升级前从托盘退出，等待本实例 worker、Python、下载器及 FFmpeg 完成回收，再成套替换程序和运行时。不会按名称结束其他 Python 或接管外接服务。
 
+## 在 .env 中启用视频插件
+
+在 `栖库.exe` 同级创建 UTF-8 `.env`，或复制发行包 `.env.example` 后改名，加入：
+
+```dotenv
+# 选择本机托管获取，适用于已配齐运行时的 Windows 原生包。
+NAS_DESKTOP_COLLECTION_MODE=managed
+# 启用视频插件。
+NAS_COLLECTION_WORKER_UAV_ENABLED=true
+```
+
+保存后从托盘退出再启动。命令行参数优先于进程环境变量，进程环境变量优先于 `.env`；同名环境变量存在时文件值不会覆盖它。文件也可配置 `NAS_COLLECTION_WORKER_UAV_PYTHON` 和既有 worker 配额。托管清单、下载器、FFmpeg、地址和状态目录仍由桌面固定，开启开关不会安装缺失依赖。完整语法、空值处理与配置范围见 [程序同级配置](windows.md#程序同级-env-配置)。独立 `nas-collection-worker.exe --check-uav` 只读取环境变量，不自动读取桌面 `.env`。
+
 ## 模式与本地诊断
 
 ```powershell

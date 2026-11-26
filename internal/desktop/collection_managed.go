@@ -109,6 +109,11 @@ func prepareCollectionDirectory(profile string, cfg Config, programDir string) (
 
 // collectionEnvironment 仅传递受控配置快照，托管模式绝不从用户 PATH 搜索 Python。
 func collectionEnvironment(programDir string, root string) ([]string, []string, error) {
+	return collectionEnvironmentWithLookup(programDir, root, os.LookupEnv)
+}
+
+// collectionEnvironmentWithLookup 只将快照中已允许的配置交给子进程，固定隔离路径不可覆盖。
+func collectionEnvironmentWithLookup(programDir string, root string, lookup func(string) (string, bool)) ([]string, []string, error) {
 	values := map[string]string{
 		"PATH": filepath.Join(programDir, "tools"),
 		"TEMP": filepath.Join(root, "tmp"), "TMP": filepath.Join(root, "tmp"),
@@ -119,7 +124,7 @@ func collectionEnvironment(programDir string, root string) ([]string, []string, 
 		"NAS_COLLECTION_WORKER_FFMPEG":     filepath.Join(programDir, "tools", "ffmpeg.exe"),
 	}
 	for _, key := range []string{"SystemRoot", "WINDIR", "SYSTEMDRIVE", "PROCESSOR_ARCHITECTURE", "NUMBER_OF_PROCESSORS", "NAS_COLLECTION_WORKER_MAX_BYTES", "NAS_COLLECTION_WORKER_MAX_FILES", "NAS_COLLECTION_WORKER_MIN_FREE_MB", "NAS_COLLECTION_WORKER_MAX_CONCURRENT"} {
-		if value := os.Getenv(key); value != "" {
+		if value, _ := lookup(key); value != "" {
 			values[key] = value
 		}
 	}
@@ -127,9 +132,9 @@ func collectionEnvironment(programDir string, root string) ([]string, []string, 
 	for _, plugin := range collectionPlugins {
 		manifest := filepath.Join(programDir, plugin.manifest)
 		_, manifestErr := os.Lstat(manifest)
-		python := os.Getenv(plugin.prefix + "_PYTHON")
+		python, _ := lookup(plugin.prefix + "_PYTHON")
 		enabled := !errors.Is(manifestErr, os.ErrNotExist) || python != ""
-		if override, present := os.LookupEnv(plugin.prefix + "_ENABLED"); present {
+		if override, present := lookup(plugin.prefix + "_ENABLED"); present {
 			if override != "true" && override != "false" {
 				return nil, nil, errors.New("本机" + plugin.name + "插件启用配置必须为true或false")
 			}
@@ -155,15 +160,10 @@ func collectionEnvironment(programDir string, root string) ([]string, []string, 
 
 // startManagedCollection 建立私有继承管道，核验真实绑定和本实例目录后才返回连接。
 func (c *controller) startManagedCollection(ctx context.Context, cfg Config) (*managedCollection, error) {
-	path, err := os.Executable()
-	if err != nil {
-		return nil, errors.New("无法定位本机程序目录")
-	}
-	path, err = filepath.EvalSymlinks(path)
+	programDir, err := executableDirectory()
 	if err != nil {
 		return nil, errors.New("无法核验本机程序目录")
 	}
-	programDir := filepath.Dir(path)
 	worker := filepath.Join(programDir, "nas-collection-worker.exe")
 	info, err := os.Lstat(worker)
 	if err != nil || !info.Mode().IsRegular() {
@@ -173,7 +173,7 @@ func (c *controller) startManagedCollection(ctx context.Context, cfg Config) (*m
 	if err != nil {
 		return nil, err
 	}
-	environment, expected, err := collectionEnvironment(programDir, root)
+	environment, expected, err := collectionEnvironmentWithLookup(programDir, root, c.environment.lookup)
 	if err != nil {
 		return nil, err
 	}

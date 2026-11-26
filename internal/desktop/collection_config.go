@@ -35,18 +35,27 @@ func validControlAction(action string) bool {
 
 // hasExternalCollectionEnvironment 保留既有外接配置，包括需要明确报错的不完整配置。
 func hasExternalCollectionEnvironment() bool {
-	return os.Getenv("NAS_COLLECTION_WORKER_URL") != "" || os.Getenv("NAS_COLLECTION_WORKER_TOKEN_FILE") != "" || os.Getenv("NAS_COLLECTION_READ_ROOT") != ""
+	return hasExternalCollectionEnvironmentWithLookup(os.Getenv)
+}
+
+// hasExternalCollectionEnvironmentWithLookup 从合并后的来源保留显式外接与不完整配置语义。
+func hasExternalCollectionEnvironmentWithLookup(lookup func(string) string) bool {
+	return lookup("NAS_COLLECTION_WORKER_URL") != "" || lookup("NAS_COLLECTION_WORKER_TOKEN_FILE") != "" || lookup("NAS_COLLECTION_READ_ROOT") != ""
 }
 
 // defaultCollectionMode 仅为新配置选择默认方式，完整随包运行时可直接托管。
 func defaultCollectionMode(mode string) string {
-	if hasExternalCollectionEnvironment() {
+	return defaultCollectionModeWithLookup(mode, os.Getenv)
+}
+
+// defaultCollectionModeWithLookup 使用同一启动快照推导新配置的默认获取方式。
+func defaultCollectionModeWithLookup(mode string, lookup func(string) string) string {
+	if hasExternalCollectionEnvironmentWithLookup(lookup) {
 		return "external"
 	}
 	if mode == "native" {
-		path, err := os.Executable()
+		dir, err := executableDirectory()
 		if err == nil {
-			dir := filepath.Dir(path)
 			worker, workerErr := os.Stat(filepath.Join(dir, "nas-collection-worker.exe"))
 			if workerErr == nil && worker.Mode().IsRegular() {
 				for _, plugin := range collectionPlugins {

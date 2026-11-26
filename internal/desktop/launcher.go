@@ -47,6 +47,7 @@ type controller struct {
 	config         Config              // 已保存的当前启动配置。
 	profile        string              // 当前模式的本机配置根。
 	options        Options             // 本次交互与诊断参数。
+	environment    desktopEnvironment  // 进程启动时的环境与程序同级文件快照，内部重启不重新读取。
 	logger         *slog.Logger        // 有界中文日志。
 	reply          controlReply        // 供托盘和本机 IPC 读取的状态。
 	commands       chan desktopCommand // 有界串行生命周期指令。
@@ -83,10 +84,14 @@ func Main(args []string) int {
 		}
 		return 0
 	}
+	environment, err := loadDesktopEnvironment()
+	if err != nil {
+		return reportFailure(o.Headless || o.PrintConfig, err)
+	}
 	if o.PrintConfig {
-		c, _, configErr := loadConfig(profile, o.Mode)
+		c, _, configErr := loadConfigWithLookup(profile, o.Mode, environment.get)
 		if configErr == nil {
-			c, configErr = applyOptions(c, o)
+			c, configErr = applyOptionsWithLookup(c, o, environment.get)
 		}
 		if configErr != nil {
 			return reportFailure(true, configErr)
@@ -143,9 +148,9 @@ func Main(args []string) int {
 		return reportFailure(o.Headless, err)
 	}
 	defer stopIPC()
-	c, fresh, err := loadConfig(profile, o.Mode)
+	c, fresh, err := loadConfigWithLookup(profile, o.Mode, environment.get)
 	if err == nil {
-		c, err = applyOptions(c, o)
+		c, err = applyOptionsWithLookup(c, o, environment.get)
 	}
 	if err != nil {
 		return reportFailure(o.Headless, err)
@@ -192,8 +197,11 @@ func Main(args []string) int {
 		return reportFailure(o.Headless, errors.New("无法创建本机诊断日志"))
 	}
 	defer closer.Close()
+	if environment.dotenvLoaded {
+		logger.Info("已加载程序同级 .env 配置，已有环境变量优先；修改后需退出程序重新启动", "配置项数", environment.dotenvCount)
+	}
 	logger.Info("本机用户数据目录已确定", "mode", c.Mode, "profile", profile, "dataDir", c.DataDir)
-	ctrl := &controller{config: c, profile: profile, options: o, logger: logger, commands: make(chan desktopCommand, 4), cancel: cancel, reply: controlReply{State: "starting", Mode: c.Mode}}
+	ctrl := &controller{config: c, profile: profile, options: o, environment: environment, logger: logger, commands: make(chan desktopCommand, 4), cancel: cancel, reply: controlReply{State: "starting", Mode: c.Mode}}
 	bridgeMu.Lock()
 	active = ctrl
 	bridgeMu.Unlock()
@@ -398,7 +406,7 @@ func (c *controller) start(ctx context.Context) error {
 	if cfg.Mode == "docker" {
 		return c.startDocker(ctx, cfg)
 	}
-	btValues, err := loadNativeBTValues(c.profile, os.Getenv)
+	btValues, err := loadNativeBTValues(c.profile, c.environment.get)
 	if err != nil {
 		return err
 	}
@@ -424,7 +432,7 @@ func (c *controller) start(ctx context.Context) error {
 		if value, ok := values[key]; ok {
 			return value
 		}
-		return os.Getenv(key)
+		return c.environment.get(key)
 	})
 	if err != nil {
 		_ = listener.Close()
