@@ -84,8 +84,8 @@ def relative_path(value: Any) -> str:
     path = PurePosixPath(value)
     if path.is_absolute() or any(part in ("", ".", "..") for part in value.split("/")):
         raise ValueError("包内路径不能包含绝对路径或上级目录")
-    reserved = {"CON", "PRN", "AUX", "NUL", *(f"COM{number}" for number in range(1, 10)), *(f"LPT{number}" for number in range(1, 10))}
-    if any(part[-1] in " ." or part.split(".", 1)[0].upper() in reserved for part in path.parts):
+    reserved = {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$", "CLOCK$", *(f"COM{number}" for number in "123456789¹²³"), *(f"LPT{number}" for number in "123456789¹²³")}
+    if any(part[-1] in " ." or part.split(".", 1)[0].rstrip(" .").upper() in reserved for part in path.parts):
         raise ValueError("包内路径不能包含Windows设备名或尾部点、空格")
     return path.as_posix()
 
@@ -244,7 +244,7 @@ def archive_tree(stage: Path, destination: Path, windows: bool) -> None:
                 info.uid = info.gid = 0
                 info.uname = info.gname = ""
                 info.mtime = 0
-                info.mode = 0o755 if path.name in ("nas", "start.sh", "ffmpeg", "ffprobe") else 0o644
+                info.mode = 0o755 if path.name in ("nas", "nas-collection-worker", "start.sh", "ffmpeg", "ffprobe") else 0o644
                 with path.open("rb") as source:
                     archive.addfile(info, source)
 
@@ -260,6 +260,13 @@ def build(args: argparse.Namespace) -> Path:
         raise ValueError("完整发布需要 --tools-manifest；仅开发验证可明确使用 --development-without-tools")
     if args.tools_manifest and args.development_without_tools:
         raise ValueError("完整工具清单与缺少工具的开发包标识不能同时使用")
+    runtime_manifest = getattr(args, "jmcomic_runtime_manifest", None)
+    if runtime_manifest:
+        from jmcomic_runtime import verify as verify_runtime
+
+        if args.target != "windows-amd64":
+            raise ValueError("随包漫画运行时目前仅支持Windows x64")
+        verify_runtime(Path(runtime_manifest).resolve())
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
     runtime = runtime_directory()
@@ -289,7 +296,7 @@ def build(args: argparse.Namespace) -> Path:
             go = str(local_go)
         if not go:
             raise ValueError("发布构建机缺少 Go，终端用户无需安装")
-        suffix = "-development" if args.development_without_tools else ""
+        suffix = ("-jmcomic" if runtime_manifest else "") + ("-development" if args.development_without_tools else "")
         package_name = f"qiku-{version}-{args.target}{suffix}"
         destination = output / (package_name + (".zip" if platform == "windows" else ".tar.gz"))
         if destination.exists():
@@ -300,27 +307,35 @@ def build(args: argparse.Namespace) -> Path:
             executable = "nas.exe" if platform == "windows" else "nas"
             command = [str(go), "build", "-buildvcs=false", "-trimpath", "-tags", "webembed", "-ldflags=-s -w", "-o", str(stage / executable), "./cmd/nas"]
             run(command, environment)
+            worker = "nas-collection-worker.exe" if platform == "windows" else "nas-collection-worker"
+            run([str(go), "build", "-buildvcs=false", "-trimpath", "-ldflags=-s -w", "-o", str(stage / worker), "./cmd/nas-collection-worker"], environment)
             if platform == "windows":
                 run([str(go), "build", "-buildvcs=false", "-trimpath", "-tags", "webembed", "-ldflags=-s -w -H=windowsgui", "-o", str(stage / "栖库.exe"), "./cmd/nas-desktop"], environment)
             else:
                 (stage / "start.sh").write_text('#!/bin/sh\n# 定位程序根并保留现有 NAS_* 环境配置。\nset -eu\napp_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\ncd "$app_dir"\nif [ -z "${NAS_MEDIA_ROOTS:-}" ]; then mkdir -p "$app_dir/media"; fi\nexec "$app_dir/nas" "$@"\n', encoding="utf-8", newline="\n")
             tools = install_tools(Path(args.tools_manifest).resolve(), args.target, stage) if args.tools_manifest else None
+            jmcomic_runtime = None
+            if runtime_manifest:
+                from jmcomic_runtime import install_runtime
+
+                jmcomic_runtime = install_runtime(Path(runtime_manifest).resolve(), args.target, stage)
             if args.images_manifest:
                 install_images(Path(args.images_manifest).resolve(), stage)
             for name in ("compose.desktop.yaml", "compose.desktop.collection.yaml", "compose.desktop.components.yaml"):
                 if not (ROOT / name).is_file():
                     raise ValueError(f"发布文件缺失：{name}")
                 shutil.copyfile(ROOT / name, stage / name)
-            for name in ("windows.md", "release.md", "collection.md", "components.md"):
+            for name in ("windows.md", "release.md", "collection.md", "components.md", "jmcomic.md", "jmcomic-windows.md"):
                 source = ROOT / "docs" / name
                 if source.is_file():
                     (stage / "docs").mkdir(exist_ok=True)
                     shutil.copyfile(source, stage / "docs" / name)
-            metadata = {"schemaVersion": 1, "version": version, "target": args.target, "developmentWithoutTools": bool(args.development_without_tools), "tools": tools}
+            metadata = {"schemaVersion": 2, "version": version, "target": args.target, "developmentWithoutTools": bool(args.development_without_tools), "tools": tools, "jmcomicRuntime": jmcomic_runtime}
             (stage / "release.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             notice = "Windows：双击栖库.exe。Linux：执行 ./start.sh。\n原生与容器配置数据独立；升级前退出旧版并备份。\nDocker完整模式需要Docker环境和release-images.json，不自动安装Docker/WSL。\n"
             if args.development_without_tools:
                 notice += "注意：这是未携带FFmpeg的开发验证包，不是完整离线发布版。\n"
+            notice += "已携带固定私有漫画运行时，可在桌面设置中启用托管获取。\n" if jmcomic_runtime else "这是漫画基础包；已发布漫画可读，在线获取需另配受信运行时或外接执行端。\n"
             (stage / "开始使用.txt").write_text(notice, encoding="utf-8")
             checksums = "".join(f"{digest(path)}  {path.relative_to(stage).as_posix()}\n" for path in sorted(stage.rglob("*")) if path.is_file())
             (stage / "checksums.sha256").write_text(checksums, encoding="utf-8", newline="\n")
@@ -340,6 +355,7 @@ def main() -> int:
     parser.add_argument("--target", choices=TARGETS, required=True, help="发布目标操作系统与CPU架构")
     parser.add_argument("--tools-manifest", help="含固定工具版本、每文件摘要、许可证和对应源码材料的JSON清单")
     parser.add_argument("--images-manifest", help="可选的固定应用/助手镜像清单，可含离线镜像归档")
+    parser.add_argument("--jmcomic-runtime-manifest", help="可选的已装配Windows x64私有漫画运行时jmcomic-runtime.json绝对路径")
     parser.add_argument("--output", default=str(ROOT / "bin/releases"), help="发布归档输出目录，默认bin/releases，不覆盖既有归档")
     parser.add_argument("--go", help="构建机Go可执行文件路径，默认优先PATH其次项目.tools工具链")
     parser.add_argument("--skip-web-build", action="store_true", help="复用已构建的web/dist；正式发布建议不使用")

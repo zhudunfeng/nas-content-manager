@@ -67,10 +67,16 @@ the empty value must not change hashes for historical operations.
 
 ### Worker environment and bridge
 
+Windows private-runtime and desktop ownership rules are specified in the
+[Windows JMComic contract](./jmcomic-windows-contract.md). In managed or
+manifest mode an explicit interpreter must be absolute and invalid explicit
+configuration never falls back; ordinary unmanaged CLI tool lookup remains compatible.
+
 | Environment key | Meaning / default |
 | --- | --- |
 | `NAS_COLLECTION_WORKER_JMCOMIC_ENABLED` | Strict `true`/`false`; native default `false`; dedicated Docker image `true` |
 | `NAS_COLLECTION_WORKER_JMCOMIC_PYTHON` | Trusted interpreter; native Linux `python3`, Windows `python`; Docker `/opt/jmcomic/bin/python` |
+| `NAS_COLLECTION_WORKER_JMCOMIC_RUNTIME_MANIFEST` | Optional canonical absolute private runtime manifest; managed mode never falls back to PATH |
 
 Pin `jmcomic==2.7.12` and its base dependency closure in
 `deploy/jmcomic-requirements.txt`, install with `--only-binary=:all: --no-deps
@@ -78,7 +84,7 @@ Pin `jmcomic==2.7.12` and its base dependency closure in
 The Docker image includes `docs/third-party-notices.md` with the upstream MIT
 notice. Native distribution does not silently install Python.
 
-The embedded bridge is invoked without a shell using `-I -B -c <fixed script>`.
+The embedded bridge is invoked without a shell using `-I -B -X utf8 -c <fixed script>`.
 Input is bounded JSON; output is one bounded strict JSON object. `probe` returns
 `{version:"2.7.12",protocolVersion:1}` without contacting the site. Other actions
 are `search`, `album`, and `download`; only the worker creates their parameters.

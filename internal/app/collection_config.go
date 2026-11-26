@@ -11,12 +11,13 @@ import (
 
 // CollectionConfig 约束可选执行端和服务器侧任务预算。
 type CollectionConfig struct {
-	WorkerURL string // NAS_COLLECTION_WORKER_URL：获取执行端地址；为空时仅支持 RSS 与本地只读登记。
-	TokenFile string // NAS_COLLECTION_WORKER_TOKEN_FILE：专用 Bearer 秘密文件，禁止回显内容。
-	ReadRoot  string // NAS_COLLECTION_READ_ROOT：执行端数据根的主服务只读映射，包含专属探针与隔离目录。
-	MaxBytes  int64  // NAS_COLLECTION_MAX_BYTES：单任务总字节上限，默认 20 GiB。
-	MaxFiles  int    // NAS_COLLECTION_MAX_FILES：单任务文件上限，默认 1000。
-	AllowHTTP bool   // NAS_COLLECTION_WORKER_ALLOW_HTTP：明确允许受限内网 HTTP，默认 false。
+	WorkerURL         string // NAS_COLLECTION_WORKER_URL：获取执行端地址；为空时仅支持 RSS 与本地只读登记。
+	TokenFile         string // NAS_COLLECTION_WORKER_TOKEN_FILE：专用 Bearer 秘密文件，禁止回显内容。
+	ReadRoot          string // NAS_COLLECTION_READ_ROOT：执行端数据根的主服务只读映射，包含专属探针与隔离目录。
+	MaxBytes          int64  // NAS_COLLECTION_MAX_BYTES：单任务总字节上限，默认 20 GiB。
+	MaxFiles          int    // NAS_COLLECTION_MAX_FILES：单任务文件上限，默认 1000。
+	AllowHTTP         bool   // NAS_COLLECTION_WORKER_ALLOW_HTTP：明确允许受限内网 HTTP，默认 false。
+	UnavailableReason string // 仅受信桌面启动快照提供的不可用中文原因，不从环境或浏览器接收。
 }
 
 // loadCollectionConfig 验证成组的执行端设置，不创建目录或读取凭据。

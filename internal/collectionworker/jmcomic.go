@@ -12,6 +12,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,6 +21,7 @@ import (
 	"time"
 
 	contract "nas-content-manager/internal/collectioncontract"
+	"nas-content-manager/internal/jmcomicruntime"
 )
 
 // jmcomicVersion 是经过源码与依赖协议核验的唯一兼容版本。
@@ -63,7 +65,40 @@ func (s *Service) initJMComic() {
 	if !s.config.JMComicEnabled {
 		return
 	}
-	s.jmcomicPython = toolPath(s.config.JMComicPython)
+	defer func() {
+		if s.jmcomicPython == "" {
+			s.logger.Warn("漫画插件未就绪，原有资源收集保持可用", "reason", s.jmcomicReason)
+		}
+	}()
+	s.jmcomicReason = "漫画插件依赖探测未通过，请检查锁定依赖版本、扩展库和证书文件"
+	// 显式解释器优先；无效配置必须报告，不能静默切换到包内或系统解释器。
+	explicit := s.config.JMComicPythonExplicit || filepath.IsAbs(s.config.JMComicPython)
+	if explicit {
+		if (s.config.Managed || s.config.JMComicRuntimeManifest != "") && !filepath.IsAbs(s.config.JMComicPython) {
+			s.jmcomicReason = "漫画插件的显式Python配置必须是受信绝对路径"
+			return
+		}
+		s.jmcomicPython = toolPath(s.config.JMComicPython)
+		if s.jmcomicPython == "" {
+			s.jmcomicReason = "漫画插件显式配置的Python不存在或不可执行，未改用其他解释器"
+		}
+	} else if s.config.JMComicRuntimeManifest != "" {
+		packaged, err := jmcomicruntime.Load(s.config.JMComicRuntimeManifest)
+		if err != nil {
+			s.jmcomicReason = "漫画插件私有运行时清单、架构、版本或文件完整性校验失败，请重新安装匹配的完整包"
+			return
+		}
+		s.jmcomicPython = packaged.Python
+	} else if s.config.Managed {
+		s.jmcomicReason = "漫画插件私有运行时缺失，请安装含JMComic的完整包或显式配置受信Python绝对路径"
+		return
+	} else {
+		// 普通控制台保留原有固定工具名兼容，桌面托管绝不进入此分支。
+		s.jmcomicPython = toolPath(s.config.JMComicPython)
+		if s.jmcomicPython == "" {
+			s.jmcomicReason = "漫画插件未找到可运行的Python，请配置受信解释器或私有运行时清单"
+		}
+	}
 	if s.jmcomicPython == "" {
 		return
 	}
@@ -75,10 +110,10 @@ func (s *Service) initJMComic() {
 	}
 	if s.callJMComic(ctx, jmcomicInput{Action: "probe"}, "", &probe) != nil || probe.Version != jmcomicVersion || probe.ProtocolVersion != 1 {
 		s.jmcomicPython = ""
-		s.logger.Warn("漫画插件依赖探测未通过，原有资源收集保持可用")
 		return
 	}
 	s.logger.Info("漫画搜索下载插件已启用", "version", jmcomicVersion)
+	s.jmcomicReason = ""
 }
 
 // jmcomicCapability 返回真实依赖状态，不把探测等同于站点可访问。
@@ -87,11 +122,41 @@ func (s *Service) jmcomicCapability() contract.Capability {
 	if !s.config.JMComicEnabled {
 		c.Reason = "漫画插件未启用，请配置NAS_COLLECTION_WORKER_JMCOMIC_ENABLED=true"
 	} else if !c.Available {
-		c.Reason = "漫画插件需要受信Python及锁定的jmcomic 2.7.12依赖，请检查执行端配置"
+		c.Reason = s.jmcomicReason
+		if c.Reason == "" {
+			c.Reason = "漫画插件需要受信Python及锁定的jmcomic 2.7.12依赖，请检查执行端配置"
+		}
 	} else {
 		c.Version = jmcomicVersion
 	}
 	return c
+}
+
+// CheckJMComic 只在私有临时目录探测本地固定依赖，不监听服务、不访问漫画站点或恢复任务。
+func CheckJMComic(ctx context.Context, config Config, logger *slog.Logger) (capability contract.Capability, result error) {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	if !config.JMComicEnabled {
+		service := &Service{config: config}
+		return service.jmcomicCapability(), nil
+	}
+	root, err := os.MkdirTemp("", "qiku-jmcomic-check-")
+	if err != nil {
+		return contract.Capability{}, errors.New("无法建立漫画诊断专用临时目录")
+	}
+	defer func() {
+		if os.RemoveAll(root) != nil {
+			result = errors.Join(result, errors.New("漫画诊断临时文件未能完整清理"))
+		}
+	}()
+	if err = os.Mkdir(filepath.Join(root, "private-state"), 0700); err != nil {
+		return contract.Capability{}, errors.New("无法建立漫画诊断状态目录")
+	}
+	config.DataDir = root
+	service := &Service{config: config, logger: logger, ctx: ctx}
+	service.initJMComic()
+	return service.jmcomicCapability(), nil
 }
 
 // validJMComicAlbumID 复用两端一致的编号白名单。
@@ -112,7 +177,7 @@ func (s *Service) callJMComic(ctx context.Context, input jmcomicInput, dir strin
 	if dir == "" {
 		dir = filepath.Join(s.config.DataDir, "private-state")
 	}
-	body, err := s.runTool(ctx, s.jmcomicPython, []string{"-I", "-B", "-c", jmcomicBridge}, dir, bytes.NewReader(data), 256<<10, input.Action != "probe")
+	body, err := s.runTool(ctx, s.jmcomicPython, []string{"-I", "-B", "-X", "utf8", "-c", jmcomicBridge}, dir, bytes.NewReader(data), 256<<10, input.Action != "probe")
 	if err != nil {
 		return err
 	}

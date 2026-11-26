@@ -1,12 +1,13 @@
 # Windows 双击启动与 Linux 兼容
 
-系统共用 Go/Vue/SQLite 业务内核。Windows 提供原生托盘入口，Linux 保留无桌面 CLI、环境参数和原有 Compose/bind 部署；当前数据库为顺序增量迁移后的 schema v3，保留原媒体和v2下载数据。
+系统共用 Go/Vue/SQLite 业务内核。Windows 提供原生托盘入口，Linux 保留无桌面 CLI、环境参数和原有 Compose/bind 部署；当前数据库为顺序增量迁移后的 schema 6，保留既有媒体、下载及用户数据。桌面配置的 schemaVersion 与数据库版本独立。
 
 ## 选择运行方式
 
 | 方式 | 适用场景 | 前提与数据位置 |
 | --- | --- | --- |
 | Windows 原生媒体 | 视频、图片、漫画、小说、音乐 | 完整发行 ZIP 内的 `栖库.exe`、内嵌网页与配套 `tools`，用户数据位于本机独立目录 |
+| Windows 原生 JMComic | 漫画搜索、选章和批量下载 | 含 `nas-collection-worker.exe` 与私有 Python 清单的完整漫画包，由桌面托管；不需要全局 Python，见 [Windows 漫画说明](jmcomic-windows.md) |
 | Windows Docker 完整模式 | 媒体与网页初始化托管 BT 引擎 | 已运行的 Docker Desktop Linux/amd64 容器环境、固定镜像清单；数据和下载位于 Linux 命名卷 |
 | Linux 原生 | 无桌面 NAS 或服务器 | 对应 amd64/arm64 归档，`./start.sh` 或 `./nas` |
 | Linux Compose | 延续现有部署 | 原 `compose.yaml` 与可选 `compose.engines.yaml`，现有路径和 UID/GID 约定保留 |
@@ -60,7 +61,7 @@ GUI 子系统的 EXE 不保证 PowerShell 显示标准输出；诊断结果同�
 
 | 字段 | 中文说明 |
 | --- | --- |
-| `schemaVersion` | 固定为 1，未知版本拒绝读取 |
+| `schemaVersion` | 当前为 2；v1 显式迁移并保留旧配置备份，未知版本拒绝读取 |
 | `instanceId` | 自动生成的 32 位十六进制安装身份，不要手动更改或跨配置复制 |
 | `mode` | `native` 或 `docker`，两种模式分开保存 |
 | `dataDir` | 原生模式的本地绝对业务目录，SQLite不使用UNC网络共享；Docker业务数据另存于实例命名卷 |
@@ -69,6 +70,7 @@ GUI 子系统的 EXE 不保证 PowerShell 显示标准输出；诊断结果同�
 | `autoOpen` | 真实就绪后是否自动打开浏览器 |
 | `dockerContext` | 明确选择的本机 Docker Desktop Linux context，默认 `desktop-linux` |
 | `imageManifest` | 固定镜像清单位置，相对路径相对程序目录解析 |
+| `collectionMode` | `disabled` 关闭、`managed` 本机托管、`external` 外接 worker；只影响原生获取服务，不删除已发布漫画或历史任务 |
 
 `--profile` 指定配置/日志根，`--data-dir` 仅指定业务数据根，含义不同。原有 `nas` CLI 不读取桌面配置，仍按原环境参数运行。
 

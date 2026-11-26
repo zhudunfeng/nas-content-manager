@@ -166,7 +166,7 @@ def main() -> None:
     source: str = (ROOT / "internal/collectionworker/jmcomic_bridge.py").read_text(encoding="utf-8")
     # 单独子进程不注入替身，真实核验生产使用的隔离启动参数和stdin/stdout协议。
     probe: subprocess.CompletedProcess[bytes] = subprocess.run(
-        [sys.executable, "-I", "-B", "-c", source], input=b'{"action":"probe"}',
+        [sys.executable, "-I", "-B", "-X", "utf8", "-c", source], input=b'{"action":"probe"}',
         cwd=BASE, capture_output=True, timeout=10, check=True)
     assert json.loads(probe.stdout) == {"version": "2.7.12", "protocolVersion": 1} and not probe.stderr
     curl_cffi.requests.Session.request = deny_network

@@ -1,0 +1,12 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "Windows JMComic runtime, lifecycle and packaging contracts"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "Windows JMComic runtime, lifecycle and packaging contracts"}
+{"file": ".trellis/spec/backend/collection-contract.md", "reason": "Windows JMComic runtime, lifecycle and packaging contracts"}
+{"file": ".trellis/spec/backend/jmcomic-contract.md", "reason": "Windows JMComic runtime, lifecycle and packaging contracts"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "Windows JMComic runtime, lifecycle and packaging contracts"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Windows JMComic runtime, lifecycle and packaging contracts"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Windows JMComic runtime, lifecycle and packaging contracts"}
+{"file": ".trellis\\tasks\\11-26-jmcomic-windows-native\\info.md", "reason": "Windows JMComic runtime, lifecycle and packaging contracts"}
+{"file": ".trellis\\tasks\\11-26-jmcomic-windows-native\\plan.md", "reason": "Windows JMComic runtime, lifecycle and packaging contracts"}
+{"file": ".trellis/spec/backend/jmcomic-windows-contract.md", "reason": "Windows private runtime and managed worker executable contract"}

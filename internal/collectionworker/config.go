@@ -18,23 +18,26 @@ import (
 
 // Config 是只能由受信任部署环境提供的执行端配置。
 type Config struct {
-	Addr             string         // NAS_COLLECTION_WORKER_ADDR：监听地址，默认127.0.0.1:8092，容器需显式配置:8092。
-	DataDir          string         // NAS_COLLECTION_WORKER_DATA_DIR：本实例专用持久根，默认collection-data。
-	TokenFile        string         // NAS_COLLECTION_WORKER_TOKEN_FILE：专用认证文件，不存在时生成随机令牌，必须显式设置。
-	SourcesFile      string         // NAS_COLLECTION_WORKER_SOURCES_FILE：授权来源JSON文件，缺失时使用空来源。
-	RcloneConfigFile string         // NAS_COLLECTION_WORKER_RCLONE_CONFIG_FILE：rclone私密配置，缺失时禁用远程复制。
-	YTDLP            string         // NAS_COLLECTION_WORKER_YTDLP：受信yt-dlp绝对路径或固定工具名，默认yt-dlp。
-	Rclone           string         // NAS_COLLECTION_WORKER_RCLONE：受信rclone绝对路径或固定工具名，默认rclone。
-	FFmpeg           string         // NAS_COLLECTION_WORKER_FFMPEG：受信ffmpeg绝对路径或固定工具名，默认ffmpeg。
-	JMComicEnabled   bool           // NAS_COLLECTION_WORKER_JMCOMIC_ENABLED：显式启用固定漫画插件，原生默认false。
-	JMComicPython    string         // NAS_COLLECTION_WORKER_JMCOMIC_PYTHON：安装固定依赖的受信Python，默认python3，Windows默认python。
-	UAVEnabled       bool           // NAS_COLLECTION_WORKER_UAV_ENABLED：显式启用固定视频插件，原生默认false。
-	UAVPython        string         // NAS_COLLECTION_WORKER_UAV_PYTHON：安装固定依赖的受信Python>=3.12，默认python3，Windows默认python。
-	MaxBytes         int64          // NAS_COLLECTION_WORKER_MAX_BYTES：单任务字节上限，默认20GiB。
-	MaxFiles         int            // NAS_COLLECTION_WORKER_MAX_FILES：单任务文件数上限，默认1000。
-	MinFreeMB        int64          // NAS_COLLECTION_WORKER_MIN_FREE_MB：磁盘保留MiB，默认512。
-	MaxConcurrent    int            // NAS_COLLECTION_WORKER_MAX_CONCURRENT：同时执行数，默认2，范围1–4。
-	Sources          []SourceConfig // 仅从受信配置文件读取的授权来源。
+	Addr                   string         // NAS_COLLECTION_WORKER_ADDR：监听地址，默认127.0.0.1:8092，容器需显式配置:8092。
+	DataDir                string         // NAS_COLLECTION_WORKER_DATA_DIR：本实例专用持久根，默认collection-data。
+	TokenFile              string         // NAS_COLLECTION_WORKER_TOKEN_FILE：专用认证文件，不存在时生成随机令牌，必须显式设置。
+	SourcesFile            string         // NAS_COLLECTION_WORKER_SOURCES_FILE：授权来源JSON文件，缺失时使用空来源。
+	RcloneConfigFile       string         // NAS_COLLECTION_WORKER_RCLONE_CONFIG_FILE：rclone私密配置，缺失时禁用远程复制。
+	YTDLP                  string         // NAS_COLLECTION_WORKER_YTDLP：受信yt-dlp绝对路径或固定工具名，默认yt-dlp。
+	Rclone                 string         // NAS_COLLECTION_WORKER_RCLONE：受信rclone绝对路径或固定工具名，默认rclone。
+	FFmpeg                 string         // NAS_COLLECTION_WORKER_FFMPEG：受信ffmpeg绝对路径或固定工具名，默认ffmpeg。
+	JMComicEnabled         bool           // NAS_COLLECTION_WORKER_JMCOMIC_ENABLED：显式启用固定漫画插件，原生默认false。
+	JMComicPython          string         // NAS_COLLECTION_WORKER_JMCOMIC_PYTHON：安装固定依赖的受信Python，默认python3，Windows默认python。
+	JMComicPythonExplicit  bool           // 标记管理员是否显式选择解释器；指定失败时禁止回退。
+	JMComicRuntimeManifest string         // NAS_COLLECTION_WORKER_JMCOMIC_RUNTIME_MANIFEST：随包运行时清单绝对路径，默认空；托管模式无显式解释器时必需。
+	Managed                bool           // 仅由托管CLI设置；禁止隐式搜索系统Python，不是可通过网络修改的配置。
+	UAVEnabled             bool           // NAS_COLLECTION_WORKER_UAV_ENABLED：显式启用固定视频插件，原生默认false。
+	UAVPython              string         // NAS_COLLECTION_WORKER_UAV_PYTHON：安装固定依赖的受信Python>=3.12，默认python3，Windows默认python。
+	MaxBytes               int64          // NAS_COLLECTION_WORKER_MAX_BYTES：单任务字节上限，默认20GiB。
+	MaxFiles               int            // NAS_COLLECTION_WORKER_MAX_FILES：单任务文件数上限，默认1000。
+	MinFreeMB              int64          // NAS_COLLECTION_WORKER_MIN_FREE_MB：磁盘保留MiB，默认512。
+	MaxConcurrent          int            // NAS_COLLECTION_WORKER_MAX_CONCURRENT：同时执行数，默认2，范围1–4。
+	Sources                []SourceConfig // 仅从受信配置文件读取的授权来源。
 }
 
 // SourceConfig 把公开来源标识绑定到管理员授权的真实根。
@@ -58,19 +61,13 @@ func LoadConfig() (Config, error) {
 		return c, fmt.Errorf("必须配置获取服务专用令牌文件")
 	}
 	var err error
-	switch env("NAS_COLLECTION_WORKER_JMCOMIC_ENABLED", "false") {
-	case "true":
-		c.JMComicEnabled = true
-	case "false":
-		c.JMComicEnabled = false
-	default:
-		return c, fmt.Errorf("NAS_COLLECTION_WORKER_JMCOMIC_ENABLED 必须为true或false")
+	if err = loadJMComicConfig(&c); err != nil {
+		return c, err
 	}
 	python := "python3"
 	if runtime.GOOS == "windows" {
 		python = "python"
 	}
-	c.JMComicPython = env("NAS_COLLECTION_WORKER_JMCOMIC_PYTHON", python)
 	switch env("NAS_COLLECTION_WORKER_UAV_ENABLED", "false") {
 	case "true":
 		c.UAVEnabled = true
@@ -174,6 +171,33 @@ func LoadConfig() (Config, error) {
 		}
 	}
 	return c, nil
+}
+
+// LoadJMComicConfig 仅读取本地漫画诊断参数，不要求令牌或读取其他来源配置。
+func LoadJMComicConfig() (Config, error) {
+	var config Config
+	err := loadJMComicConfig(&config)
+	return config, err
+}
+
+// loadJMComicConfig 共享漫画运行时参数，显式解释器和清单只在探测阶段解析。
+func loadJMComicConfig(config *Config) error {
+	switch env("NAS_COLLECTION_WORKER_JMCOMIC_ENABLED", "false") {
+	case "true":
+		config.JMComicEnabled = true
+	case "false":
+		config.JMComicEnabled = false
+	default:
+		return fmt.Errorf("NAS_COLLECTION_WORKER_JMCOMIC_ENABLED 必须为true或false")
+	}
+	python := "python3"
+	if runtime.GOOS == "windows" {
+		python = "python"
+	}
+	config.JMComicPythonExplicit = os.Getenv("NAS_COLLECTION_WORKER_JMCOMIC_PYTHON") != ""
+	config.JMComicPython = env("NAS_COLLECTION_WORKER_JMCOMIC_PYTHON", python)
+	config.JMComicRuntimeManifest = os.Getenv("NAS_COLLECTION_WORKER_JMCOMIC_RUNTIME_MANIFEST")
+	return nil
 }
 
 // env 返回已注明默认值的环境参数。

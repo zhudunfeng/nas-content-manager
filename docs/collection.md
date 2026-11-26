@@ -76,6 +76,8 @@ docker compose -f compose.yaml -f compose.engines.yaml -f compose.collection.yam
 
 ## 原生/Windows对接
 
+Windows 桌面提供关闭、本机托管与外接三种获取模式；含私有运行时的完整漫画包可由启动器管理 worker、专用令牌和实际回环端口，见 [Windows 原生漫画](jmcomic-windows.md)。下述手工连接方式仍用于独立主服务和外接 worker。
+
 原生主服务和worker必须能读到同一获取数据实体；两侧路径可以不同，配置`NAS_COLLECTION_READ_ROOT`指向主服务侧的只读映射。仅设置相同字符串路径不代表映射成立，连接检查会验证随机探针和执行端身份。
 
 worker可用`go build ./cmd/nas-collection-worker`单独构建。使用固定路径配置工具，不把用户输入作为命令参数模板。Windows启动器完整模式支持v2固定三镜像清单，自动叠加`compose.desktop.collection.yaml`并核验额外服务、卷、挂载、端口和镜像归属；旧v1清单保持两服务模式。生成方式见[发布流程](release.md)。

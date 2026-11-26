@@ -4,7 +4,7 @@
 
 ## 构建目标与输入
 
-`scripts/release.py` 支持 `windows-amd64`、`linux-amd64`、`linux-arm64`，构建网页并暂存到 `internal/webassets/dist`，以 `webembed` 标签内嵌。暂存有独占构建锁并在结束后清理；不要并发操作暂存目录。Linux/Windows 共用后端，Windows 包另含托盘 EXE。
+`scripts/release.py` 支持 `windows-amd64`、`linux-amd64`、`linux-arm64`，构建网页并暂存到 `internal/webassets/dist`，以 `webembed` 标签内嵌。暂存有独占构建锁并在结束后清理；不要并发操作暂存目录。Linux/Windows 共用后端，包中包含独立 worker，Windows 包另含托盘 EXE。
 
 构建机使用项目 Go 工具链、Node 锁文件和 Python 3.10+。Go 不在 PATH 时可用 `--go`，或仓库 `.tools/go/bin/go.exe`。完整离线发布还需每目标经过审核的 FFmpeg/ffprobe 工具材料清单；不同平台不能混用。
 
@@ -30,6 +30,25 @@ sh scripts/release-linux.sh --target linux-arm64 --tools-manifest /srv/release-i
 ```
 
 默认输出到 `bin/releases`，拒绝覆盖既有归档。ZIP/tar.gz 内有 `release.json`、`checksums.sha256`、中文使用说明及文档，归档旁另有 `.sha256`。文件排序、归档时间/所有者固定；可重现性仍要求相同源码、工具链和输入材料。
+
+## 可选 Windows 漫画运行时
+
+默认基础包不包含 JMComic 私有 Python。完整漫画包由维护者显式提供 `--jmcomic-runtime-manifest`；当前只接受 `windows-amd64`，不得将其作为 Linux 或 ARM64 运行时。装配流程及离线参数见 [Windows 原生漫画](jmcomic-windows.md#构建端装配)。
+
+```powershell
+# 装配至全新目录；依赖由哈希锁文件控制，终端不运行pip。
+python -B scripts/project_env.py -- python -B scripts/jmcomic_runtime.py assemble --output .runtime/jmcomic-runtime
+# 文件清单校验与实际依赖探测分开执行。
+python -B scripts/project_env.py -- python -B scripts/jmcomic_runtime.py verify .runtime/jmcomic-runtime/jmcomic-runtime.json --probe
+# 将运行时及许可成套纳入发行；媒体工具材料仍须独立审核。
+python -B scripts/project_env.py -- python -B scripts/release.py --target windows-amd64 --tools-manifest 'D:\release-inputs\windows-tools.json' --jmcomic-runtime-manifest .runtime/jmcomic-runtime/jmcomic-runtime.json
+# PowerShell包装入口的等价可选参数，脚本须保留UTF-8 BOM。
+.\scripts\release-windows.ps1 -ToolsManifest 'D:\release-inputs\windows-tools.json' -JMComicRuntimeManifest '.runtime\jmcomic-runtime\jmcomic-runtime.json'
+```
+
+运行时清单严格记录目标、解释器和依赖版本、锁文件摘要、来源、许可及每文件大小／摘要，打包与归档校验同时核对普通文件、路径别名和 PE 架构。完整保留 native 扩展、DLL、CA、包数据和 `.dist-info`；不能用复制开发 venv、只放 `.py` 或启动时联网补包代替。只在全部验证通过后发布；文件摘要检查不替代许可审核、DLL 完整闭包或干净机器验收。
+
+程序及运行时放只读安装目录，配置／任务／秘密留在 profile。更新先正常退出本实例并等待 worker／Python 释放，再成套替换文件；不覆盖用户任务和检查点，不自动升级依赖。
 
 ## 工具材料清单
 

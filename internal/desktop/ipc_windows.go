@@ -176,7 +176,7 @@ func serveControl(ctx context.Context, profile string, handler func(string) cont
 				count, readErr := pipeReadWrite(serveCtx, handle, request, false)
 				if readErr == nil && count > 0 && count <= 256 {
 					action := string(request[:count])
-					if action == "open" || action == "status" || action == "quit" {
+					if validControlAction(action) {
 						data, _ := json.Marshal(handler(action))
 						written, writeErr := pipeReadWrite(serveCtx, handle, data, true)
 						if writeErr == nil && written == len(data) {
@@ -202,7 +202,7 @@ func serveControl(ctx context.Context, profile string, handler func(string) cont
 // sendControl 只连接本机当前用户的固定通道，并有界等待首实例初始化完成。
 func sendControl(profile string, action string, timeout time.Duration) (controlReply, error) {
 	var reply controlReply
-	if action != "open" && action != "status" && action != "quit" {
+	if !validControlAction(action) {
 		return reply, errors.New("不支持的本机控制动作")
 	}
 	name, err := pipePath(profile)

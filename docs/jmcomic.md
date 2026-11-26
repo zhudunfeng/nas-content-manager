@@ -31,12 +31,15 @@ docker compose -f compose.yaml -f compose.collection.yaml up -d --build
 
 ## 原生执行端
 
+Windows 桌面完整漫画包可使用随包私有 Python 和托管 worker，无需手工安装全局 Python；启用、停用、检查与升级步骤见 [Windows 原生漫画](jmcomic-windows.md)。以下手工方式继续用于开发者、管理员和外接执行端。
+
 先按照[原生执行端说明](collection.md#原生windows对接)配置专用数据根、令牌与主应用只读映射，再为 worker 配置以下参数：
 
 | 配置参数 | 默认值与中文解释 |
 | --- | --- |
 | `NAS_COLLECTION_WORKER_JMCOMIC_ENABLED` | `false`；原生执行端显式启用漫画适配器，严格使用 `true` 或 `false`；专用 Docker 镜像默认启用 |
 | `NAS_COLLECTION_WORKER_JMCOMIC_PYTHON` | Linux 为 `python3`，Windows 为 `python`；管理员指定的可信 Python 解释器名称或绝对路径，应指向已安装锁定依赖的虚拟环境 |
+| `NAS_COLLECTION_WORKER_JMCOMIC_RUNTIME_MANIFEST` | 空；管理员或桌面提供的私有运行时清单绝对路径，核验完整性后使用包内解释器；托管模式不隐式回退到系统 Python |
 
 解释器必须能导入锁定版本 `jmcomic==2.7.12` 及其基础依赖。依赖安装在执行端部署阶段完成，不会在用户搜索或下载时自动安装。建议使用 Python 3.11 或更新的受支持版本；锁定依赖的实际可安装性仍取决于平台 wheel。
 

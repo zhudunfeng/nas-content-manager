@@ -26,6 +26,7 @@ The first release is a standard-library Go HTTP service with pure-Go SQLite. Its
 14. For dedicated backup roots, strict metadata, protection-path isolation or platform no-overwrite publication, read [Backup root and publication contract](./backup-publish-contract.md).
 15. For the fixed JMComic adapter, Python bridge, comic search or directory-image import, read [JMComic plugin contract](./jmcomic-contract.md).
 16. For UAV video search, SupJav candidate fallback/TS normalization, Huangguo episode identity, scoped CDN relay or offline MP4 acquisition, read [UAV plugin contract](./uav-contract.md).
+17. For native Windows JMComic runtime packaging, desktop-owned collection processes or schema-2 collection mode migration, read [Windows JMComic contract](./jmcomic-windows-contract.md).
 
 ## Quality Check
 
@@ -44,6 +45,7 @@ Run `go vet ./...`, `go test ./...`, `go build ./cmd/nas`, and the isolated `scr
 | [Cross-platform contract](./cross-platform-contract.md) | Shared lifecycle, Windows launcher, embedded assets, immutable desktop deployments and releases | Implemented |
 | [Collection contract](./collection-contract.md) | Multi-source collection, durable worker, publication and exact import coverage | Implemented |
 | [JMComic plugin contract](./jmcomic-contract.md) | Optional fixed Python adapter, bounded search, complete comic publication and original reader handoff | Implemented locally; target pending |
+| [Windows JMComic contract](./jmcomic-windows-contract.md) | Private Python inventory, desktop collection ownership, schema-2 migration and package identity | Implemented locally; target pending |
 | [UAV plugin contract](./uav-contract.md) | Fixed five-site search, SupJav fallback/TS normalization, scoped CDN relay and validated video import | Implemented locally; target pending |
 | [External collection contract](./external-collection-contract.md) | Schema v4, typed external automation, durable intents and MoviePilot workflows | Implemented |
 | [Component deployment contract](./collection-component-contract.md) | Fixed Docker components, private volume ownership, persistent deployment and desktop v3 | Implemented |

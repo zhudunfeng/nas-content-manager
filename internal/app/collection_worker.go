@@ -19,6 +19,9 @@ import (
 // collectionWorkerCall 通过固定认证端点调用执行端，错误不回显凭据和工具输出。
 func (a *App) collectionWorkerCall(ctx context.Context, method string, endpoint string, input any, output any) (int, error) {
 	if a.config.Collection.WorkerURL == "" {
+		if a.config.Collection.UnavailableReason != "" {
+			return 503, collectionProblem(503, a.config.Collection.UnavailableReason)
+		}
 		return 503, collectionProblem(503, "尚未配置资源获取执行端")
 	}
 	token, err := os.ReadFile(a.config.Collection.TokenFile)

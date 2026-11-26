@@ -23,9 +23,9 @@ from typing import Any, BinaryIO, Callable
 from release import SHA256, TARGETS, TOOL_GROUPS, TOOL_MANIFEST, archive_tree, configure_console, digest, install_images, install_tools, read_json, relative_path, unique_object, validate_binary, validate_binary_stream, validate_images_manifest, validate_tools_manifest
 
 
-def metadata_object(data: bytes) -> dict[str, Any]:
+def metadata_object(data: bytes, limit: int = 1024 * 1024) -> dict[str, Any]:
     """解析有限元数据并拒绝重复字段及非对象值，使校验和构建保持同一解释。"""
-    if len(data) > 1024 * 1024:
+    if len(data) > limit:
         raise ValueError("发布元数据过大")
     value = json.loads(data, object_pairs_hook=unique_object)
     if not isinstance(value, dict):
@@ -33,10 +33,9 @@ def metadata_object(data: bytes) -> dict[str, Any]:
     return value
 
 
-def verify_tool_architectures(path: Path, root: str, target: str) -> None:
-    """重新以归档流检查两个固定工具的架构，不把归档解压到用户文件系统。"""
-    suffix = ".exe" if target.startswith("windows-") else ""
-    names = [f"{root}/tools/{name}{suffix}" for name in ("ffmpeg", "ffprobe")]
+def verify_architectures(path: Path, root: str, target: str, entries: list[str]) -> None:
+    """以归档流检查指定固定入口架构，不把归档解压到用户文件系统。"""
+    names = [f"{root}/{name}" for name in entries]
     if path.suffix == ".zip":
         with zipfile.ZipFile(path) as archive:
             for name in names:
@@ -47,9 +46,35 @@ def verify_tool_architectures(path: Path, root: str, target: str) -> None:
             for name in names:
                 stream = archive.extractfile(name)
                 if stream is None:
-                    raise ValueError("归档工具无法读取")
+                    raise ValueError("归档入口无法读取")
                 with stream:
                     validate_binary_stream(stream, target)
+
+
+def verify_jmcomic(path: Path, root: str, metadata: dict[str, Any], small: dict[str, bytes], hashes: dict[str, str], sizes: dict[str, int]) -> None:
+    """复用运行时契约校验归档全部依赖、许可、资源和本机架构。"""
+    from jmcomic_runtime import LICENSE_ROOT, MANIFEST_LIMIT, MANIFEST_NAME, RUNTIME_ROOT, validate_manifest, verify_stream
+
+    materials = {name for name in hashes if name.casefold().startswith((RUNTIME_ROOT + "/", LICENSE_ROOT + "/")) or name.casefold() == MANIFEST_NAME}
+    summary = metadata.get("jmcomicRuntime")
+    if summary is None:
+        if materials:
+            raise ValueError("漫画基础包夹带未声明的运行时材料")
+        return
+    if metadata["target"] != "windows-amd64" or not isinstance(summary, dict) or set(summary) != {"manifest", "sha256", "pythonVersion", "jmcomicVersion"} or summary["manifest"] != MANIFEST_NAME or MANIFEST_NAME not in small or summary["sha256"] != hashes.get(MANIFEST_NAME):
+        raise ValueError("漫画运行时发布摘要或目标无效")
+    value = metadata_object(small[MANIFEST_NAME], MANIFEST_LIMIT)
+    records = validate_manifest(value)
+    if summary["pythonVersion"] != value["pythonVersion"] or summary["jmcomicVersion"] != value["jmcomicVersion"] or materials != {MANIFEST_NAME, *records}:
+        raise ValueError("漫画运行时版本、摘要或声明文件集合不一致")
+    if path.suffix != ".zip":
+        raise ValueError("Windows漫画包必须使用ZIP归档")
+    with zipfile.ZipFile(path) as archive:
+        for name, record in records.items():
+            if hashes.get(name) != record["sha256"] or sizes.get(name) != record["size"]:
+                raise ValueError("漫画运行时文件摘要或长度与归档不一致")
+            with archive.open(f"{root}/{name}") as stream:
+                verify_stream(stream, record, value["pythonVersion"])
 
 
 def stream_digest(stream: BinaryIO) -> str:
@@ -66,6 +91,7 @@ def verify(path: Path) -> int:
     if expected != f"{digest(path)}  {path.name}":
         raise ValueError("外部归档摘要不匹配")
     hashes: dict[str, str] = {}
+    sizes: dict[str, int] = {}
     small: dict[str, bytes] = {}
     roots: set[str] = set()
     folded: set[str] = set()
@@ -78,10 +104,12 @@ def verify(path: Path) -> int:
             raise ValueError("归档路径重复或缺少单一根目录")
         roots.add(root)
         folded.add(safe.casefold())
-        if local in ("release.json", "checksums.sha256", "release-images.json", TOOL_MANIFEST):
-            if size > 1024 * 1024:
+        sizes[local] = size
+        if local in ("release.json", "checksums.sha256", "release-images.json", TOOL_MANIFEST, "jmcomic-runtime.json"):
+            limit = 4 * 1024 * 1024 if local == "jmcomic-runtime.json" else 1024 * 1024
+            if size > limit:
                 raise ValueError("归档元数据过大")
-            data = stream.read(1024 * 1024 + 1)
+            data = stream.read(limit + 1)
             if len(data) != size:
                 raise ValueError("归档元数据截断")
             small[local] = data
@@ -119,11 +147,15 @@ def verify(path: Path) -> int:
     if checksums != actual:
         raise ValueError("包内文件缺失、被修改或存在未校验的额外文件")
     metadata = metadata_object(small["release.json"])
-    if set(metadata) != {"schemaVersion", "version", "target", "developmentWithoutTools", "tools"} or type(metadata["schemaVersion"]) is not int or metadata["schemaVersion"] != 1 or not isinstance(metadata["target"], str) or metadata["target"] not in TARGETS or type(metadata["developmentWithoutTools"]) is not bool or not isinstance(metadata["version"], str) or not re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.+_-]{0,63}", metadata["version"]):
+    fields = {"schemaVersion", "version", "target", "developmentWithoutTools", "tools"}
+    schema = metadata.get("schemaVersion")
+    if type(schema) is not int or schema not in (1, 2) or set(metadata) != fields | ({"jmcomicRuntime"} if schema == 2 else set()) or not isinstance(metadata["target"], str) or metadata["target"] not in TARGETS or type(metadata["developmentWithoutTools"]) is not bool or not isinstance(metadata["version"], str) or not re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.+_-]{0,63}", metadata["version"]):
         raise ValueError("发布元数据无效")
     windows = metadata["target"].startswith("windows-")
     required = {"nas.exe", "栖库.exe"} if windows else {"nas", "start.sh"}
     required |= {"compose.desktop.yaml", "开始使用.txt"}
+    if schema == 2:
+        required.add("nas-collection-worker.exe" if windows else "nas-collection-worker")
     if not metadata["developmentWithoutTools"]:
         suffix = ".exe" if windows else ""
         required |= {f"tools/ffmpeg{suffix}", f"tools/ffprobe{suffix}", TOOL_MANIFEST}
@@ -145,8 +177,14 @@ def verify(path: Path) -> int:
         raise ValueError("开发验证包不能声明完整工具材料")
     if not required.issubset(hashes):
         raise ValueError("发布包缺少平台入口或必需材料")
+    root = next(iter(roots))
+    if schema == 2:
+        executables = ["nas.exe", "栖库.exe", "nas-collection-worker.exe"] if windows else ["nas", "nas-collection-worker"]
+        verify_architectures(path, root, metadata["target"], executables)
+    verify_jmcomic(path, root, metadata, small, hashes, sizes)
     if not metadata["developmentWithoutTools"]:
-        verify_tool_architectures(path, next(iter(roots)), metadata["target"])
+        suffix = ".exe" if windows else ""
+        verify_architectures(path, root, metadata["target"], [f"tools/{name}{suffix}" for name in ("ffmpeg", "ffprobe")])
     if "release-images.json" in small:
         manifest = metadata_object(small["release-images.json"])
         name = validate_images_manifest(manifest)
@@ -279,6 +317,32 @@ def self_test() -> int:
         # PE头部只是包校验夹具，不能作为真实工具运行或许可审核证据。
         binary = root / "binary.exe"
         binary.write_bytes(b"MZ" + b"\x00" * 58 + (64).to_bytes(4, "little") + b"PE\x00\x00\x64\x86")
+        # schema2必须有真实架构入口，不能把基础包误报为已包含漫画运行时。
+        for name in ("nas.exe", "栖库.exe", "nas-collection-worker.exe"):
+            (stage / name).write_bytes(binary.read_bytes())
+        basic = {**metadata, "schemaVersion": 2, "jmcomicRuntime": None}
+        (stage / "release.json").write_text(json.dumps(basic), encoding="utf-8")
+        seal(stage, second)
+        verify(second)
+        count += 1
+        (stage / "nas-collection-worker.exe").unlink()
+        seal(stage, second)
+        rejected(lambda: verify(second), "schema2缺少worker仍被接受")
+        (stage / "nas-collection-worker.exe").write_bytes(b"wrong architecture")
+        seal(stage, second)
+        rejected(lambda: verify(second), "schema2未核验worker架构")
+        (stage / "nas-collection-worker.exe").write_bytes(binary.read_bytes())
+        (stage / "jmcomic-runtime.json").write_text("{}", encoding="utf-8")
+        seal(stage, second)
+        rejected(lambda: verify(second), "基础包夹带运行时清单仍被接受")
+        (stage / "release.json").write_text(json.dumps({**basic, "jmcomicRuntime": {}}), encoding="utf-8")
+        seal(stage, second)
+        rejected(lambda: verify(second), "无效运行时摘要仍被接受")
+        (stage / "release.json").write_text(json.dumps(metadata), encoding="utf-8")
+        seal(stage, second)
+        rejected(lambda: verify(second), "旧schema1夹带未声明运行时仍被接受")
+        (stage / "jmcomic-runtime.json").unlink()
+        (stage / "nas-collection-worker.exe").unlink()
         license_file = root / "license.txt"
         source_file = root / "source.txt"
         license_file.write_text("仅用于校验的许可材料", encoding="utf-8")
@@ -332,6 +396,12 @@ def self_test() -> int:
                 raise AssertionError("Linux封装结果不确定")
             count += 1
             verify(first_tar)
+            count += 1
+            for name in ("nas", "nas-collection-worker"):
+                (linux_stage / name).write_bytes(elf)
+            (linux_stage / "release.json").write_text(json.dumps({**metadata, "schemaVersion": 2, "target": target, "developmentWithoutTools": False, "tools": summary, "jmcomicRuntime": None}), encoding="utf-8")
+            seal(linux_stage, second_tar, False)
+            verify(second_tar)
             count += 1
         with zipfile.ZipFile(first, "a") as archive:
             archive.writestr("qiku-test/extra.txt", "unexpected")

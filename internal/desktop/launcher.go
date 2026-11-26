@@ -24,10 +24,13 @@ import (
 
 // controlReply 是固定本机控制协议，不包含凭据、命令或任意跳转 URL。
 type controlReply struct {
-	State string `json:"state"`           // starting、ready、stopping、stopped 或 failed。
-	Mode  string `json:"mode"`            // native 或 docker。
-	URL   string `json:"url,omitempty"`   // 本实例真实就绪后的回环地址。
-	Error string `json:"error,omitempty"` // 脱敏中文错误说明。
+	State             string `json:"state"`                       // starting、ready、stopping、stopped 或 failed。
+	Mode              string `json:"mode"`                        // native 或 docker。
+	URL               string `json:"url,omitempty"`               // 本实例真实就绪后的回环地址。
+	Error             string `json:"error,omitempty"`             // 脱敏中文错误说明。
+	CollectionMode    string `json:"collectionMode,omitempty"`    // 当前本机获取方式。
+	CollectionState   string `json:"collectionState,omitempty"`   // disabled、external、starting、ready、unavailable 或 failed。
+	CollectionMessage string `json:"collectionMessage,omitempty"` // 不含凭据的漫画组件中文诊断。
 }
 
 // desktopCommand 串行传送本机托盘的受控配置变更。
@@ -38,16 +41,18 @@ type desktopCommand struct {
 
 // controller 串行管理共享核心，保证旧数据库句柄退出后才启动新实例。
 type controller struct {
-	mu            sync.RWMutex        // 状态和配置快照锁。
-	config        Config              // 已保存的当前启动配置。
-	profile       string              // 当前模式的本机配置根。
-	options       Options             // 本次交互与诊断参数。
-	logger        *slog.Logger        // 有界中文日志。
-	reply         controlReply        // 供托盘和本机 IPC 读取的状态。
-	commands      chan desktopCommand // 有界串行生命周期指令。
-	cancel        context.CancelFunc  // 取消整个启动器。
-	serviceCancel context.CancelFunc  // 取消当前原生或容器监视服务。
-	serviceDone   chan error          // 当前共享核心退出结果。
+	mu             sync.RWMutex        // 状态和配置快照锁。
+	config         Config              // 已保存的当前启动配置。
+	profile        string              // 当前模式的本机配置根。
+	options        Options             // 本次交互与诊断参数。
+	logger         *slog.Logger        // 有界中文日志。
+	reply          controlReply        // 供托盘和本机 IPC 读取的状态。
+	commands       chan desktopCommand // 有界串行生命周期指令。
+	cancel         context.CancelFunc  // 取消整个启动器。
+	serviceCancel  context.CancelFunc  // 取消当前原生或容器监视服务。
+	serviceDone    chan error          // 当前共享核心退出结果。
+	collection     *managedCollection  // 本实例托管的获取服务；外接服务永不归属此字段。
+	collectionDone <-chan struct{}     // 托管子树真实退出信号；与媒体服务独立。
 }
 
 // Main 执行本机启动流程；返回码由薄平台入口传给操作系统。
@@ -229,7 +234,7 @@ func (c *controller) snapshot() (Config, controlReply) {
 // setState 原子发布真实阶段，不在失败时保留可点击的旧地址。
 func (c *controller) setState(state string, address string, err error) {
 	c.mu.Lock()
-	c.reply = controlReply{State: state, Mode: c.config.Mode, URL: address}
+	c.reply.State, c.reply.Mode, c.reply.URL, c.reply.Error = state, c.config.Mode, address, ""
 	if err != nil {
 		c.reply.Error = err.Error()
 	}
@@ -247,6 +252,19 @@ func (c *controller) handleControl(action string) controlReply {
 		}
 	case "quit":
 		// 由管道服务收到客户端固定确认后取消，避免丢失退出响应。
+	case "collection-enable", "collection-disable", "collection-check":
+		cfg, _ := c.snapshot()
+		if cfg.Mode != "native" {
+			reply.Error = "本机漫画托管只适用于原生模式"
+			break
+		}
+		if action == "collection-enable" {
+			cfg.CollectionMode = "managed"
+		}
+		if action == "collection-disable" {
+			cfg.CollectionMode = "disabled"
+		}
+		c.request(desktopCommand{Kind: "config", Config: &cfg})
 	default:
 		reply.Error = "不支持的本机控制动作"
 	}
@@ -333,6 +351,10 @@ func (c *controller) run(ctx context.Context) error {
 			} else {
 				go showMessage("栖库服务已停止", err.Error(), true)
 			}
+		case <-c.collectionDone:
+			c.collectionDone = nil
+			c.setCollectionState("failed", "本机漫画获取服务已退出，已有媒体仍可阅读；请查看日志后重新检测")
+			c.logger.Warn("本机获取服务意外退出，已降级漫画获取；未自动重启或重发任务")
 		}
 	}
 }
@@ -368,12 +390,16 @@ func (c *controller) start(ctx context.Context) error {
 	if cfg.Mode == "docker" {
 		return c.startDocker(ctx, cfg)
 	}
+	collectionValues, collectionReason := c.startCollection(ctx, cfg)
 	listener, port, err := bindLoopback(cfg.Port)
 	if err != nil {
-		return err
+		return errors.Join(err, c.stopCollection())
 	}
 	cfg.Port = port
 	values := map[string]string{"NAS_ADDR": listener.Addr().String(), "NAS_DATA_DIR": cfg.DataDir, "NAS_MEDIA_ROOTS": mediaRootList(cfg.MediaRoots)}
+	for key, value := range collectionValues {
+		values[key] = value
+	}
 	core, err := app.LoadConfigWithLookup(func(key string) string {
 		if value, ok := values[key]; ok {
 			return value
@@ -382,11 +408,14 @@ func (c *controller) start(ctx context.Context) error {
 	})
 	if err != nil {
 		_ = listener.Close()
-		return err
+		return errors.Join(err, c.stopCollection())
+	}
+	if core.Collection.WorkerURL == "" {
+		core.Collection.UnavailableReason = collectionReason
 	}
 	if err = saveConfig(c.profile, cfg); err != nil {
 		_ = listener.Close()
-		return err
+		return errors.Join(err, c.stopCollection())
 	}
 	c.mu.Lock()
 	c.config = cfg
@@ -426,7 +455,7 @@ func (c *controller) start(ctx context.Context) error {
 			}
 			err = errors.New("服务在就绪前已停止")
 		}
-		return err
+		return errors.Join(err, c.stopCollection())
 	case <-ctx.Done():
 		return errors.Join(ctx.Err(), c.stop())
 	case <-time.After(45 * time.Second):
@@ -437,7 +466,7 @@ func (c *controller) start(ctx context.Context) error {
 // stop 等待共享核心关闭数据库和工作协程，不强杀其他用户进程。
 func (c *controller) stop() error {
 	if c.serviceCancel == nil {
-		return nil
+		return c.stopCollection()
 	}
 	c.setState("stopping", "", nil)
 	c.serviceCancel()
@@ -447,13 +476,17 @@ func (c *controller) stop() error {
 			c.serviceDone = nil
 			c.serviceCancel = nil
 			if err != nil && !cancellationOnly(err) {
-				return err
+				return errors.Join(err, c.stopCollection())
 			}
 		case <-time.After(30 * time.Second):
-			return errors.New("服务仍在有序关闭，已拒绝重启；请等待进程退出后重试")
+			// 主服务取消已发出；即使其排空超时，也先完成本实例可选进程的退出屏障。
+			return errors.Join(errors.New("服务仍在有序关闭，已拒绝重启；请等待进程退出后重试"), c.stopCollection())
 		}
 	}
 	c.serviceCancel = nil
+	if err := c.stopCollection(); err != nil {
+		return err
+	}
 	c.setState("stopped", "", nil)
 	return nil
 }

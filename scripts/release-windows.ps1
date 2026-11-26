@@ -4,6 +4,8 @@ param(
     [string]$ToolsManifest,
     # 可选Docker固定镜像及离线归档清单。
     [string]$ImagesManifest,
+    # 可选JMComic私有Python运行时清单，构建完整漫画功能包时显式提供。
+    [string]$JMComicRuntimeManifest,
     # 归档输出目录，默认使用仓库bin/releases。
     [string]$Output,
     # 明确生成不含FFmpeg的开发包，不能作为完整离线包分发。
@@ -16,6 +18,7 @@ $ErrorActionPreference = 'Stop'
 $releaseArguments = @((Join-Path $PSScriptRoot 'release.py'), '--target', 'windows-amd64')
 if ($ToolsManifest) { $releaseArguments += @('--tools-manifest', $ToolsManifest) }
 if ($ImagesManifest) { $releaseArguments += @('--images-manifest', $ImagesManifest) }
+if ($JMComicRuntimeManifest) { $releaseArguments += @('--jmcomic-runtime-manifest', $JMComicRuntimeManifest) }
 if ($Output) { $releaseArguments += @('--output', $Output) }
 if ($DevelopmentWithoutTools) { $releaseArguments += '--development-without-tools' }
 if ($SkipWebBuild) { $releaseArguments += '--skip-web-build' }

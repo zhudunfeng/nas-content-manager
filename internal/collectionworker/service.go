@@ -60,6 +60,7 @@ type Service struct {
 	ytdlpVersion  string                        // 非私密版本说明。
 	rcloneVersion string                        // 非私密版本说明。
 	jmcomicPython string                        // 已解析且通过固定版本探测的受信Python。
+	jmcomicReason string                        // 本地运行时不可用的脱敏中文原因，不含真实路径。
 	uavPython     string                        // 已通过固定版本探测的视频插件独立解释器。
 	lease         *workerLease                  // 专用数据根独占锁。
 	closing       bool                          // 已关闭HTTP处理器准入。
@@ -74,16 +75,26 @@ func Run(ctx context.Context, config Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("获取服务监听失败")
 	}
+	return runWithListener(ctx, config, logger, listener, nil)
+}
+
+// runWithListener 接管真实监听器，在完整初始化后就绪，并保留服务与进程回收错误。
+func runWithListener(ctx context.Context, config Config, logger *slog.Logger, listener net.Listener, ready func(*Service, string) error) (result error) {
 	defer listener.Close()
 	service, err := New(ctx, config, logger)
 	if err != nil {
 		return err
 	}
-	defer service.Close()
+	defer func() { result = errors.Join(result, service.Close()) }()
 	server := &http.Server{Handler: service.Handler(), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 16 << 10, BaseContext: func(net.Listener) context.Context { return service.ctx }}
 	defer server.Close()
 	done := make(chan error, 1)
 	go func() { done <- server.Serve(listener) }()
+	if ready != nil {
+		if err = ready(service, listener.Addr().String()); err != nil {
+			return err
+		}
+	}
 	service.logger.Info("资源获取服务已启动", "addr", listener.Addr().String(), "instance", service.instanceID)
 	select {
 	case <-ctx.Done():
