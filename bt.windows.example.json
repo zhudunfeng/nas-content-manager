@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "downloads": {
+    "mode": "external",
+    "root": "E:/QikuDownloads",
+    "engineRoot": "E:/QikuDownloads",
+    "url": "http://127.0.0.1:8080",
+    "username": "admin",
+    "passwordFile": "bt/qb-password"
+  },
+  "search": {
+    "mode": "external",
+    "sourcesFile": "bt/sources.json"
+  }
+}

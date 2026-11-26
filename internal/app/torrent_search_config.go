@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -62,6 +63,8 @@ func loadTorrentSearchConfigWithLookup(lookup func(string) string) (TorrentSearc
 	if err != nil || len(data) > 64<<10 {
 		return c, fmt.Errorf("搜种来源文件读取失败或超过 64 KiB")
 	}
+	// 接受 Windows PowerShell UTF8 文件头，不容忍其他位置的标记或 UTF-16 文件。
+	data = bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf})
 	var document struct {
 		Sources []TorrentSearchSource `json:"sources"` // 所有授权的索引服务端点。
 	}

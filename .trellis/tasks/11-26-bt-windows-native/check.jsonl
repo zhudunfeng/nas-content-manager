@@ -1,0 +1,7 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/spec/backend/bt-windows-contract.md", "reason": "Strict configuration and external-only lifecycle acceptance"}
+{"file": ".trellis/spec/backend/download-contract.md", "reason": "Windows/POSIX ownership and publication regression"}
+{"file": ".trellis/spec/backend/torrent-search-contract.md", "reason": "Credential isolation and search-to-download regression"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "Desktop native process ownership and Windows package checks"}
+{"file": ".trellis/spec/frontend/app-contract.md", "reason": "Responsive guide text and keyboard dialog behavior"}

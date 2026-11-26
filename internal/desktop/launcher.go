@@ -394,6 +394,10 @@ func (c *controller) start(ctx context.Context) error {
 	if cfg.Mode == "docker" {
 		return c.startDocker(ctx, cfg)
 	}
+	btValues, err := loadNativeBTValues(c.profile, os.Getenv)
+	if err != nil {
+		return err
+	}
 	collectionValues, collectionReason := c.startCollection(ctx, cfg)
 	listener, port, err := bindLoopback(cfg.Port)
 	if err != nil {
@@ -401,6 +405,14 @@ func (c *controller) start(ctx context.Context) error {
 	}
 	cfg.Port = port
 	values := map[string]string{"NAS_ADDR": listener.Addr().String(), "NAS_DATA_DIR": cfg.DataDir, "NAS_MEDIA_ROOTS": mediaRootList(cfg.MediaRoots)}
+	for key, value := range btValues {
+		values[key] = value
+	}
+	if root := btValues["NAS_DOWNLOAD_ROOT"]; root != "" {
+		// root 是本机明确的下载授权；仅追加 complete，staging 仍由原发布门禁隔离。
+		roots := append(append([]string(nil), cfg.MediaRoots...), filepath.Join(root, "complete"))
+		values["NAS_MEDIA_ROOTS"] = mediaRootList(roots)
+	}
 	for key, value := range collectionValues {
 		values[key] = value
 	}
@@ -413,6 +425,9 @@ func (c *controller) start(ctx context.Context) error {
 	if err != nil {
 		_ = listener.Close()
 		return errors.Join(err, c.stopCollection())
+	}
+	if len(btValues) > 0 {
+		c.logger.Info("已加载本机 BT 搜索与下载配置", "下载方式", core.Downloads.Mode, "搜种方式", core.TorrentSearch.Mode)
 	}
 	if core.Collection.WorkerURL == "" {
 		core.Collection.UnavailableReason = collectionReason

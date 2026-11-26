@@ -349,7 +349,10 @@ def build(args: argparse.Namespace) -> Path:
                 if not (ROOT / name).is_file():
                     raise ValueError(f"发布文件缺失：{name}")
                 shutil.copyfile(ROOT / name, stage / name)
-            for name in ("windows.md", "release.md", "collection.md", "components.md", "jmcomic.md", "jmcomic-windows.md", "uav.md", "uav-windows.md"):
+            if platform == "windows":
+                for name in ("bt.windows.example.json", "torrent-search.sources.example.json"):
+                    shutil.copyfile(ROOT / name, stage / name)
+            for name in ("windows.md", "release.md", "collection.md", "components.md", "jmcomic.md", "jmcomic-windows.md", "uav.md", "uav-windows.md", "bt-windows.md", "engines.md", "downloads.md", "torrent-search.md"):
                 source = ROOT / "docs" / name
                 if source.is_file():
                     (stage / "docs").mkdir(exist_ok=True)
@@ -357,6 +360,8 @@ def build(args: argparse.Namespace) -> Path:
             metadata = {"schemaVersion": 3, "version": version, "target": args.target, "developmentWithoutTools": bool(args.development_without_tools), "tools": tools, "jmcomicRuntime": jmcomic_runtime, "uavRuntime": uav_runtime, "ytDlp": yt_dlp}
             (stage / "release.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             notice = "Windows：双击栖库.exe。Linux：执行 ./start.sh。\n原生与容器配置数据独立；升级前退出旧版并备份。\nDocker完整模式需要Docker环境和release-images.json，不自动安装Docker/WSL。\n"
+            if platform == "windows":
+                notice += "Windows原生BT可连接已安装的qBittorrent与Jackett/Prowlarr，按docs/bt-windows.md配置bt.json后双击使用。\n"
             if args.development_without_tools:
                 notice += "注意：这是未携带FFmpeg的开发验证包，不是完整离线发布版。\n"
             notice += "已携带固定私有漫画运行时，可在桌面设置中启用托管获取。\n" if jmcomic_runtime else "这是漫画基础包；已发布漫画可读，在线获取需另配受信运行时或外接执行端。\n"

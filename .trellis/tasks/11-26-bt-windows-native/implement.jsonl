@@ -1,0 +1,7 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".trellis/spec/backend/bt-windows-contract.md", "reason": "Native BT profile, precedence and Windows path contract"}
+{"file": ".trellis/spec/backend/download-contract.md", "reason": "Download ownership, selected publication and root isolation"}
+{"file": ".trellis/spec/backend/torrent-search-contract.md", "reason": "Torznab private sources and existing managed download handoff"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "Native desktop lifecycle, environment and release packaging"}

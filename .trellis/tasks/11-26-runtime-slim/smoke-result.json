@@ -1,0 +1,34 @@
+{
+  "environment": "passed",
+  "declaredGoModulesRetained": 14,
+  "binaryMetadata": [
+    {
+      "name": "nas.exe",
+      "buildVersion": "go1.27.4",
+      "package": "nas"
+    },
+    {
+      "name": "nas-desktop.exe",
+      "buildVersion": "go1.27.4",
+      "package": "nas-desktop"
+    },
+    {
+      "name": "nas-collection-worker.exe",
+      "buildVersion": "go1.27.4",
+      "package": "nas-collection-worker"
+    }
+  ],
+  "jmcomicRuntimeProbe": {
+    "status": "passed",
+    "files": 620
+  },
+  "uavRuntimeProbe": {
+    "status": "passed",
+    "files": 784
+  },
+  "downloaderVersion": "2026.10.26",
+  "evidenceArchiveCRC": "passed",
+  "pausedDraftOriginalAndArchiveMatch": true,
+  "goFullModuleGraphOffline": "not_available_in_existing_cache",
+  "goFullModuleGraphNote": "离线 go list -m all 要求尚未下载的其他模块元数据；既有 go/pkg 全部文件均已逐项 SHA-256 确认未变，不下载新依赖、不声称全量离线构建通过。"
+}

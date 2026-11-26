@@ -7,6 +7,7 @@
 | 方式 | 适用场景 | 前提与数据位置 |
 | --- | --- | --- |
 | Windows 原生媒体 | 视频、图片、漫画、小说、音乐 | 完整发行 ZIP 内的 `栖库.exe`、内嵌网页与配套 `tools`，用户数据位于本机独立目录 |
+| Windows 原生 BT | 种子搜索、文件选择、下载与入库 | 连接已安装的 Windows qBittorrent 和 Jackett／Prowlarr；用 profile 下的 `bt.json` 保存连接配置，见 [Windows BT 说明](bt-windows.md) |
 | Windows 原生 JMComic | 漫画搜索、选章和批量下载 | 含 `nas-collection-worker.exe` 与私有 Python 清单的完整漫画包，由桌面托管；不需要全局 Python，见 [Windows 漫画说明](jmcomic-windows.md) |
 | Windows 原生 UAV | Jable、MissAV、Hanime1、黄果、SupJav 视频搜索下载 | 含独立 UAV 运行时、固定下载器及媒体工具的完整包，复用同一托管 worker，见 [Windows 视频说明](uav-windows.md) |
 | Windows Docker 完整模式 | 媒体与网页初始化托管 BT 引擎 | 已运行的 Docker Desktop Linux/amd64 容器环境、固定镜像清单；数据和下载位于 Linux 命名卷 |

@@ -2,6 +2,19 @@
 
 最新验证日期：**2026-11-26（Asia/Shanghai）**。各章节保留相应实施日期和历史结果。本记录区分已经执行的检查与目标设备待验事项，不将编译成功、稀疏文件或短视频样本视为完整 NAS 性能验收。
 
+## Windows 原生 BT 搜索与下载（2026-11-26）
+
+原生桌面新增独立 `bt.json`，持久连接已有 qBittorrent 与 Jackett／Prowlarr；修复 Windows 引擎盘符、大小写、反斜杠与尾分隔符等价比较，以及 PowerShell UTF-8 BOM、Windows 非法种子文件名。搜索结果继续经过原文件选择、完成发布和五媒体入库门禁。使用方法见 [Windows BT 说明](bt-windows.md)，详细证据见[后端验证](../.trellis/tasks/11-26-bt-windows-native/research/backend-validation.md)、[独立配置复核](../.trellis/tasks/11-26-bt-windows-native/research/quality-review.md)及[主线验证](../.trellis/tasks/11-26-bt-windows-native/research/final-validation.md)。
+
+- 真实 Windows 桌面 EXE 配合受控 Torznab／qB 完成 **12 项**端到端断言：中文空格 profile、独立启动目录、BOM、profile 相对私密文件、搜索转种子、先选集后传输、移动发布、原字节读取、重启幂等、独立停用与历史访问；退出不停止外接服务，日志不泄露凭据或私密地址。最后 null／非法 UTF-8 修复后已重建并复跑。
+- Windows 引擎路径完整下载 **36 项**通过；最终代码 POSIX 映射完整下载 **42 项**通过，后者含新增六类非法文件名负例。两轮覆盖五媒体、v1/v2/hybrid、丢失添加响应恢复、拒绝外部任务、移除保留载荷与发布门禁。搜种 **43 项**、引擎接入 **35 项**通过；受控服务不等同真实 Peer。
+- 独立临时 Go 配置矩阵包含 **64 项行为条件检查**（6 个测试函数、29 个无效 JSON 子例，35 个 Go PASS 条目），验证严格字段、null／非法 UTF-8、64 KiB 原始字节预算、BOM、模式独立性、环境及旧开关优先级、profile 路径。临时 Go 测试源码已删除；最终空 `go test ./...` 只作为编译证据。
+- 基础媒体 core **52 项**通过，含真实本机 FFmpeg／ffprobe、五媒体、鉴权、个人状态、数据库快照与 5 GiB 稀疏 HTTP 偏移；稀疏文件不代表真实大视频解码性能。原桌面 **17 类**生命周期回归通过，含真实控制 IPC、退出释放、中文空格及原账号恢复。
+- 引擎说明在真实隔离应用与本机 Chromium 上完成 **33 项**浏览器检查：375／768／1024／1440 宽、深浅主题，无页面／弹窗／说明横向溢出，Tab 焦点、Escape 关闭与焦点恢复正常；另人工查看手机浅色和桌面深色截图。
+- Go vet、Vue 严格类型及 Vite 构建通过；最终源码 Linux amd64／arm64 交叉编译通过，未在 Linux 执行。发布边界自测 **131 项**通过。真实 Windows 开发归档 **23 文件**校验通过，BT／来源样例和四份相关说明实际随包；直接从包中取出的 GUI 桌面 EXE 再次通过 BT **12 项**。开发包未附 FFmpeg 和第三方 BT 引擎，不是完整离线发行版。全部本地构建、测试与新浏览器进程均从项目环境包装器启动，缓存和临时目录限定在 `.runtime/`。
+
+本轮没有自动安装或接管 Windows 第三方引擎，没有执行 Docker／WSL。公网索引器、真实 qB Peer 传输、干净 Windows 普通用户、Linux 容器及实体 NAS 仍待单独验收；未将协议样本、编译或开发包等同这些结果。
+
 ## Windows 原生 UAV 五站运行与分发（2026-11-26）
 
 新增 UAV 独立 embedded Python、`--check-uav`、桌面单 worker 多插件能力、固定下载器材料装配及 release schema 3；Jable、MissAV、Hanime1、黄果和 SupJav 沿用原搜索、发布和播放流程。使用与排错见 [Windows 原生视频](uav-windows.md)，构建材料见 [发布流程](release.md)，详细本机证据见[实施验证记录](../.trellis/tasks/11-26-uav-windows-native/research/implementation-validation.md)与[独立复核记录](../.trellis/tasks/11-26-uav-windows-native/research/quality-review.md)。

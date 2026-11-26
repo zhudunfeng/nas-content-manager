@@ -1,5 +1,7 @@
 # 启用 BT 下载与自动入库
 
+Windows 原生桌面连接已有 qBittorrent 时，按 [Windows BT 使用说明](bt-windows.md) 保存 `bt.json`，无需 Docker 或 WSL。下方继续说明通用下载约定与 NAS／容器部署。
+
 下载中心通过 qBittorrent 下载视频、图片、漫画、小说和音乐，完成验证后沿用栖库原有播放器和阅读器。基础部署默认关闭下载；已有媒体目录仍为只读。
 
 **本次未执行 Docker。下列 Docker 命令供你在目标 NAS 手动验证。** 已实测的本机协议版本为 qBittorrent **5.2.4 / WebAPI 2.15.1**；可选官方镜像固定为 `5.2.4-1` 和多架构摘要，不使用 `latest`。Windows 协议探针与镜像清单检查不能代替 Linux 容器运行验证，详见[探针记录](../.trellis/tasks/11-17-bt-download/research/bt-implementation-probes.md)。

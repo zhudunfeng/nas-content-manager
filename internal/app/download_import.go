@@ -18,7 +18,7 @@ func (m *downloadManager) publish(ctx context.Context, d downloadRecord, t qbTor
 		return err
 	}
 	final := engineTaskPath(m.app.config.Downloads, "complete/"+d.ContentType+"/"+d.ID)
-	if actual != final {
+	if !sameEnginePath(actual, final) {
 		tx, beginErr := m.app.db.BeginTx(ctx, nil)
 		if beginErr != nil {
 			return beginErr
@@ -90,7 +90,7 @@ func (m *downloadManager) publish(ctx context.Context, d downloadRecord, t qbTor
 
 // inspectPublication 不经过尚未开放的发布门禁，使用只读根句柄与每段 Lstat 校验选中文件。
 func (m *downloadManager) inspectPublication(d downloadRecord, files []DownloadFile, baseline bool) ([]DownloadFile, error) {
-	if !d.SelectionLocked || d.ManifestVersion < 1 || filepath.Clean(d.LocalRoot) != m.app.config.Downloads.Root || d.FinalPath != filepath.Join(d.LocalRoot, "complete", d.ContentType, d.ID) {
+	if !d.SelectionLocked || d.ManifestVersion < 1 || downloadPathKey(d.LocalRoot) != downloadPathKey(m.app.config.Downloads.Root) || downloadPathKey(d.FinalPath) != downloadPathKey(filepath.Join(d.LocalRoot, "complete", d.ContentType, d.ID)) {
 		return nil, fmt.Errorf("发布路径或清单状态不安全")
 	}
 	canonical, err := filepath.EvalSymlinks(d.FinalPath)

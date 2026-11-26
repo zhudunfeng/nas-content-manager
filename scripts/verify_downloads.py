@@ -123,10 +123,14 @@ class Fixture:
 class FakeQB:
     """模拟公开 WebAPI 与异步移动，文件传输由测试显式推进。"""
 
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, windows_engine_paths: bool = False) -> None:
         """创建只监听宿主回环地址的假引擎。"""
         # 唯一可写的隔离下载根，与被测应用配置一一映射。
         self.root: Path = root
+        # 显式模拟 Windows 盘符根及 WebAPI 回报格式，不改动实际宿主样本路径。
+        self.windows_engine_paths: bool = windows_engine_paths
+        # 唯一允许的虚拟引擎根，真实文件仍只存放于本次隔离目录。
+        self.engine_root: str = 'E:/BT 中文下载' if windows_engine_paths else '/downloads'
         # 只在内存保留的验证密码，不打印或写入普通日志。
         self.password: str = secrets.token_urlsafe(24)
         # 模拟 qB SID，测试会主动过期一次以验证刷新。
@@ -235,7 +239,7 @@ class FakeQB:
                         tasks = list(engine.tasks.values())
                         if query.get('hashes'):
                             tasks = [task for task in tasks if task['hash'] in query['hashes'][0].split('|')]
-                        self.reply(200, [{key: value for key, value in task.items() if not key.startswith('_')} for task in tasks])
+                        self.reply(200, [engine.public_task(task) for task in tasks])
                         return
                     if endpoint in ('torrents/files', 'torrents/properties'):
                         task = engine.tasks.get(query.get('hash', [''])[0])
@@ -320,10 +324,19 @@ class FakeQB:
         total = sum(len(content) for _, content in fixture.files)
         self.tasks[fixture.hash] = {'hash': fixture.hash, 'infohash_v1': fixture.v1, 'infohash_v2': fixture.v2, 'name': fixture.name, 'state': 'stoppedDL', 'save_path': save_path, 'content_path': save_path + '/' + fixture.name, 'tags': tags, 'size': total, 'total_size': total, 'completed': 0, 'downloaded': 0, 'dlspeed': 0, 'upspeed': 0, 'uploaded': 0, 'ratio': 0, 'num_leechs': 0, 'num_seeds': 0, 'eta': 8640000, 'progress': 0, 'amount_left': total, '_files': [{'index': index, 'name': fixture.name + '/' + path, 'size': len(content), 'progress': 0, 'priority': 1} for index, (path, content) in enumerate(fixture.files)]}
 
+    def public_task(self, task: dict[str, Any]) -> dict[str, Any]:
+        """只在协议响应变换 Windows 路径大小写和分隔符，避免污染 POSIX 样本目录。"""
+        result: dict[str, Any] = {key: value for key, value in task.items() if not key.startswith('_')}
+        if self.windows_engine_paths:
+            result['save_path'] = str(result['save_path']).swapcase().replace('/', '\\') + '\\'
+            result['content_path'] = str(result['content_path']).swapcase().replace('/', '\\')
+        return result
+
     def local_path(self, engine_path: str) -> Path:
-        """将唯一受控的虚拟 /downloads 映射到隔离宿主目录。"""
-        assert engine_path.startswith('/downloads/'), '引擎请求越过专用根'
-        candidate = (self.root / engine_path.removeprefix('/downloads/')).resolve()
+        """将唯一受控虚拟引擎根映射到隔离宿主目录，不以协议回报改变实际目录。"""
+        prefix: str = self.engine_root + '/'
+        assert engine_path.startswith(prefix), '引擎请求越过专用根'
+        candidate = (self.root / engine_path[len(prefix):]).resolve()
         assert candidate.is_relative_to(self.root), '引擎路径发生越界'
         return candidate
 
@@ -367,14 +380,14 @@ class FakeQB:
 class Harness:
     """管理隔离应用进程、会话和下载场景断言。"""
 
-    def __init__(self, binary: Path, root: Path) -> None:
+    def __init__(self, binary: Path, root: Path, windows_engine_paths: bool = False) -> None:
         """准备独立数据目录与动态端口，不使用现有用户服务。"""
         # 待测应用可执行文件，须由调用方事先构建。
         self.binary: Path = binary
         # 所有生成文件的唯一路径，强制含 verify 段。
         self.root: Path = root
         # 受控假下载器，与浏览器会话完全分离。
-        self.engine: FakeQB = FakeQB(root / 'downloads')
+        self.engine: FakeQB = FakeQB(root / 'downloads', windows_engine_paths)
         # 应用运行期间的进程句柄。
         self.process: subprocess.Popen[bytes] | None = None
         # 逐次启动的标准日志文件，不写入凭据。
@@ -392,7 +405,7 @@ class Harness:
         for path in ('data', 'media', 'downloads/staging', 'downloads/complete'):
             (root / path).mkdir(parents=True, exist_ok=True)
         password_file = root / 'qb-password'
-        password_file.write_text(self.engine.password, encoding='utf-8')
+        password_file.write_text(self.engine.password, encoding='utf-8-sig' if windows_engine_paths else 'utf-8')
         if os.name != 'nt':
             password_file.chmod(0o600)
         self.env.update({
@@ -413,7 +426,7 @@ class Harness:
             # 应用可读的隔离宿主下载根。
             'NAS_DOWNLOAD_ROOT': str(root / 'downloads'),
             # 假引擎使用固定虚拟根并映射到同一实体。
-            'NAS_DOWNLOAD_ENGINE_ROOT': '/downloads',
+            'NAS_DOWNLOAD_ENGINE_ROOT': self.engine.engine_root,
             # 固定回环 WebAPI 地址。
             'NAS_DOWNLOAD_QB_URL': self.engine.base,
             # 引擎验证用户名，与栖库管理员不同。
@@ -519,6 +532,9 @@ class Harness:
         client.check(self.upload(oversized, 'novel')[0] == 413, '种子本体超过8MiB返回413')
         unsafe = Fixture('越界种子', [('../escape.txt', b'outside')])
         client.check(self.upload(unsafe, 'novel')[0] == 400, '种子文件清单拒绝父目录穿越')
+        for character in '<>"|?*':
+            invalid_name: Fixture = Fixture('Windows非法文件名', [('bad' + character + '.txt', b'bounded')])
+            client.check(self.upload(invalid_name, 'novel')[0] == 400, '种子文件清单拒绝 Windows 非法文件名字符')
         text = ('本机 BT 下载验证。\n' * 5).encode()
         fixture = self.engine.register(Fixture('安全发布验证', [('selected.txt', text), ('unselected.txt', b'not selected')]))
         task = self.add(fixture, 'novel')
@@ -617,7 +633,7 @@ class Harness:
             client.check(found['id'] == again['download']['id'], f'{mode}种子完整身份与磁力去重一致')
         conflict = self.engine.register(Fixture('外部任务', [('outside.txt', b'outside')]))
         with self.engine.lock:
-            self.engine.create_task(conflict, '/downloads/external', '')
+            self.engine.create_task(conflict, self.engine.engine_root + '/external', '')
             snapshots = self.engine.snapshot_count
         client.json('/api/downloads/connection-test', 'POST', {})
         self.wait_engine(lambda: self.engine.snapshot_count > snapshots)
@@ -678,6 +694,8 @@ def main() -> None:
     parser.add_argument('--root', type=Path, default=verification_directory() / ('downloads-' + time.strftime('%Y%m%d-%H%M%S')), help='全新隔离目录，默认位于项目配置根下，路径必须包含 verify 段')
     # 浏览器联调模式仅准备样本，不将其输出误计为自动断言通过。
     parser.add_argument('--serve', action='store_true', help='保留隔离浏览器样本，创建根目录下stop文件后退出')
+    # Windows 兼容分支使用盘符、大小写变化、反斜杠、尾分隔符和 UTF-8 BOM 密码。
+    parser.add_argument('--windows-engine-paths', action='store_true', help='模拟 Windows qB 路径回报并验证原有完整下载流程')
     args = parser.parse_args()
     root = args.root.resolve()
     binary = args.binary.resolve()
@@ -686,7 +704,7 @@ def main() -> None:
     if 'verify' not in root.parts or root.exists():
         parser.error('--root 必须不存在且路径中包含 verify 段')
     root.mkdir(parents=True)
-    harness = Harness(binary, root)
+    harness = Harness(binary, root, args.windows_engine_paths)
     completed = False
     try:
         if args.serve:
@@ -698,7 +716,7 @@ def main() -> None:
         harness.close()
         if not args.serve:
             # 只记录断言数量和执行边界，不保存测试凭据或原始来源。
-            result = {'passed': completed, 'assertions': harness.client.passed, 'engine': 'controlled fake qB', 'realApplication': True, 'realBTTransfer': False, 'dockerExecuted': False}
+            result = {'passed': completed, 'assertions': harness.client.passed, 'engine': 'controlled fake qB', 'windowsEnginePaths': args.windows_engine_paths, 'realApplication': True, 'realBTTransfer': False, 'dockerExecuted': False}
             (root / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
 
 

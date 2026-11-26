@@ -216,7 +216,7 @@ func (m *downloadManager) findOwnedTorrent(d downloadRecord, torrents []qbTorren
 		actual, err := cleanEnginePath(t.SavePath)
 		stage := engineTaskPath(m.app.config.Downloads, "staging/"+d.ID)
 		final := engineTaskPath(m.app.config.Downloads, "complete/"+d.ContentType+"/"+d.ID)
-		if err != nil || (actual != stage && actual != final) || filepath.Clean(d.LocalRoot) != m.app.config.Downloads.Root {
+		if err != nil || (!sameEnginePath(actual, stage) && !sameEnginePath(actual, final)) || downloadPathKey(d.LocalRoot) != downloadPathKey(m.app.config.Downloads.Root) {
 			return nil, fmt.Errorf("下载器任务目录已偏离受管下载卷，已停止自动操作")
 		}
 		copy := t
@@ -366,7 +366,7 @@ func (m *downloadManager) processOperations(ctx context.Context, torrents []qbTo
 		}
 		if op.Kind == "move" {
 			actual, _ := cleanEnginePath(t.SavePath)
-			if actual == engineTaskPath(m.app.config.Downloads, "complete/"+d.ContentType+"/"+d.ID) {
+			if sameEnginePath(actual, engineTaskPath(m.app.config.Downloads, "complete/"+d.ContentType+"/"+d.ID)) {
 				m.finishOperation(ctx, op, "completed")
 				continue
 			}

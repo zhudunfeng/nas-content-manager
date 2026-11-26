@@ -1,0 +1,73 @@
+{
+  "logicalBytes": 619231497,
+  "allocatedBytes": 619231497,
+  "files": 10332,
+  "rows": [
+    {
+      "name": "go",
+      "logicalBytes": 404514542,
+      "allocatedBytes": 404514542,
+      "files": 8914
+    },
+    {
+      "name": "tools",
+      "logicalBytes": 114351439,
+      "allocatedBytes": 114351439,
+      "files": 1407
+    },
+    {
+      "name": "bin",
+      "logicalBytes": 56296448,
+      "allocatedBytes": 56296448,
+      "files": 3
+    },
+    {
+      "name": "verify",
+      "logicalBytes": 44069068,
+      "allocatedBytes": 44069068,
+      "files": 8
+    },
+    {
+      "name": "cache",
+      "logicalBytes": 0,
+      "allocatedBytes": 0,
+      "files": 0
+    },
+    {
+      "name": "node",
+      "logicalBytes": 0,
+      "allocatedBytes": 0,
+      "files": 0
+    },
+    {
+      "name": "npm",
+      "logicalBytes": 0,
+      "allocatedBytes": 0,
+      "files": 0
+    },
+    {
+      "name": "playwright",
+      "logicalBytes": 0,
+      "allocatedBytes": 0,
+      "files": 0
+    },
+    {
+      "name": "python",
+      "logicalBytes": 0,
+      "allocatedBytes": 0,
+      "files": 0
+    },
+    {
+      "name": "tmp",
+      "logicalBytes": 0,
+      "allocatedBytes": 0,
+      "files": 0
+    }
+  ],
+  "remainingLinks": [],
+  "scanErrors": [],
+  "volumeFreeBytes": 194391687168,
+  "observedVolumeFreeGainBytes": 188350947328,
+  "reducedBytes": 188279465102,
+  "reductionPercent": 99.6722
+}

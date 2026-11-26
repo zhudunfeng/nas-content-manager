@@ -305,7 +305,7 @@ func torrentFileEntry(node *bencodeNode, name string, index int) (DownloadFile, 
 
 // validateDownloadRelative 拒绝绝对路径、跨平台设备名、穿越和控制字符。
 func validateDownloadRelative(value string) error {
-	if value == "" || len(value) > 4096 || !utf8.ValidString(value) || strings.ContainsAny(value, "\\:\x00") || strings.HasPrefix(value, "/") {
+	if value == "" || len(value) > 4096 || !utf8.ValidString(value) || strings.ContainsAny(value, "\\:\x00<>\"|?*") || strings.HasPrefix(value, "/") {
 		return fmt.Errorf("下载文件路径无效")
 	}
 	for _, r := range value {

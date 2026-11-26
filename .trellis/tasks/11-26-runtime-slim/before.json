@@ -1,0 +1,519 @@
+{
+  "logicalBytes": 188898696599,
+  "allocatedBytes": 188898696599,
+  "files": 64082,
+  "rows": [
+    {
+      "name": "verify",
+      "logicalBytes": 155031498618,
+      "allocatedBytes": 155031498618,
+      "files": 30326
+    },
+    {
+      "name": "engine-bootstrap",
+      "logicalBytes": 5933744563,
+      "allocatedBytes": 5933744563,
+      "files": 81
+    },
+    {
+      "name": "windows-exit",
+      "logicalBytes": 5518099480,
+      "allocatedBytes": 5518099480,
+      "files": 131
+    },
+    {
+      "name": "verify-bt",
+      "logicalBytes": 5474641831,
+      "allocatedBytes": 5474641831,
+      "files": 50
+    },
+    {
+      "name": "music",
+      "logicalBytes": 5430988661,
+      "allocatedBytes": 5430988661,
+      "files": 52
+    },
+    {
+      "name": "review",
+      "logicalBytes": 5406924511,
+      "allocatedBytes": 5406924511,
+      "files": 26
+    },
+    {
+      "name": "go",
+      "logicalBytes": 2403850081,
+      "allocatedBytes": 2403850081,
+      "files": 20096
+    },
+    {
+      "name": "bin",
+      "logicalBytes": 2025939861,
+      "allocatedBytes": 2025939861,
+      "files": 1370
+    },
+    {
+      "name": "bt-probe",
+      "logicalBytes": 380425802,
+      "allocatedBytes": 380425802,
+      "files": 96
+    },
+    {
+      "name": "windows-one-click",
+      "logicalBytes": 241855428,
+      "allocatedBytes": 241855428,
+      "files": 45
+    },
+    {
+      "name": "tools",
+      "logicalBytes": 178613587,
+      "allocatedBytes": 178613587,
+      "files": 2524
+    },
+    {
+      "name": "python",
+      "logicalBytes": 127590406,
+      "allocatedBytes": 127590406,
+      "files": 4069
+    },
+    {
+      "name": "research",
+      "logicalBytes": 114575432,
+      "allocatedBytes": 114575432,
+      "files": 4169
+    },
+    {
+      "name": "windows-icon",
+      "logicalBytes": 87596716,
+      "allocatedBytes": 87596716,
+      "files": 10
+    },
+    {
+      "name": "releases",
+      "logicalBytes": 83085742,
+      "allocatedBytes": 83085742,
+      "files": 4
+    },
+    {
+      "name": "project-env-validation",
+      "logicalBytes": 44626701,
+      "allocatedBytes": 44626701,
+      "files": 7
+    },
+    {
+      "name": "password-policy",
+      "logicalBytes": 40971942,
+      "allocatedBytes": 40971942,
+      "files": 12
+    },
+    {
+      "name": "tmp",
+      "logicalBytes": 35295419,
+      "allocatedBytes": 35295419,
+      "files": 21
+    },
+    {
+      "name": "desktop-check",
+      "logicalBytes": 25457662,
+      "allocatedBytes": 25457662,
+      "files": 6
+    },
+    {
+      "name": "session-temp-cleanup",
+      "logicalBytes": 21394118,
+      "allocatedBytes": 21394118,
+      "files": 5
+    },
+    {
+      "name": "engine-ui",
+      "logicalBytes": 20941280,
+      "allocatedBytes": 20941280,
+      "files": 17
+    },
+    {
+      "name": "collection-app-test.exe",
+      "logicalBytes": 20793856,
+      "allocatedBytes": 20793856,
+      "files": 1
+    },
+    {
+      "name": "bootstrap-app-local.exe",
+      "logicalBytes": 20272640,
+      "allocatedBytes": 20272640,
+      "files": 1
+    },
+    {
+      "name": "nas-search-quality.exe",
+      "logicalBytes": 20137472,
+      "allocatedBytes": 20137472,
+      "files": 1
+    },
+    {
+      "name": "bt-quality",
+      "logicalBytes": 19893760,
+      "allocatedBytes": 19893760,
+      "files": 1
+    },
+    {
+      "name": "nas.exe",
+      "logicalBytes": 18639872,
+      "allocatedBytes": 18639872,
+      "files": 1
+    },
+    {
+      "name": "nas-review.exe",
+      "logicalBytes": 18601984,
+      "allocatedBytes": 18601984,
+      "files": 1
+    },
+    {
+      "name": "bt-engine-helper-linux-tests",
+      "logicalBytes": 18501829,
+      "allocatedBytes": 18501829,
+      "files": 1
+    },
+    {
+      "name": "bt-engine-review-linux-tests",
+      "logicalBytes": 18497502,
+      "allocatedBytes": 18497502,
+      "files": 1
+    },
+    {
+      "name": "nas-linux-amd64",
+      "logicalBytes": 18446969,
+      "allocatedBytes": 18446969,
+      "files": 1
+    },
+    {
+      "name": "nas-engine-helper-linux",
+      "logicalBytes": 17820860,
+      "allocatedBytes": 17820860,
+      "files": 1
+    },
+    {
+      "name": "nas-linux-arm64",
+      "logicalBytes": 17446196,
+      "allocatedBytes": 17446196,
+      "files": 1
+    },
+    {
+      "name": "release-uav-schema3-validation",
+      "logicalBytes": 17265052,
+      "allocatedBytes": 17265052,
+      "files": 2
+    },
+    {
+      "name": "nas-engine-helper-arm64",
+      "logicalBytes": 16829213,
+      "allocatedBytes": 16829213,
+      "files": 1
+    },
+    {
+      "name": "ci-encoding-fix",
+      "logicalBytes": 12622261,
+      "allocatedBytes": 12622261,
+      "files": 6
+    },
+    {
+      "name": "node",
+      "logicalBytes": 8983972,
+      "allocatedBytes": 8983972,
+      "files": 845
+    },
+    {
+      "name": "external-app-ui-evidence",
+      "logicalBytes": 1383037,
+      "allocatedBytes": 1383037,
+      "files": 18
+    },
+    {
+      "name": "external-ui-evidence",
+      "logicalBytes": 1016896,
+      "allocatedBytes": 1016896,
+      "files": 14
+    },
+    {
+      "name": "external-app-ui-acceptance-evidence",
+      "logicalBytes": 901967,
+      "allocatedBytes": 901967,
+      "files": 11
+    },
+    {
+      "name": "external-app-ui-clean-evidence",
+      "logicalBytes": 887490,
+      "allocatedBytes": 887490,
+      "files": 13
+    },
+    {
+      "name": "bt-frontend",
+      "logicalBytes": 508930,
+      "allocatedBytes": 508930,
+      "files": 7
+    },
+    {
+      "name": "setup",
+      "logicalBytes": 357956,
+      "allocatedBytes": 357956,
+      "files": 5
+    },
+    {
+      "name": "restore",
+      "logicalBytes": 295724,
+      "allocatedBytes": 295724,
+      "files": 5
+    },
+    {
+      "name": "search-real-desktop-dark.png",
+      "logicalBytes": 94419,
+      "allocatedBytes": 94419,
+      "files": 1
+    },
+    {
+      "name": "search-ui-desktop-dark.png",
+      "logicalBytes": 87407,
+      "allocatedBytes": 87407,
+      "files": 1
+    },
+    {
+      "name": "search-real-selected-dark.png",
+      "logicalBytes": 84141,
+      "allocatedBytes": 84141,
+      "files": 1
+    },
+    {
+      "name": "search-real-mobile-light.png",
+      "logicalBytes": 61462,
+      "allocatedBytes": 61462,
+      "files": 1
+    },
+    {
+      "name": "search-ui-mobile-light.png",
+      "logicalBytes": 56510,
+      "allocatedBytes": 56510,
+      "files": 1
+    },
+    {
+      "name": "verify_external_ui.py",
+      "logicalBytes": 21271,
+      "allocatedBytes": 21271,
+      "files": 1
+    },
+    {
+      "name": "verify_external_app_ui.py",
+      "logicalBytes": 16399,
+      "allocatedBytes": 16399,
+      "files": 1
+    },
+    {
+      "name": "backend-thumbnail.jpg",
+      "logicalBytes": 11648,
+      "allocatedBytes": 11648,
+      "files": 1
+    },
+    {
+      "name": "npm",
+      "logicalBytes": 11029,
+      "allocatedBytes": 11029,
+      "files": 12
+    },
+    {
+      "name": "verify_external_app_ui_remaining.py",
+      "logicalBytes": 10517,
+      "allocatedBytes": 10517,
+      "files": 1
+    },
+    {
+      "name": "windows-icon-preview.png",
+      "logicalBytes": 5116,
+      "allocatedBytes": 5116,
+      "files": 1
+    },
+    {
+      "name": "verify_component_compose.py",
+      "logicalBytes": 4163,
+      "allocatedBytes": 4163,
+      "files": 1
+    },
+    {
+      "name": "verify_linux_archive.py",
+      "logicalBytes": 3199,
+      "allocatedBytes": 3199,
+      "files": 1
+    },
+    {
+      "name": "component_media_check.py",
+      "logicalBytes": 2524,
+      "allocatedBytes": 2524,
+      "files": 1
+    },
+    {
+      "name": "run_media_regression.py",
+      "logicalBytes": 2203,
+      "allocatedBytes": 2203,
+      "files": 1
+    },
+    {
+      "name": "component_build_check.py",
+      "logicalBytes": 1312,
+      "allocatedBytes": 1312,
+      "files": 1
+    },
+    {
+      "name": "cache",
+      "logicalBytes": 0,
+      "allocatedBytes": 0,
+      "files": 0
+    },
+    {
+      "name": "ci-encoding-before",
+      "logicalBytes": 0,
+      "allocatedBytes": 0,
+      "files": 0
+    },
+    {
+      "name": "config",
+      "logicalBytes": 0,
+      "allocatedBytes": 0,
+      "files": 0
+    },
+    {
+      "name": "playwright",
+      "logicalBytes": 0,
+      "allocatedBytes": 0,
+      "files": 0
+    }
+  ],
+  "linksFollowed": false,
+  "errors": [
+    {
+      "path": "verify/s0322-review-behavior-1/fixtures/TestS0322ReviewDeepUnknownACL_true/data/backups/unknown-tree",
+      "error": "[WinError 5] 拒绝访问。: 'E:\\\\vscodeProjects\\\\nas-content-manager\\\\.runtime\\\\verify\\\\s0322-review-behavior-1\\\\fixtures\\\\TestS0322ReviewDeepUnknownACL_true\\\\data\\\\backups\\\\unknown-tree'"
+    }
+  ],
+  "largeFiles": [
+    {
+      "path": "engine-bootstrap/verify/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "music/verify/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "review/verify/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/usable-20261123-core/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/search-media-20261118-081809/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s0322-review-core-final/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s0322-core-implement-final/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s0321-review-core-final/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s0321-core-large-implement-final/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s03-1-review-core-final/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s03-1-core-large-stable/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s02-3-core-review-http-final/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s02-3-core-review-final/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s02-3-core-final/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s02-2-review-core/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s02-2-core-final/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s02-1-review-core/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s02-1-core-4/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s02-1-core-3/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s02-1-core-2/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s02-1-core-1/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s01-core-2/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/s01-core-1/core/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/media-final-20261120-095335/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    },
+    {
+      "path": "verify/media-final-20261120-084612/media/video/仅协议验证-5GiB.mp4",
+      "logical": 5368709243,
+      "allocated": 5368709243
+    }
+  ]
+}
