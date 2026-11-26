@@ -34,6 +34,9 @@ Desktop schema 2 adds the required non-null `collectionMode` field and preserves
 schema-1 identities through explicit migration with an exact-byte backup. Native
 JMComic ownership, private runtime distribution and the fixed collection IPC
 actions are defined in the [Windows JMComic contract](./jmcomic-windows-contract.md).
+The [Windows UAV contract](./uav-windows-contract.md) extends that worker to
+independent comic/video capabilities, separate private runtimes and release
+schema 3; it does not add another desktop configuration or database version.
 The nine original fields below remain required; only absent profiles receive defaults.
 
 - Default profile is `%LOCALAPPDATA%/Qiku/profiles/native` or `docker`; the business data root is separate. Precedence: explicit CLI > applicable NAS environment > saved JSON > defaults. Original CLI does not read desktop JSON.

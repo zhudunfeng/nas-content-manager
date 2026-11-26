@@ -21,18 +21,19 @@ import (
 
 // managedCollection 保存本实例私有控制句柄，凭据不写入桌面状态响应。
 type managedCollection struct {
-	process    *collectionProcess            // 已归属独占 Job 的 worker 进程树。
-	input      *os.File                      // 仅父进程持有的命令写端。
-	output     *os.File                      // 仅父进程持有的就绪读端。
-	log        *rotatingWriter               // 单独限额的 worker 中文日志。
-	nonce      string                        // 当前启动的一次性关联值，不回显。
-	instanceID string                        // 当前桌面 profile 身份。
-	address    string                        // 已通过认证和目录挑战的回环地址。
-	readRoot   string                        // 私有 worker 数据根。
-	tokenFile  string                        // 与本实例数据根绑定的秘密文件。
-	capability collectioncontract.Capability // 固定漫画依赖的真实能力，不代表公网站点可达。
-	once       sync.Once                     // 防止退出和错误清理重复发送停止。
-	stopErr    error                         // 有序停止的完整结果。
+	process      *collectionProcess              // 已归属独占 Job 的 worker 进程树。
+	input        *os.File                        // 仅父进程持有的命令写端。
+	output       *os.File                        // 仅父进程持有的就绪读端。
+	log          *rotatingWriter                 // 单独限额的 worker 中文日志。
+	nonce        string                          // 当前启动的一次性关联值，不回显。
+	instanceID   string                          // 当前桌面 profile 身份。
+	address      string                          // 已通过认证和目录挑战的回环地址。
+	readRoot     string                          // 私有 worker 数据根。
+	tokenFile    string                          // 与本实例数据根绑定的秘密文件。
+	expected     []string                        // 本次受控环境明确启用的插件能力，未随包插件不算损坏。
+	capabilities []collectioncontract.Capability // 各启用插件的真实本地能力，不代表站点可达。
+	once         sync.Once                       // 防止退出和错误清理重复发送停止。
+	stopErr      error                           // 有序停止的完整结果。
 }
 
 // prepareCollectionDirectory 只创建本实例专用目录，拒绝接管未知目录或链接别名。
@@ -102,32 +103,49 @@ func prepareCollectionDirectory(profile string, cfg Config, programDir string) (
 }
 
 // collectionEnvironment 仅传递受控配置快照，托管模式绝不从用户 PATH 搜索 Python。
-func collectionEnvironment(programDir string, root string) ([]string, error) {
+func collectionEnvironment(programDir string, root string) ([]string, []string, error) {
 	values := map[string]string{
 		"PATH": filepath.Join(programDir, "tools"),
 		"TEMP": filepath.Join(root, "tmp"), "TMP": filepath.Join(root, "tmp"),
-		"NAS_COLLECTION_WORKER_ADDR":                     "127.0.0.1:0",
-		"NAS_COLLECTION_WORKER_DATA_DIR":                 filepath.Join(root, "data"),
-		"NAS_COLLECTION_WORKER_TOKEN_FILE":               filepath.Join(root, "secrets", "token"),
-		"NAS_COLLECTION_WORKER_JMCOMIC_ENABLED":          "true",
-		"NAS_COLLECTION_WORKER_JMCOMIC_RUNTIME_MANIFEST": filepath.Join(programDir, "jmcomic-runtime.json"),
+		"NAS_COLLECTION_WORKER_ADDR":       "127.0.0.1:0",
+		"NAS_COLLECTION_WORKER_DATA_DIR":   filepath.Join(root, "data"),
+		"NAS_COLLECTION_WORKER_TOKEN_FILE": filepath.Join(root, "secrets", "token"),
+		"NAS_COLLECTION_WORKER_YTDLP":      filepath.Join(programDir, "tools", "yt-dlp.exe"),
+		"NAS_COLLECTION_WORKER_FFMPEG":     filepath.Join(programDir, "tools", "ffmpeg.exe"),
 	}
 	for _, key := range []string{"SystemRoot", "WINDIR", "SYSTEMDRIVE", "PROCESSOR_ARCHITECTURE", "NUMBER_OF_PROCESSORS", "NAS_COLLECTION_WORKER_MAX_BYTES", "NAS_COLLECTION_WORKER_MAX_FILES", "NAS_COLLECTION_WORKER_MIN_FREE_MB", "NAS_COLLECTION_WORKER_MAX_CONCURRENT"} {
 		if value := os.Getenv(key); value != "" {
 			values[key] = value
 		}
 	}
-	if python := os.Getenv("NAS_COLLECTION_WORKER_JMCOMIC_PYTHON"); python != "" {
-		if !filepath.IsAbs(python) {
-			return nil, errors.New("本机托管漫画解释器覆盖必须为绝对路径")
+	expected := []string{}
+	for _, plugin := range collectionPlugins {
+		manifest := filepath.Join(programDir, plugin.manifest)
+		_, manifestErr := os.Lstat(manifest)
+		python := os.Getenv(plugin.prefix + "_PYTHON")
+		enabled := !errors.Is(manifestErr, os.ErrNotExist) || python != ""
+		if override, present := os.LookupEnv(plugin.prefix + "_ENABLED"); present {
+			if override != "true" && override != "false" {
+				return nil, nil, errors.New("本机" + plugin.name + "插件启用配置必须为true或false")
+			}
+			enabled = override == "true"
 		}
-		values["NAS_COLLECTION_WORKER_JMCOMIC_PYTHON"] = python
+		values[plugin.prefix+"_ENABLED"] = "false"
+		if enabled {
+			values[plugin.prefix+"_ENABLED"] = "true"
+			values[plugin.prefix+"_RUNTIME_MANIFEST"] = manifest
+			expected = append(expected, plugin.kind)
+			if python != "" {
+				// 相对或失效覆盖由对应插件独立拒绝，不能拖垮另一插件或静默改用PATH。
+				values[plugin.prefix+"_PYTHON"] = python
+			}
+		}
 	}
 	environment := make([]string, 0, len(values))
 	for key, value := range values {
 		environment = append(environment, key+"="+value)
 	}
-	return environment, nil
+	return environment, expected, nil
 }
 
 // startManagedCollection 建立私有继承管道，核验真实绑定和本实例目录后才返回连接。
@@ -144,13 +162,13 @@ func (c *controller) startManagedCollection(ctx context.Context, cfg Config) (*m
 	worker := filepath.Join(programDir, "nas-collection-worker.exe")
 	info, err := os.Lstat(worker)
 	if err != nil || !info.Mode().IsRegular() {
-		return nil, errors.New("随包获取服务缺失，请使用含 JMComic 的完整 Windows 包")
+		return nil, errors.New("随包获取服务缺失，请使用含获取组件的完整 Windows 包")
 	}
 	root, err := prepareCollectionDirectory(c.profile, cfg, programDir)
 	if err != nil {
 		return nil, err
 	}
-	environment, err := collectionEnvironment(programDir, root)
+	environment, expected, err := collectionEnvironment(programDir, root)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +208,7 @@ func (c *controller) startManagedCollection(ctx context.Context, cfg Config) (*m
 	}
 	nonceBytes := make([]byte, 32)
 	_, err = rand.Read(nonceBytes)
-	m := &managedCollection{process: process, input: input, output: output, log: log, nonce: hex.EncodeToString(nonceBytes), instanceID: cfg.InstanceID, readRoot: filepath.Join(root, "data"), tokenFile: filepath.Join(root, "secrets", "token")}
+	m := &managedCollection{process: process, input: input, output: output, log: log, nonce: hex.EncodeToString(nonceBytes), instanceID: cfg.InstanceID, readRoot: filepath.Join(root, "data"), tokenFile: filepath.Join(root, "secrets", "token"), expected: expected}
 	if err != nil {
 		return nil, errors.Join(errors.New("无法生成获取服务关联值"), m.stop())
 	}
@@ -271,10 +289,20 @@ func (m *managedCollection) verify(ctx context.Context) error {
 	if caps.Version != collectioncontract.Version || caps.InstanceID == "" || len(caps.Capabilities) > 8 || len(caps.Sources) > 64 {
 		return errors.New("本机获取服务协议不兼容")
 	}
+	byKind := make(map[string]collectioncontract.Capability, len(caps.Capabilities))
 	for _, capability := range caps.Capabilities {
-		if capability.Kind == "jmcomic" {
-			m.capability = capability
+		if _, duplicate := byKind[capability.Kind]; capability.Kind == "" || duplicate || len(capability.Reason) > 1200 || len(capability.Version) > 120 {
+			return errors.New("本机获取服务能力响应无效")
 		}
+		byKind[capability.Kind] = capability
+	}
+	m.capabilities = make([]collectioncontract.Capability, 0, len(m.expected))
+	for _, kind := range m.expected {
+		capability, present := byKind[kind]
+		if !present {
+			capability = collectioncontract.Capability{Kind: kind, Reason: "获取服务未报告已配置插件的能力，请检查完整包版本"}
+		}
+		m.capabilities = append(m.capabilities, capability)
 	}
 	// 探针使用 UUID 格式，和现有服务协议保持一致。
 	probeBytes := make([]byte, 16)

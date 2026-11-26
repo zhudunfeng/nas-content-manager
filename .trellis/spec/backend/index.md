@@ -27,6 +27,7 @@ The first release is a standard-library Go HTTP service with pure-Go SQLite. Its
 15. For the fixed JMComic adapter, Python bridge, comic search or directory-image import, read [JMComic plugin contract](./jmcomic-contract.md).
 16. For UAV video search, SupJav candidate fallback/TS normalization, Huangguo episode identity, scoped CDN relay or offline MP4 acquisition, read [UAV plugin contract](./uav-contract.md).
 17. For native Windows JMComic runtime packaging, desktop-owned collection processes or schema-2 collection mode migration, read [Windows JMComic contract](./jmcomic-windows-contract.md).
+18. For native Windows UAV runtime, multi-plugin desktop capabilities, fixed downloader materials or release schema 3, read [Windows UAV contract](./uav-windows-contract.md).
 
 ## Quality Check
 
@@ -47,6 +48,7 @@ Run `go vet ./...`, `go test ./...`, `go build ./cmd/nas`, and the isolated `scr
 | [JMComic plugin contract](./jmcomic-contract.md) | Optional fixed Python adapter, bounded search, complete comic publication and original reader handoff | Implemented locally; target pending |
 | [Windows JMComic contract](./jmcomic-windows-contract.md) | Private Python inventory, desktop collection ownership, schema-2 migration and package identity | Implemented locally; target pending |
 | [UAV plugin contract](./uav-contract.md) | Fixed five-site search, SupJav fallback/TS normalization, scoped CDN relay and validated video import | Implemented locally; target pending |
+| [Windows UAV contract](./uav-windows-contract.md) | Private video runtime provenance, shared desktop worker, downloader materials and release schema 3 | Implemented locally; target pending |
 | [External collection contract](./external-collection-contract.md) | Schema v4, typed external automation, durable intents and MoviePilot workflows | Implemented |
 | [Component deployment contract](./collection-component-contract.md) | Fixed Docker components, private volume ownership, persistent deployment and desktop v3 | Implemented |
 | [Regression baseline contract](./baseline-contract.md) | Isolated verifier orchestration, truthful evidence and target acceptance boundaries | Implemented |

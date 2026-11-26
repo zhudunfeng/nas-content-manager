@@ -141,6 +141,9 @@ runtime archives add `-jmcomic` before an optional `-development` suffix.
 Release metadata distinguishes basic media distribution from an included
 JMComic runtime; development-without-tools remains an independent limitation.
 Do not label a development package a complete offline media distribution.
+The [Windows UAV contract](uav-windows-contract.md) adds release schema 3 and
+per-plugin desktop status while preserving schema-1/2 archive validation, this
+runtime's independent identity and old profile/external behavior.
 
 The app may receive a desktop-only `CollectionConfig.UnavailableReason` when its
 worker URL is empty. It is fixed sanitized startup context, not an environment or

@@ -9,6 +9,20 @@ import (
 	"path/filepath"
 )
 
+// collectionPlugin 仅描述随包支持的固定插件，不接受用户自定义解释器参数或站点。
+type collectionPlugin struct {
+	kind     string // worker能力中的固定种类。
+	name     string // 托盘及诊断使用的中文名称。
+	prefix   string // 本机受信配置的固定环境变量前缀。
+	manifest string // 程序根中的固定清单文件名。
+}
+
+// collectionPlugins 是托管环境、默认配置和托盘共同使用的固定插件列表。
+var collectionPlugins = [...]collectionPlugin{
+	{kind: "jmcomic", name: "漫画", prefix: "NAS_COLLECTION_WORKER_JMCOMIC", manifest: "jmcomic-runtime.json"},
+	{kind: "uav", name: "视频", prefix: "NAS_COLLECTION_WORKER_UAV", manifest: "uav-runtime.json"},
+}
+
 // validCollectionMode 仅允许三种固定获取方式，不接受解释器或任意命令参数。
 func validCollectionMode(mode string) bool {
 	return mode == "disabled" || mode == "managed" || mode == "external"
@@ -34,9 +48,13 @@ func defaultCollectionMode(mode string) string {
 		if err == nil {
 			dir := filepath.Dir(path)
 			worker, workerErr := os.Stat(filepath.Join(dir, "nas-collection-worker.exe"))
-			manifest, manifestErr := os.Stat(filepath.Join(dir, "jmcomic-runtime.json"))
-			if workerErr == nil && worker.Mode().IsRegular() && manifestErr == nil && manifest.Mode().IsRegular() {
-				return "managed"
+			if workerErr == nil && worker.Mode().IsRegular() {
+				for _, plugin := range collectionPlugins {
+					manifest, manifestErr := os.Stat(filepath.Join(dir, plugin.manifest))
+					if manifestErr == nil && manifest.Mode().IsRegular() {
+						return "managed"
+					}
+				}
 			}
 		}
 	}

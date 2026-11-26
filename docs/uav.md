@@ -58,6 +58,10 @@ $env:NAS_COLLECTION_WORKER_UAV_PYTHON = (Resolve-Path .runtime/uav-venv/Scripts/
 
 Linux 使用独立环境的 `bin/python`，并使用对应 Python ≥3.12 创建环境。仍需启动 worker、配置原有 yt-dlp/FFmpeg 路径，并按资源收集文档将主服务连接到该 worker；这些命令不替代原认证与路径授权。上游项目元数据同时声明桌面及 AI 功能包，本适配器有意只安装固定无头导入闭包，因此不将全量上游 `pip check` 作为通过结论。成功探测和离线解析也不代表真实站点可用。
 
+## Windows 原生完整包
+
+Windows 桌面可使用独立 UAV 私有运行时与固定下载器，由现有桌面入口托管同一个获取 worker，无需全局 Python。安装、中文路径、托盘和 `--check-uav` 本地诊断见 [Windows 原生视频说明](uav-windows.md)。手工环境、外接 worker 与 Linux/Docker 部署继续保留；完整包必须同时包含解析运行时、下载器和媒体工具。
+
 ## 下载与故障处理
 
 - UAV 桥接只执行固定站点的搜索与详情解析。实际传输走执行端固定下载器，所有 HTTP/HLS 请求及重定向受公网策略约束；FFmpeg 仅处理本地文件。

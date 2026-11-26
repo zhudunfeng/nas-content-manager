@@ -62,6 +62,7 @@ type Service struct {
 	jmcomicPython string                        // 已解析且通过固定版本探测的受信Python。
 	jmcomicReason string                        // 本地运行时不可用的脱敏中文原因，不含真实路径。
 	uavPython     string                        // 已通过固定版本探测的视频插件独立解释器。
+	uavReason     string                        // 视频运行时或工具不可用的脱敏中文原因，不含解释器路径或工具原文。
 	lease         *workerLease                  // 专用数据根独占锁。
 	closing       bool                          // 已关闭HTTP处理器准入。
 	requests      sync.WaitGroup                // 已获准处理器数量，保护退出后的文件和锁释放。
@@ -155,19 +156,11 @@ func New(ctx context.Context, config Config, logger *slog.Logger) (*Service, err
 		s.Close()
 		return nil, err
 	}
-	s.ytdlp = toolPath(config.YTDLP)
+	s.initWebTools()
 	s.rclone = toolPath(config.Rclone)
-	s.ffmpeg = toolPath(config.FFmpeg)
-	s.ytdlpVersion = s.version(s.ytdlp, append(s.webArguments(), "--version")...)
 	s.rcloneVersion = s.version(s.rclone, "version")
-	if s.ytdlpVersion == "" {
-		s.ytdlp = ""
-	}
 	if s.rcloneVersion == "" {
 		s.rclone = ""
-	}
-	if s.version(s.ffmpeg, "-version") == "" {
-		s.ffmpeg = ""
 	}
 	s.proxy, err = newPublicProxy(workCtx)
 	if err != nil {

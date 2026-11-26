@@ -332,10 +332,13 @@ func showTrayMenu(window uintptr) {
 		appendMenu(menu, 0, 5, "选择独立数据目录…")
 		appendMenu(menu, 0x800, 0, "")
 		collectionStates := map[string]string{"disabled": "已停用", "external": "外接服务", "starting": "正在核验", "ready": "已就绪", "unavailable": "依赖未就绪", "failed": "不可用"}
-		appendMenu(menu, 2, 0, "漫画组件 · "+collectionStates[reply.CollectionState])
-		appendMenu(menu, 0, 10, "启用本机漫画下载")
-		appendMenu(menu, 0, 11, "停用本机漫画下载")
-		appendMenu(menu, 0, 12, "重新检测漫画组件")
+		appendMenu(menu, 2, 0, "本机获取组件 · "+collectionStates[reply.CollectionState])
+		for _, plugin := range collectionPlugins {
+			appendMenu(menu, 2, 0, plugin.name+" · "+collectionPluginState(reply, plugin.kind))
+		}
+		appendMenu(menu, 0, 10, "启用本机资源获取")
+		appendMenu(menu, 0, 11, "停用本机资源获取")
+		appendMenu(menu, 0, 12, "重新检测获取组件")
 	}
 	appendMenu(menu, 0, 6, "重启当前模式")
 	if cfg.Mode == "docker" {

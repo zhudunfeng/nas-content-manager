@@ -6,6 +6,10 @@ param(
     [string]$ImagesManifest,
     # 可选JMComic私有Python运行时清单，构建完整漫画功能包时显式提供。
     [string]$JMComicRuntimeManifest,
+    # 可选UAV私有运行时清单，完整视频包还必须提供下载器及媒体工具材料。
+    [string]$UAVRuntimeManifest,
+    # 可选固定下载器及完整许可、对应源码材料的成品清单。
+    [string]$YtDlpManifest,
     # 归档输出目录，默认使用仓库bin/releases。
     [string]$Output,
     # 明确生成不含FFmpeg的开发包，不能作为完整离线包分发。
@@ -19,6 +23,8 @@ $releaseArguments = @((Join-Path $PSScriptRoot 'release.py'), '--target', 'windo
 if ($ToolsManifest) { $releaseArguments += @('--tools-manifest', $ToolsManifest) }
 if ($ImagesManifest) { $releaseArguments += @('--images-manifest', $ImagesManifest) }
 if ($JMComicRuntimeManifest) { $releaseArguments += @('--jmcomic-runtime-manifest', $JMComicRuntimeManifest) }
+if ($UAVRuntimeManifest) { $releaseArguments += @('--uav-runtime-manifest', $UAVRuntimeManifest) }
+if ($YtDlpManifest) { $releaseArguments += @('--ytdlp-manifest', $YtDlpManifest) }
 if ($Output) { $releaseArguments += @('--output', $Output) }
 if ($DevelopmentWithoutTools) { $releaseArguments += '--development-without-tools' }
 if ($SkipWebBuild) { $releaseArguments += '--skip-web-build' }

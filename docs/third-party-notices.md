@@ -29,7 +29,7 @@ SOFTWARE.
 
 ## UAV-Downloader
 
-The optional collection-worker video adapter uses a headless subset of UAV-Downloader 3.8.4, commit d40f09457fbd38dd7dc94580637242afafaf3939, from <https://github.com/Alos21750/UAV-Downloader>. The original source archive SHA-256 is 88934f8920f836b064212a6d997a0eedb9a8149e38d112569d8c766dae208b41. The fixed bridge only calls search and metadata parsing; controlled downloads and offline validation belong to this project. GUI, AI, account and upstream downloader features are omitted. Dependencies retain their licenses and metadata in /opt/uav; deploy/uav-requirements.txt records exact versions and hashes. The upstream Apache-2.0 license follows.
+The optional collection-worker video adapter uses a headless subset of UAV-Downloader 3.8.4, commit d40f09457fbd38dd7dc94580637242afafaf3939, from <https://github.com/Alos21750/UAV-Downloader>. The original source archive SHA-256 is 88934f8920f836b064212a6d997a0eedb9a8149e38d112569d8c766dae208b41. The fixed bridge only calls search and metadata parsing; controlled downloads and offline validation belong to this project. GUI, AI, account and upstream downloader features are omitted. Dependencies retain their licenses and metadata in /opt/uav for the container recipe, or runtimes/uav and licenses/uav for the optional Windows package; deploy/uav-requirements.txt records exact versions and hashes. Windows assembly additionally records the build lock and derived wheel identity while retaining the original source archive provenance. The upstream Apache-2.0 license follows.
 
                                  Apache License
                            Version 2.0, January 2004
@@ -232,3 +232,11 @@ The optional collection-worker video adapter uses a headless subset of UAV-Downl
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+## Optional Windows Python and downloader materials
+
+The optional Windows UAV and JMComic packages use separate CPython embeddable runtimes. Their Python licenses, original dependency license metadata, source records and file inventories accompany the selected runtime under `licenses/uav`, `licenses/jmcomic` and the corresponding `runtimes/` directories. Runtime assembly preserves the original UAV source archive identity as well as its derived wheel and build-lock digests. The headless subset deliberately excludes upstream GUI and AI dependencies.
+
+The optional Windows downloader is the fixed official yt-dlp `2026.10.26` executable, SHA-256 `f5389d3698ecde4ef06f4e6b1ce0294fe9ac1396228c8990b8d3416d6d177a7d`. Its bundled components have their own licenses; the executable's distribution obligations must be assessed from the actual binary and components rather than inferred from the yt-dlp Python wheel. `licenses/yt-dlp/` must include the official license and third-party notices, GPL text, corresponding source archives, necessary build materials and a reviewed component inventory bound to that executable. The assembly and archive tools verify identities and inventory references; these checks do not determine legal completeness.
+
+FFmpeg/ffprobe materials remain independent under `licenses/ffmpeg/` and must match the exact packaged build, including shared-library dependencies and corresponding source obligations. See [the maintainer release procedure](release.md) for the required input schemas and explicit review gates. Local runtime probes and fixture self-tests are not release approval.

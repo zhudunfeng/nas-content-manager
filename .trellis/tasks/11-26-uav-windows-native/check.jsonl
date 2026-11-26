@@ -1,0 +1,5 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "验证Windows路径生命周期及Linux发布兼容"}
+{"file": ".trellis/spec/backend/uav-contract.md", "reason": "验证视频五站下载与失败隔离不回退"}
+{"file": ".trellis/spec/backend/uav-windows-contract.md", "reason": "验证真实依赖、Windows生命周期与发行身份"}

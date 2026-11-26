@@ -2,6 +2,19 @@
 
 最新验证日期：**2026-11-26（Asia/Shanghai）**。各章节保留相应实施日期和历史结果。本记录区分已经执行的检查与目标设备待验事项，不将编译成功、稀疏文件或短视频样本视为完整 NAS 性能验收。
 
+## Windows 原生 UAV 五站运行与分发（2026-11-26）
+
+新增 UAV 独立 embedded Python、`--check-uav`、桌面单 worker 多插件能力、固定下载器材料装配及 release schema 3；Jable、MissAV、Hanime1、黄果和 SupJav 沿用原搜索、发布和播放流程。使用与排错见 [Windows 原生视频](uav-windows.md)，构建材料见 [发布流程](release.md)，详细本机证据见[实施验证记录](../.trellis/tasks/11-26-uav-windows-native/research/implementation-validation.md)与[独立复核记录](../.trellis/tasks/11-26-uav-windows-native/research/quality-review.md)。
+
+- 实际离线装配 Windows x64 CPython **3.14.4**、UAV **3.8.4** 固定源码，784 份运行时/许可文件。UAV Python/Go 交叉校验及真实 embedded probe **70 项**通过，含五站模块、AES、CA、空 PATH、污染 Python 环境与中文空格迁移；共享辅助改动后原 JMComic 真实运行时回归 **49 项**通过。
+- 真正私有 Python、固定官方 **yt-dlp.exe 2026.10.26** 和本机真实 FFmpeg 完成离线解析/HLS：五站搜索与解析、SupJav 七类 provider/十项回退，有限 HLS 与 AES-128 均成功解码；缺片、不支持的加密按预期失败，无 FFmpeg 网络回退。站点传输使用受控样例，未证明公网可用。
+- 最终候选主服务/worker 完成 UAV **102** 项协议、core **44**、collection **27** 项回归；本轮原 JMComic 协议 **66** 项通过。协议 fixture 与上条真实依赖验证分开记录。原生桌面 **17 类**及真实托盘十尺寸图标、退出后即时文件释放检查通过。
+- 真实私有运行时的 JMComic-only **14 项**、UAV-only **20 项**、双插件组合 **24 项**桌面矩阵通过，组合实际观察漫画 26 个、视频 25 个原生映像；含只读 ACL、双向部分故障隔离、取消/父强杀、嵌套 Job、独立哨兵保留、映像替换和同 profile 重启。矩阵与最终候选的154份生产输入一致，构建选项与摘要差异有记录，详见[桌面验证](../.trellis/tasks/11-26-uav-windows-native/research/worker-desktop-validation.md)。
+- 独立复核修复下载器版本门槛及旧 schema 1/2 合法工具包兼容。发布边界自测 **131 项**、下载器材料自测 **36 项**通过；真实 UAV 785 成员专项归档正例及三类重算摘要负例通过。真实基础开发包构建并通过17文件归档核验，明确缺工具和可选插件，未作为完整视频包。
+- 全仓 Go vet/包编译、Windows 三入口、Vue 严格类型与 Vite 构建通过；PowerShell 5.1/7 实际解析及中文空格参数透传通过。Linux amd64/arm64 为交叉编译证据，未在 Linux 执行。临时单元测试源码已清除，保留可重复集成脚本；空 Go 测试集只计编译。
+
+本轮尚未取得干净 Windows 11 普通用户、真实公网站点、Docker、ARM64 运行或实体 NAS 验收；完整下载器对应源码与组件材料仍需维护者实际准备并人工审核。机器材料校验不代替该审核，本次未生成虚假声明、提交、发布或部署。
+
 ## Windows 原生 JMComic 运行与分发（2026-11-26）
 
 实现随包私有 Python、桌面托管 worker、`disabled|managed|external` 三模式、桌面配置 v1→v2 原字节备份迁移、私有控制管道、Windows Job 所有权和故障降级；原搜索、选章、批量、发布、阅读及数据库 schema 6 保持原契约。使用与故障处理见 [Windows 原生漫画说明](jmcomic-windows.md)，详细结果见[主线验收报告](../.trellis/tasks/11-26-jmcomic-windows-native/research/final-validation.md)。

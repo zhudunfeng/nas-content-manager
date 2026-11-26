@@ -1,14 +1,83 @@
 package desktop
 
-import "context"
+import (
+	"context"
+	"strings"
+
+	"nas-content-manager/internal/collectioncontract"
+)
 
 // setCollectionState 单独发布可选组件状态，不覆盖媒体服务的真实就绪地址。
 func (c *controller) setCollectionState(state string, message string) {
+	c.setCollectionCapabilities(state, message, nil)
+}
+
+// setCollectionCapabilities 同时发布状态与各插件快照，避免重检时保留上一实例能力。
+func (c *controller) setCollectionCapabilities(state string, message string, capabilities []collectioncontract.Capability) {
 	c.mu.Lock()
 	c.reply.CollectionMode = c.config.CollectionMode
 	c.reply.CollectionState = state
 	c.reply.CollectionMessage = message
+	c.reply.CollectionCapabilities = append([]collectioncontract.Capability(nil), capabilities...)
 	c.mu.Unlock()
+}
+
+// collectionReadiness 根据预期插件的本地探测结果生成总体状态和脱敏说明。
+func collectionReadiness(capabilities []collectioncontract.Capability) (string, string) {
+	ready := []string{}
+	unavailable := []string{}
+	for _, capability := range capabilities {
+		name := "获取"
+		for _, plugin := range collectionPlugins {
+			if plugin.kind == capability.Kind {
+				name = plugin.name
+				break
+			}
+		}
+		if capability.Available {
+			ready = append(ready, name)
+			continue
+		}
+		reason := capability.Reason
+		if reason == "" {
+			reason = "本地依赖尚未就绪，请查看日志"
+		}
+		unavailable = append(unavailable, name+"："+reason)
+	}
+	if len(ready) > 0 {
+		message := "本机" + strings.Join(ready, "、") + "依赖已就绪；站点连接在实际请求时验证"
+		if len(unavailable) > 0 {
+			message += "；" + strings.Join(unavailable, "；")
+		}
+		return "ready", message
+	}
+	if len(unavailable) > 0 {
+		return "unavailable", strings.Join(unavailable, "；")
+	}
+	return "unavailable", "本机获取服务已启动，尚未配置漫画或视频私有运行时"
+}
+
+// collectionPluginState 为托盘固定插件生成短状态，不把未配置的可选插件标为损坏。
+func collectionPluginState(reply controlReply, kind string) string {
+	switch reply.CollectionState {
+	case "disabled":
+		return "已停用"
+	case "external":
+		return "外接服务"
+	case "starting":
+		return "正在核验"
+	case "failed":
+		return "未检测"
+	}
+	for _, capability := range reply.CollectionCapabilities {
+		if capability.Kind == kind {
+			if capability.Available {
+				return "已就绪"
+			}
+			return "依赖未就绪"
+		}
+	}
+	return "未配置"
 }
 
 // startCollection 为当前启动创建成组连接快照，缺失可选组件只降级获取功能。
@@ -24,15 +93,15 @@ func (c *controller) startCollection(ctx context.Context, cfg Config) (map[strin
 		"NAS_COLLECTION_WORKER_ALLOW_HTTP": "false",
 	}
 	if cfg.CollectionMode == "disabled" {
-		message := "本机漫画获取已停用，可在托盘启用；已发布漫画仍可阅读"
+		message := "本机资源获取已停用，可在托盘启用；已发布媒体仍可使用"
 		c.setCollectionState("disabled", message)
 		return values, message
 	}
-	c.setCollectionState("starting", "正在启动并核验本机漫画组件")
+	c.setCollectionState("starting", "正在启动并核验本机获取组件")
 	worker, err := c.startManagedCollection(ctx, cfg)
 	if err != nil {
 		c.logger.Warn("本机获取服务不可用，原有媒体保持可用", "原因", err)
-		message := "本机漫画获取服务启动失败，请在托盘查看日志或重新检测"
+		message := "本机获取服务启动失败，请在托盘查看日志或重新检测"
 		c.setCollectionState("failed", message)
 		return values, message
 	}
@@ -42,15 +111,8 @@ func (c *controller) startCollection(ctx context.Context, cfg Config) (map[strin
 	values["NAS_COLLECTION_WORKER_TOKEN_FILE"] = worker.tokenFile
 	values["NAS_COLLECTION_READ_ROOT"] = worker.readRoot
 	values["NAS_COLLECTION_WORKER_ALLOW_HTTP"] = "true"
-	if worker.capability.Available {
-		c.setCollectionState("ready", "本机漫画依赖已就绪；站点连接在实际请求时验证")
-	} else {
-		message := worker.capability.Reason
-		if message == "" {
-			message = "本机获取服务已启动，但漫画依赖尚未就绪，请查看日志"
-		}
-		c.setCollectionState("unavailable", message)
-	}
+	state, message := collectionReadiness(worker.capabilities)
+	c.setCollectionCapabilities(state, message, worker.capabilities)
 	return values, ""
 }
 

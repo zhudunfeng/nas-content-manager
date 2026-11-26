@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import tarfile
 import tempfile
@@ -85,6 +86,67 @@ def stream_digest(stream: BinaryIO) -> str:
     return value.hexdigest()
 
 
+def verify_uav(path: Path, root: str, metadata: dict[str, Any], small: dict[str, bytes], hashes: dict[str, str], sizes: dict[str, int]) -> None:
+    """独立核验视频运行时摘要、固定来源、RECORD与归档成员闭包。"""
+    from uav_runtime import LICENSE_ROOT, MANIFEST_LIMIT, MANIFEST_NAME, RUNTIME_ROOT, validate_manifest, validate_record, verify_stream
+
+    materials = {name for name in hashes if name.casefold().startswith((RUNTIME_ROOT + "/", LICENSE_ROOT + "/")) or name.casefold() == MANIFEST_NAME}
+    summary = metadata.get("uavRuntime")
+    if summary is None:
+        if materials:
+            raise ValueError("视频基础包夹带未声明的运行时材料")
+        return
+    if metadata["target"] != "windows-amd64" or not isinstance(summary, dict) or set(summary) != {"manifest", "sha256", "pythonVersion", "uavVersion", "uavCommit"} or summary["manifest"] != MANIFEST_NAME or MANIFEST_NAME not in small or summary["sha256"] != hashes.get(MANIFEST_NAME):
+        raise ValueError("视频运行时发布摘要或目标无效")
+    value = metadata_object(small[MANIFEST_NAME], MANIFEST_LIMIT)
+    records = validate_manifest(value)
+    if any(summary[key] != value[key] for key in ("pythonVersion", "uavVersion", "uavCommit")) or materials != {MANIFEST_NAME, *records}:
+        raise ValueError("视频运行时版本、来源或声明文件集合不一致")
+    if path.suffix != ".zip":
+        raise ValueError("Windows视频包必须使用ZIP归档")
+    record_names = [name for name in records if name.endswith(f'/uav_downloader-{value["uavVersion"]}.dist-info/RECORD')]
+    if len(record_names) != 1 or sizes.get(record_names[0], MANIFEST_LIMIT + 1) > MANIFEST_LIMIT:
+        raise ValueError("视频运行时RECORD缺失或超过校验预算")
+    with zipfile.ZipFile(path) as archive:
+        for name, record in records.items():
+            if hashes.get(name) != record["sha256"] or sizes.get(name) != record["size"]:
+                raise ValueError("视频运行时文件摘要或长度与归档不一致")
+            with archive.open(f"{root}/{name}") as stream:
+                verify_stream(stream, record, value["pythonVersion"])
+        with archive.open(f"{root}/{record_names[0]}") as stream:
+            validate_record(stream.read(MANIFEST_LIMIT + 1), value)
+
+
+def verify_ytdlp(path: Path, root: str, metadata: dict[str, Any], small: dict[str, bytes], hashes: dict[str, str], sizes: dict[str, int]) -> None:
+    """独立核验固定下载器及人工审核材料库存，不与FFmpeg混用清单。"""
+    from ytdlp_runtime import EXECUTABLE, INVENTORY, LICENSE_ROOT, MANIFEST_LIMIT, MANIFEST_NAME, VERSION, validate_inventory, validate_manifest, verify_stream
+
+    materials = {name for name in hashes if name.casefold().startswith(LICENSE_ROOT + "/") or name.casefold() == EXECUTABLE}
+    summary = metadata.get("ytDlp")
+    if summary is None:
+        # 旧完整包已由原tools清单逐项核验；其中允许声明额外工具，不能追溯套用schema3独立下载器契约。
+        if metadata["schemaVersion"] in (1, 2) and not metadata["developmentWithoutTools"]:
+            materials = {name for name in materials if name.casefold() != EXECUTABLE}
+        if materials:
+            raise ValueError("发布包夹带未声明的固定下载器材料")
+        return
+    if metadata["target"] != "windows-amd64" or not isinstance(summary, dict) or set(summary) != {"manifest", "sha256", "version"} or summary["manifest"] != MANIFEST_NAME or summary["version"] != VERSION or MANIFEST_NAME not in small or summary["sha256"] != hashes.get(MANIFEST_NAME):
+        raise ValueError("下载器发布摘要或目标无效")
+    value = metadata_object(small[MANIFEST_NAME], MANIFEST_LIMIT)
+    records = validate_manifest(value)
+    if materials != {MANIFEST_NAME, *records} or INVENTORY not in small:
+        raise ValueError("下载器材料未声明、缺失或夹带额外文件")
+    validate_inventory(metadata_object(small[INVENTORY], MANIFEST_LIMIT), value)
+    if path.suffix != ".zip":
+        raise ValueError("Windows下载器包必须使用ZIP归档")
+    with zipfile.ZipFile(path) as archive:
+        for name, record in records.items():
+            if hashes.get(name) != record["sha256"] or sizes.get(name) != record["size"]:
+                raise ValueError("下载器文件摘要或长度与归档不一致")
+            with archive.open(f"{root}/{name}") as stream:
+                verify_stream(stream, record)
+
+
 def verify(path: Path) -> int:
     """核对完整包的每一份文件，不接受遗漏、重复路径、链接或未经校验的额外文件。"""
     expected = path.with_name(path.name + ".sha256").read_text(encoding="ascii").strip()
@@ -105,8 +167,8 @@ def verify(path: Path) -> int:
         roots.add(root)
         folded.add(safe.casefold())
         sizes[local] = size
-        if local in ("release.json", "checksums.sha256", "release-images.json", TOOL_MANIFEST, "jmcomic-runtime.json"):
-            limit = 4 * 1024 * 1024 if local == "jmcomic-runtime.json" else 1024 * 1024
+        if local in ("release.json", "checksums.sha256", "release-images.json", TOOL_MANIFEST, "jmcomic-runtime.json", "uav-runtime.json", "licenses/yt-dlp/yt-dlp-manifest.json", "licenses/yt-dlp/source-inventory.json"):
+            limit = 4 * 1024 * 1024 if local in ("jmcomic-runtime.json", "uav-runtime.json") else 1024 * 1024
             if size > limit:
                 raise ValueError("归档元数据过大")
             data = stream.read(limit + 1)
@@ -149,12 +211,13 @@ def verify(path: Path) -> int:
     metadata = metadata_object(small["release.json"])
     fields = {"schemaVersion", "version", "target", "developmentWithoutTools", "tools"}
     schema = metadata.get("schemaVersion")
-    if type(schema) is not int or schema not in (1, 2) or set(metadata) != fields | ({"jmcomicRuntime"} if schema == 2 else set()) or not isinstance(metadata["target"], str) or metadata["target"] not in TARGETS or type(metadata["developmentWithoutTools"]) is not bool or not isinstance(metadata["version"], str) or not re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.+_-]{0,63}", metadata["version"]):
+    additions = {"jmcomicRuntime", "uavRuntime", "ytDlp"} if schema == 3 else {"jmcomicRuntime"} if schema == 2 else set()
+    if type(schema) is not int or schema not in (1, 2, 3) or set(metadata) != fields | additions or not isinstance(metadata["target"], str) or metadata["target"] not in TARGETS or type(metadata["developmentWithoutTools"]) is not bool or not isinstance(metadata["version"], str) or not re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.+_-]{0,63}", metadata["version"]):
         raise ValueError("发布元数据无效")
     windows = metadata["target"].startswith("windows-")
     required = {"nas.exe", "栖库.exe"} if windows else {"nas", "start.sh"}
     required |= {"compose.desktop.yaml", "开始使用.txt"}
-    if schema == 2:
+    if schema >= 2:
         required.add("nas-collection-worker.exe" if windows else "nas-collection-worker")
     if not metadata["developmentWithoutTools"]:
         suffix = ".exe" if windows else ""
@@ -170,7 +233,7 @@ def verify(path: Path) -> int:
                 if hashes.get(record["destination"]) != record["sha256"]:
                     raise ValueError("工具、许可或源码材料与清单摘要不一致")
         listed = {record["destination"] for group in TOOL_GROUPS for record in tools[group]}
-        materials = {name for name in hashes if name.startswith(("tools/", "licenses/ffmpeg/")) and name != TOOL_MANIFEST}
+        materials = {name for name in hashes if name.startswith(("tools/", "licenses/ffmpeg/")) and name != TOOL_MANIFEST and not (schema == 3 and metadata["ytDlp"] is not None and name == "tools/yt-dlp.exe")}
         if listed != materials:
             raise ValueError("工具或再分发材料存在未声明文件")
     elif metadata["tools"] is not None:
@@ -178,10 +241,14 @@ def verify(path: Path) -> int:
     if not required.issubset(hashes):
         raise ValueError("发布包缺少平台入口或必需材料")
     root = next(iter(roots))
-    if schema == 2:
+    if schema >= 2:
         executables = ["nas.exe", "栖库.exe", "nas-collection-worker.exe"] if windows else ["nas", "nas-collection-worker"]
         verify_architectures(path, root, metadata["target"], executables)
     verify_jmcomic(path, root, metadata, small, hashes, sizes)
+    verify_uav(path, root, metadata, small, hashes, sizes)
+    verify_ytdlp(path, root, metadata, small, hashes, sizes)
+    if metadata.get("uavRuntime") is not None and (metadata.get("ytDlp") is None or metadata["developmentWithoutTools"]):
+        raise ValueError("完整视频包必须同时提供私有运行时、固定下载器和媒体工具")
     if not metadata["developmentWithoutTools"]:
         suffix = ".exe" if windows else ""
         verify_architectures(path, root, metadata["target"], [f"tools/{name}{suffix}" for name in ("ffmpeg", "ffprobe")])
@@ -196,6 +263,40 @@ def verify(path: Path) -> int:
             raise ValueError("离线镜像归档摘要不匹配")
     print(f"发布包校验通过：{metadata['target']}，{len(hashes)}份文件，开发验证包={metadata['developmentWithoutTools']}")
     return len(hashes)
+
+
+def verify_windows_wrapper(root: Path) -> int:
+    """在实际可用的PowerShell5.1/7解析原脚本并验证含中文空格参数的原样透传。"""
+    script = Path(__file__).with_name("release-windows.ps1")
+    if not script.read_bytes().startswith(b"\xef\xbb\xbf"):
+        raise AssertionError("含中文发布脚本必须保留UTF-8 BOM")
+    driver = root / "wrapper-check.ps1"
+    driver.write_text('''param([string]$SourcePath)
+$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+$tokens = $null
+$parseErrors = $null
+$null = [System.Management.Automation.Language.Parser]::ParseFile($SourcePath, [ref]$tokens, [ref]$parseErrors)
+if ($parseErrors.Count -gt 0) { throw ($parseErrors | Out-String) }
+# 仅替换构建启动和环境初始化以观察argv；被测试的param声明与透传语句来自原脚本。
+$source = [System.IO.File]::ReadAllText($SourcePath)
+$source = $source.Replace(". (Join-Path `$PSScriptRoot 'project-env.ps1')", '')
+$source = $source.Replace("(Join-Path `$PSScriptRoot 'release.py')", "'release.py'")
+$source = $source.Replace('& python @releaseArguments', '[Console]::WriteLine((ConvertTo-Json -InputObject @($releaseArguments) -Compress))')
+$source = $source.Replace('exit $LASTEXITCODE', '')
+$block = [scriptblock]::Create($source)
+& $block -UAVRuntimeManifest 'C:\\中文 空格\\uav-runtime.json' -YtDlpManifest 'C:\\中文 空格\\yt-dlp-manifest.json' -JMComicRuntimeManifest 'C:\\中文 空格\\jmcomic-runtime.json' -ToolsManifest 'C:\\中文 空格\\tools.json' -Output 'C:\\发布 空格' -SkipWebBuild
+''', encoding="utf-8-sig")
+    expected = ["release.py", "--target", "windows-amd64", "--tools-manifest", "C:\\中文 空格\\tools.json", "--jmcomic-runtime-manifest", "C:\\中文 空格\\jmcomic-runtime.json", "--uav-runtime-manifest", "C:\\中文 空格\\uav-runtime.json", "--ytdlp-manifest", "C:\\中文 空格\\yt-dlp-manifest.json", "--output", "C:\\发布 空格", "--skip-web-build"]
+    count = 0
+    engines = list({os.path.normcase(path): path for name in ("powershell.exe", "pwsh.exe", "pwsh") if (path := shutil.which(name))}.values())
+    for engine in engines:
+        result = subprocess.run([engine, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver), "-SourcePath", str(script)], capture_output=True, check=False, timeout=30)
+        if result.returncode or json.loads(result.stdout.decode("utf-8-sig")) != expected:
+            raise AssertionError("Windows发布包装脚本解析或参数透传失败：" + Path(engine).name + " " + result.stderr.decode("utf-8", errors="replace")[:1000])
+        print("Windows发布脚本解析与中文空格参数透传通过：" + Path(engine).name)
+        count += 1
+    return count
 
 
 def self_test() -> int:
@@ -232,10 +333,10 @@ def self_test() -> int:
 
     # 显式覆盖 CI 环境，防止父进程已启用 UTF-8 导致回归虚假通过。
     for encoding in ("cp1252", "ascii"):
-        console_case(["-c", "import sys; before = (sys.stdout.encoding, sys.stderr.encoding); import release, verify_release, package_desktop_images; assert before == (sys.stdout.encoding, sys.stderr.encoding)"], encoding, 0)
+        console_case(["-c", "import sys; before = (sys.stdout.encoding, sys.stderr.encoding); import release, verify_release, package_desktop_images, ytdlp_runtime, verify_ytdlp_runtime; assert before == (sys.stdout.encoding, sys.stderr.encoding)"], encoding, 0)
         memory_streams = "import contextlib, io, release\noutput, errors = io.StringIO(), io.StringIO()\nwith contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):\n    release.configure_console()\n    print('中文输出')\nassert output.getvalue() == '中文输出\\n' and errors.getvalue() == ''"
         console_case(["-c", memory_streams], encoding, 0)
-        for script, description in (("release.py", "发布目标操作系统与CPU架构"), ("verify_release.py", "归档"), ("package_desktop_images.py", "本机Docker")):
+        for script, description in (("release.py", "发布目标操作系统与CPU架构"), ("verify_release.py", "归档"), ("package_desktop_images.py", "本机Docker"), ("ytdlp_runtime.py", "下载器"), ("verify_ytdlp_runtime.py", "下载器")):
             console_case([script, "--help"], encoding, 0, expected_stdout=description)
         console_case(["-c", "import release, sys; release.configure_console(); release.run([sys.executable, '-c', 'pass'])"], encoding, 0, expected_stdout="执行发布构建：")
         # 仅替换耗时构建函数，真实执行 main 的成功输出，不下载依赖或制造发布包。
@@ -249,6 +350,7 @@ def self_test() -> int:
         rejected(lambda: metadata_object(value), "归档元数据接受了非对象或重复字段")
     with tempfile.TemporaryDirectory(prefix="qiku-release-check-") as temporary:
         root = Path(temporary)
+        count += verify_windows_wrapper(root)
         duplicate = root / "duplicate.json"
         duplicate.write_text('{"schemaVersion":1,"schemaVersion":2}', encoding="utf-8")
         rejected(lambda: read_json(duplicate), "重复JSON字段未被拒绝")
@@ -332,6 +434,30 @@ def self_test() -> int:
         seal(stage, second)
         rejected(lambda: verify(second), "schema2未核验worker架构")
         (stage / "nas-collection-worker.exe").write_bytes(binary.read_bytes())
+        schema3 = {**basic, "schemaVersion": 3, "uavRuntime": None, "ytDlp": None}
+        (stage / "release.json").write_text(json.dumps(schema3), encoding="utf-8")
+        seal(stage, second)
+        verify(second)
+        count += 1
+        for field in ("jmcomicRuntime", "uavRuntime", "ytDlp"):
+            incomplete = {key: value for key, value in schema3.items() if key != field}
+            (stage / "release.json").write_text(json.dumps(incomplete), encoding="utf-8")
+            seal(stage, second)
+            rejected(lambda: verify(second), "schema3接受了缺失的可空摘要字段")
+        for field in ("uavRuntime", "ytDlp"):
+            (stage / "release.json").write_text(json.dumps({**schema3, field: {}}), encoding="utf-8")
+            seal(stage, second)
+            rejected(lambda: verify(second), "schema3接受了无效插件摘要")
+        for base in (metadata, basic, schema3):
+            (stage / "release.json").write_text(json.dumps(base), encoding="utf-8")
+            for name in ("uav-runtime.json", "licenses/uav/undeclared", "runtimes/uav/undeclared", "tools/yt-dlp.exe", "licenses/yt-dlp/undeclared"):
+                extra = stage / name
+                extra.parent.mkdir(parents=True, exist_ok=True)
+                extra.write_bytes(b"undeclared")
+                seal(stage, second)
+                rejected(lambda: verify(second), "基础包夹带未声明视频/下载器材料仍被接受")
+                extra.unlink()
+        (stage / "release.json").write_text(json.dumps(basic), encoding="utf-8")
         (stage / "jmcomic-runtime.json").write_text("{}", encoding="utf-8")
         seal(stage, second)
         rejected(lambda: verify(second), "基础包夹带运行时清单仍被接受")
@@ -365,11 +491,72 @@ def self_test() -> int:
         count += 1
         packaged_path = stage / TOOL_MANIFEST
         packaged = metadata_object(packaged_path.read_bytes())
+        # schema1/2原tools契约允许附带已声明的工具；schema3仍要求独立下载器材料。
+        legacy_tools = {**tools, "runtimeFiles": [*tools["runtimeFiles"], {"source": str(binary), "destination": "tools/yt-dlp.exe", "sha256": digest(binary)}]}
+        validate_tools_manifest(legacy_tools, "windows-amd64")
+        (stage / "tools/yt-dlp.exe").write_bytes(binary.read_bytes())
+        legacy_packaged = {**packaged, "runtimeFiles": [*packaged["runtimeFiles"], {"source": "tools/yt-dlp.exe", "destination": "tools/yt-dlp.exe", "sha256": digest(binary)}]}
+        for base in (metadata, basic):
+            if base["schemaVersion"] == 2:
+                (stage / "nas-collection-worker.exe").write_bytes(binary.read_bytes())
+            (stage / "release.json").write_text(json.dumps({**base, "developmentWithoutTools": False, "tools": summary}), encoding="utf-8")
+            packaged_path.write_text(json.dumps(legacy_packaged), encoding="utf-8")
+            seal(stage, second)
+            verify(second)
+            count += 1
+            packaged_path.write_text(json.dumps(packaged), encoding="utf-8")
+            seal(stage, second)
+            rejected(lambda: verify(second), "旧完整包接受了未被原tools清单声明的下载器")
+        packaged_path.write_text(json.dumps(legacy_packaged), encoding="utf-8")
+        (stage / "release.json").write_text(json.dumps({**schema3, "developmentWithoutTools": False, "tools": summary}), encoding="utf-8")
+        seal(stage, second)
+        rejected(lambda: verify(second), "schema3绕过独立下载器契约而沿用旧tools声明")
+        (stage / "tools/yt-dlp.exe").unlink()
+        (stage / "nas-collection-worker.exe").unlink()
+        packaged_path.write_text(json.dumps(packaged), encoding="utf-8")
+        (stage / "release.json").write_text(json.dumps({**metadata, "developmentWithoutTools": False, "tools": summary}), encoding="utf-8")
         for replacement in ({**packaged, "sourceFiles": []}, {**packaged, "licenseFiles": []}, {**packaged, "version": "other"}):
             packaged_path.write_text(json.dumps(replacement), encoding="utf-8")
             seal(stage, second)
             rejected(lambda: verify(second), "完整包缺失材料或版本不一致未被拒绝")
         packaged_path.write_text(json.dumps(packaged), encoding="utf-8")
+        # 下载器夹具只证明schema3的独立材料绑定，不能证明真实分发许可齐备。
+        from verify_ytdlp_runtime import fixture_materials
+        from ytdlp_runtime import EXECUTABLE, INVENTORY, LICENSE_ROOT, MANIFEST_NAME, install_runtime as install_ytdlp_runtime
+        import ytdlp_runtime
+
+        ytdlp_fixtures = root / "ytdlp-fixtures"
+        ytdlp_fixtures.mkdir()
+        with fixture_materials(ytdlp_fixtures) as material_path:
+            source_manifest = ytdlp_runtime.assemble(material_path, root / "ytdlp-bundle")
+            ytdlp_summary = install_ytdlp_runtime(source_manifest.absolute(), "windows-amd64", stage)
+            complete3 = {**schema3, "developmentWithoutTools": False, "tools": summary, "ytDlp": ytdlp_summary}
+            (stage / "nas-collection-worker.exe").write_bytes(binary.read_bytes())
+            (stage / "release.json").write_text(json.dumps(complete3), encoding="utf-8")
+            seal(stage, second)
+            verify(second)
+            count += 1
+            for replacement in ({**ytdlp_summary, "version": "latest"}, {**ytdlp_summary, "sha256": "0" * 64}, {**ytdlp_summary, "unexpected": True}, None):
+                (stage / "release.json").write_text(json.dumps({**complete3, "ytDlp": replacement}), encoding="utf-8")
+                seal(stage, second)
+                rejected(lambda: verify(second), "下载器归档摘要或独立声明未被绑定")
+            (stage / "release.json").write_text(json.dumps(complete3), encoding="utf-8")
+            inventory_path = stage / INVENTORY
+            inventory = metadata_object(inventory_path.read_bytes())
+            inventory_path.write_text(json.dumps({**inventory, "complete": False}), encoding="utf-8")
+            downloader_manifest_path = stage / MANIFEST_NAME
+            downloader_manifest = metadata_object(downloader_manifest_path.read_bytes())
+            for record in downloader_manifest["sourceFiles"]:
+                if record["destination"] == INVENTORY:
+                    record["sha256"], record["size"] = digest(inventory_path), inventory_path.stat().st_size
+            downloader_manifest_path.write_text(json.dumps(downloader_manifest), encoding="utf-8")
+            complete3["ytDlp"]["sha256"] = digest(downloader_manifest_path)
+            (stage / "release.json").write_text(json.dumps(complete3), encoding="utf-8")
+            seal(stage, second)
+            rejected(lambda: verify(second), "重算摘要后仍接受未审核的下载器库存")
+        (stage / EXECUTABLE).unlink()
+        shutil.rmtree(stage / LICENSE_ROOT)
+        (stage / "release.json").write_text(json.dumps({**metadata, "developmentWithoutTools": False, "tools": summary}), encoding="utf-8")
         # 即使两层摘要都重算，也不能把错误架构工具伪装成完整发布。
         (stage / "tools/ffmpeg.exe").write_bytes(b"wrong architecture")
         packaged["runtimeFiles"][0]["sha256"] = digest(stage / "tools/ffmpeg.exe")
@@ -400,6 +587,10 @@ def self_test() -> int:
             for name in ("nas", "nas-collection-worker"):
                 (linux_stage / name).write_bytes(elf)
             (linux_stage / "release.json").write_text(json.dumps({**metadata, "schemaVersion": 2, "target": target, "developmentWithoutTools": False, "tools": summary, "jmcomicRuntime": None}), encoding="utf-8")
+            seal(linux_stage, second_tar, False)
+            verify(second_tar)
+            count += 1
+            (linux_stage / "release.json").write_text(json.dumps({**metadata, "schemaVersion": 3, "target": target, "developmentWithoutTools": False, "tools": summary, "jmcomicRuntime": None, "uavRuntime": None, "ytDlp": None}), encoding="utf-8")
             seal(linux_stage, second_tar, False)
             verify(second_tar)
             count += 1

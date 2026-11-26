@@ -267,6 +267,20 @@ def build(args: argparse.Namespace) -> Path:
         if args.target != "windows-amd64":
             raise ValueError("随包漫画运行时目前仅支持Windows x64")
         verify_runtime(Path(runtime_manifest).resolve())
+    uav_manifest = getattr(args, "uav_runtime_manifest", None)
+    ytdlp_manifest = getattr(args, "ytdlp_manifest", None)
+    if uav_manifest:
+        from uav_runtime import verify as verify_uav_runtime
+
+        if args.target != "windows-amd64" or not ytdlp_manifest or not args.tools_manifest or args.development_without_tools:
+            raise ValueError("完整视频包仅支持Windows x64，必须同时提供UAV、下载器和FFmpeg材料")
+        verify_uav_runtime(Path(uav_manifest).absolute())
+    if ytdlp_manifest:
+        from ytdlp_runtime import verify as verify_ytdlp_runtime
+
+        if args.target != "windows-amd64":
+            raise ValueError("随包固定下载器目前仅支持Windows x64")
+        verify_ytdlp_runtime(Path(ytdlp_manifest).absolute())
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
     runtime = runtime_directory()
@@ -296,7 +310,7 @@ def build(args: argparse.Namespace) -> Path:
             go = str(local_go)
         if not go:
             raise ValueError("发布构建机缺少 Go，终端用户无需安装")
-        suffix = ("-jmcomic" if runtime_manifest else "") + ("-development" if args.development_without_tools else "")
+        suffix = ("-jmcomic" if runtime_manifest else "") + ("-uav" if uav_manifest else "-ytdlp" if ytdlp_manifest else "") + ("-development" if args.development_without_tools else "")
         package_name = f"qiku-{version}-{args.target}{suffix}"
         destination = output / (package_name + (".zip" if platform == "windows" else ".tar.gz"))
         if destination.exists():
@@ -319,23 +333,36 @@ def build(args: argparse.Namespace) -> Path:
                 from jmcomic_runtime import install_runtime
 
                 jmcomic_runtime = install_runtime(Path(runtime_manifest).resolve(), args.target, stage)
+            uav_runtime = None
+            if uav_manifest:
+                from uav_runtime import install_runtime as install_uav_runtime
+
+                uav_runtime = install_uav_runtime(Path(uav_manifest).absolute(), args.target, stage)
+            yt_dlp = None
+            if ytdlp_manifest:
+                from ytdlp_runtime import install_runtime as install_ytdlp_runtime
+
+                yt_dlp = install_ytdlp_runtime(Path(ytdlp_manifest).absolute(), args.target, stage)
             if args.images_manifest:
                 install_images(Path(args.images_manifest).resolve(), stage)
             for name in ("compose.desktop.yaml", "compose.desktop.collection.yaml", "compose.desktop.components.yaml"):
                 if not (ROOT / name).is_file():
                     raise ValueError(f"发布文件缺失：{name}")
                 shutil.copyfile(ROOT / name, stage / name)
-            for name in ("windows.md", "release.md", "collection.md", "components.md", "jmcomic.md", "jmcomic-windows.md"):
+            for name in ("windows.md", "release.md", "collection.md", "components.md", "jmcomic.md", "jmcomic-windows.md", "uav.md", "uav-windows.md"):
                 source = ROOT / "docs" / name
                 if source.is_file():
                     (stage / "docs").mkdir(exist_ok=True)
                     shutil.copyfile(source, stage / "docs" / name)
-            metadata = {"schemaVersion": 2, "version": version, "target": args.target, "developmentWithoutTools": bool(args.development_without_tools), "tools": tools, "jmcomicRuntime": jmcomic_runtime}
+            metadata = {"schemaVersion": 3, "version": version, "target": args.target, "developmentWithoutTools": bool(args.development_without_tools), "tools": tools, "jmcomicRuntime": jmcomic_runtime, "uavRuntime": uav_runtime, "ytDlp": yt_dlp}
             (stage / "release.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             notice = "Windows：双击栖库.exe。Linux：执行 ./start.sh。\n原生与容器配置数据独立；升级前退出旧版并备份。\nDocker完整模式需要Docker环境和release-images.json，不自动安装Docker/WSL。\n"
             if args.development_without_tools:
                 notice += "注意：这是未携带FFmpeg的开发验证包，不是完整离线发布版。\n"
             notice += "已携带固定私有漫画运行时，可在桌面设置中启用托管获取。\n" if jmcomic_runtime else "这是漫画基础包；已发布漫画可读，在线获取需另配受信运行时或外接执行端。\n"
+            notice += "已携带固定私有视频运行时、下载器及媒体工具；各插件本地就绪状态独立显示，站点可用性需单独验证。\n" if uav_runtime else "视频在线获取需另配受信运行时或外接执行端。\n"
+            if yt_dlp:
+                notice += "固定下载器的许可、对应源码库存和构建材料位于licenses/yt-dlp；机器校验不替代人工分发审查。\n"
             (stage / "开始使用.txt").write_text(notice, encoding="utf-8")
             checksums = "".join(f"{digest(path)}  {path.relative_to(stage).as_posix()}\n" for path in sorted(stage.rglob("*")) if path.is_file())
             (stage / "checksums.sha256").write_text(checksums, encoding="utf-8", newline="\n")
@@ -356,6 +383,8 @@ def main() -> int:
     parser.add_argument("--tools-manifest", help="含固定工具版本、每文件摘要、许可证和对应源码材料的JSON清单")
     parser.add_argument("--images-manifest", help="可选的固定应用/助手镜像清单，可含离线镜像归档")
     parser.add_argument("--jmcomic-runtime-manifest", help="可选的已装配Windows x64私有漫画运行时jmcomic-runtime.json绝对路径")
+    parser.add_argument("--uav-runtime-manifest", help="可选的已装配Windows x64私有视频运行时清单；必须同时提供下载器和FFmpeg材料")
+    parser.add_argument("--ytdlp-manifest", help="可选的固定官方Windows x64下载器及完整许可/对应源码材料成品清单")
     parser.add_argument("--output", default=str(ROOT / "bin/releases"), help="发布归档输出目录，默认bin/releases，不覆盖既有归档")
     parser.add_argument("--go", help="构建机Go可执行文件路径，默认优先PATH其次项目.tools工具链")
     parser.add_argument("--skip-web-build", action="store_true", help="复用已构建的web/dist；正式发布建议不使用")

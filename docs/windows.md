@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | Windows 原生媒体 | 视频、图片、漫画、小说、音乐 | 完整发行 ZIP 内的 `栖库.exe`、内嵌网页与配套 `tools`，用户数据位于本机独立目录 |
 | Windows 原生 JMComic | 漫画搜索、选章和批量下载 | 含 `nas-collection-worker.exe` 与私有 Python 清单的完整漫画包，由桌面托管；不需要全局 Python，见 [Windows 漫画说明](jmcomic-windows.md) |
+| Windows 原生 UAV | Jable、MissAV、Hanime1、黄果、SupJav 视频搜索下载 | 含独立 UAV 运行时、固定下载器及媒体工具的完整包，复用同一托管 worker，见 [Windows 视频说明](uav-windows.md) |
 | Windows Docker 完整模式 | 媒体与网页初始化托管 BT 引擎 | 已运行的 Docker Desktop Linux/amd64 容器环境、固定镜像清单；数据和下载位于 Linux 命名卷 |
 | Linux 原生 | 无桌面 NAS 或服务器 | 对应 amd64/arm64 归档，`./start.sh` 或 `./nas` |
 | Linux Compose | 延续现有部署 | 原 `compose.yaml` 与可选 `compose.engines.yaml`，现有路径和 UID/GID 约定保留 |
@@ -70,7 +71,7 @@ GUI 子系统的 EXE 不保证 PowerShell 显示标准输出；诊断结果同�
 | `autoOpen` | 真实就绪后是否自动打开浏览器 |
 | `dockerContext` | 明确选择的本机 Docker Desktop Linux context，默认 `desktop-linux` |
 | `imageManifest` | 固定镜像清单位置，相对路径相对程序目录解析 |
-| `collectionMode` | `disabled` 关闭、`managed` 本机托管、`external` 外接 worker；只影响原生获取服务，不删除已发布漫画或历史任务 |
+| `collectionMode` | `disabled` 关闭、`managed` 本机托管、`external` 外接 worker；漫画和视频共用同一服务，不删除已发布媒体或历史任务 |
 
 `--profile` 指定配置/日志根，`--data-dir` 仅指定业务数据根，含义不同。原有 `nas` CLI 不读取桌面配置，仍按原环境参数运行。
 

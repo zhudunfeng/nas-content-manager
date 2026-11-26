@@ -33,6 +33,8 @@ type Config struct {
 	Managed                bool           // 仅由托管CLI设置；禁止隐式搜索系统Python，不是可通过网络修改的配置。
 	UAVEnabled             bool           // NAS_COLLECTION_WORKER_UAV_ENABLED：显式启用固定视频插件，原生默认false。
 	UAVPython              string         // NAS_COLLECTION_WORKER_UAV_PYTHON：安装固定依赖的受信Python>=3.12，默认python3，Windows默认python。
+	UAVPythonExplicit      bool           // 标记管理员是否显式选择视频解释器；指定失败时禁止回退。
+	UAVRuntimeManifest     string         // NAS_COLLECTION_WORKER_UAV_RUNTIME_MANIFEST：随包视频运行时清单绝对路径，默认空；托管模式无显式解释器时必需。
 	MaxBytes               int64          // NAS_COLLECTION_WORKER_MAX_BYTES：单任务字节上限，默认20GiB。
 	MaxFiles               int            // NAS_COLLECTION_WORKER_MAX_FILES：单任务文件数上限，默认1000。
 	MinFreeMB              int64          // NAS_COLLECTION_WORKER_MIN_FREE_MB：磁盘保留MiB，默认512。
@@ -64,19 +66,9 @@ func LoadConfig() (Config, error) {
 	if err = loadJMComicConfig(&c); err != nil {
 		return c, err
 	}
-	python := "python3"
-	if runtime.GOOS == "windows" {
-		python = "python"
+	if err = loadUAVConfig(&c); err != nil {
+		return c, err
 	}
-	switch env("NAS_COLLECTION_WORKER_UAV_ENABLED", "false") {
-	case "true":
-		c.UAVEnabled = true
-	case "false":
-		c.UAVEnabled = false
-	default:
-		return c, fmt.Errorf("NAS_COLLECTION_WORKER_UAV_ENABLED 必须为true或false")
-	}
-	c.UAVPython = env("NAS_COLLECTION_WORKER_UAV_PYTHON", python)
 	for _, field := range []*string{&c.DataDir, &c.TokenFile} {
 		*field, err = filepath.Abs(*field)
 		if err != nil {
@@ -197,6 +189,33 @@ func loadJMComicConfig(config *Config) error {
 	config.JMComicPythonExplicit = os.Getenv("NAS_COLLECTION_WORKER_JMCOMIC_PYTHON") != ""
 	config.JMComicPython = env("NAS_COLLECTION_WORKER_JMCOMIC_PYTHON", python)
 	config.JMComicRuntimeManifest = os.Getenv("NAS_COLLECTION_WORKER_JMCOMIC_RUNTIME_MANIFEST")
+	return nil
+}
+
+// LoadUAVConfig 仅读取本地视频诊断参数，不要求令牌或读取来源、恢复持久任务。
+func LoadUAVConfig() (Config, error) {
+	config := Config{YTDLP: env("NAS_COLLECTION_WORKER_YTDLP", "yt-dlp"), FFmpeg: env("NAS_COLLECTION_WORKER_FFMPEG", "ffmpeg")}
+	err := loadUAVConfig(&config)
+	return config, err
+}
+
+// loadUAVConfig 共享视频运行时参数，显式解释器与清单在独立能力探测时解析。
+func loadUAVConfig(config *Config) error {
+	switch env("NAS_COLLECTION_WORKER_UAV_ENABLED", "false") {
+	case "true":
+		config.UAVEnabled = true
+	case "false":
+		config.UAVEnabled = false
+	default:
+		return fmt.Errorf("NAS_COLLECTION_WORKER_UAV_ENABLED 必须为true或false")
+	}
+	python := "python3"
+	if runtime.GOOS == "windows" {
+		python = "python"
+	}
+	config.UAVPythonExplicit = os.Getenv("NAS_COLLECTION_WORKER_UAV_PYTHON") != ""
+	config.UAVPython = env("NAS_COLLECTION_WORKER_UAV_PYTHON", python)
+	config.UAVRuntimeManifest = os.Getenv("NAS_COLLECTION_WORKER_UAV_RUNTIME_MANIFEST")
 	return nil
 }
 

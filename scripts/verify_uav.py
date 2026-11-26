@@ -65,7 +65,7 @@ func main() {
     downloader := false
     outputPath := ""
     for index, value := range os.Args[1:] {
-        if value == "--version" { _, _ = os.Stdout.WriteString("2026.11.25\n"); return }
+        if value == "--version" { _, _ = os.Stdout.WriteString("2026.10.26\n"); return }
         if value == "--load-info-json" { downloader = true }
         if (value == "--output" || value == "-o") && index+2 < len(os.Args) { outputPath = os.Args[index+2] }
     }

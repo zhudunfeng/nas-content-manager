@@ -28,7 +28,7 @@ func normalizeSupJavTS(ctx context.Context, name string) (int64, error)
 - Existing preview endpoint: `POST /api/collection/previews`.
 - Existing durable submission endpoint: `POST /api/collection/tasks`.
 - Existing task detail/events/actions, library scan and authenticated file Range endpoints remain authoritative.
-- The embedded Python bridge accepts one bounded JSON input on stdin with action `probe`, `search` or `resolve`; only the trusted interpreter is executable. It runs with `-I -B -c <embedded source>`.
+- The embedded Python bridge accepts one bounded JSON input on stdin with action `probe`, `search` or `resolve`; only the trusted interpreter is executable. It runs with `-I -B -X utf8 -c <embedded source>`.
 
 ## 3. Contracts
 
@@ -107,8 +107,13 @@ When serving a bounded range, withhold its final byte until reading the upstream
 | --- | --- |
 | `NAS_COLLECTION_WORKER_UAV_ENABLED` | Native `false`; explicit opt-in. The dedicated image contains fixed dependencies and enables it. |
 | `NAS_COLLECTION_WORKER_UAV_PYTHON` | Native `python3` (`python` on Windows); trusted Python ≥3.12 environment. Container `/opt/uav/bin/python`. |
+| `NAS_COLLECTION_WORKER_UAV_RUNTIME_MANIFEST` | Optional Windows private runtime manifest absolute path; managed mode uses the trusted package rather than system Python. |
 
 Reuse existing worker yt-dlp, FFmpeg, token, roots and resource-limit configuration. UAV Python is separate from the JMComic environment. `deploy/uav-requirements.txt` and `uav-build-requirements.txt` pin the headless runtime/build closure and hashes; install only at deployment/build time. The upstream pyproject also lists GUI/AI extras deliberately absent here: a successful headless import/probe is not a claim that a full upstream `pip check` passes. Include upstream LICENSE/attribution in distributed packages.
+
+Windows private distribution, explicit interpreter precedence, local diagnostics,
+multi-plugin desktop status and release schema 3 additionally follow the
+[Windows UAV contract](uav-windows-contract.md).
 
 ## 4. Validation & Error Matrix
 

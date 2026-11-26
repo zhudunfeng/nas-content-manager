@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qiku.invalid/schemas/ytdlp-materials.schema.json",
+  "title": "固定Windows下载器构建材料与成品清单",
+  "description": "清单仅描述经过维护者审核的本地材料；机器校验不替代GPL及第三方对应源码义务的人工审查。成品source必须等于destination，构建输入source可为相对或绝对普通文件路径。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "target", "version", "sourceUrl", "correspondingSourceReviewed", "runtimeFiles", "licenseFiles", "sourceFiles"],
+  "properties": {
+    "schemaVersion": {"const": 1, "description": "下载器材料清单版本，与release.json版本独立。"},
+    "target": {"const": "windows-amd64", "description": "唯一支持的固定官方EXE目标平台。"},
+    "version": {"const": "2026.10.26", "description": "固定下载器版本，不自动跟踪最新版本。"},
+    "sourceUrl": {"const": "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/yt-dlp.exe", "description": "固定版本官方Windows x64 EXE来源。"},
+    "correspondingSourceReviewed": {"const": true, "description": "维护者确认已核对实际EXE及全部组件的对应源码、许可与构建材料；不由工具自动推定。"},
+    "runtimeFiles": {"type": "array", "minItems": 1, "maxItems": 1, "description": "仅含tools/yt-dlp.exe，必须匹配脚本内置的官方EXE摘要。", "items": {"$ref": "#/$defs/file"}},
+    "licenseFiles": {"type": "array", "minItems": 3, "maxItems": 512, "description": "完整许可材料，至少包含固定官方LICENSE、THIRD_PARTY_LICENSES.txt和COPYING-GPL-3.0.txt。", "items": {"$ref": "#/$defs/file"}},
+    "sourceFiles": {"type": "array", "minItems": 3, "maxItems": 512, "description": "完整对应源码及构建材料，必须包含source-inventory.json、固定官方source/yt-dlp.tar.gz及其他实际组件材料。", "items": {"$ref": "#/$defs/file"}}
+  },
+  "$defs": {
+    "file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "destination", "sha256", "size"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1, "description": "构建输入普通文件路径；相对路径从本清单目录计算，成品只能保留包内destination。"},
+        "destination": {"type": "string", "minLength": 1, "description": "安全、大小写唯一的包内正斜杠相对路径；许可和源码必须位于licenses/yt-dlp。"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "材料完整字节的小写SHA-256，EXE与指定官方材料还需匹配内置身份。"},
+        "size": {"type": "integer", "minimum": 1, "maximum": 2147483648, "description": "材料完整字节数，所有材料合计不得超过4GiB。"}
+      }
+    }
+  }
+}

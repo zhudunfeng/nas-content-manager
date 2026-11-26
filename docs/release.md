@@ -50,6 +50,36 @@ python -B scripts/project_env.py -- python -B scripts/release.py --target window
 
 程序及运行时放只读安装目录，配置／任务／秘密留在 profile。更新先正常退出本实例并等待 worker／Python 释放，再成套替换文件；不覆盖用户任务和检查点，不自动升级依赖。
 
+## 可选 Windows 视频运行时与下载器
+
+视频包通过 `--uav-runtime-manifest` 显式装入独立 UAV embedded Python，当前只支持 `windows-amd64`。UAV 3.8.4 固定到 commit `d40f09457fbd38dd7dc94580637242afafaf3939`；解析依赖、构建依赖和派生 wheel 摘要分别记录，保留原始源码来源身份。UAV 和 JMComic 可同时装入同一个发行包，各自拥有独立解释器、依赖目录和文件清单。
+
+```powershell
+# 联网仅发生在维护者装配阶段，终端不运行pip或自动升级依赖。
+python -B scripts/project_env.py -- python -B scripts/uav_runtime.py assemble --output .runtime/uav-runtime
+python -B scripts/project_env.py -- python -B scripts/uav_runtime.py verify .runtime/uav-runtime/uav-runtime.json --probe
+# 离线装配需另提供官方Python归档、依赖wheel及wheel-sources.json、固定UAV源码和构建wheel目录。
+python -B scripts/project_env.py -- python -B scripts/uav_runtime.py assemble --offline --output .runtime/uav-runtime-offline --python-archive 'D:\release-inputs\python-3.14.4-embed-amd64.zip' --wheelhouse 'D:\release-inputs\uav-wheels' --source-archive 'D:\release-inputs\uav-source.tar.gz' --build-wheelhouse 'D:\release-inputs\uav-build-wheels'
+```
+
+完整视频包还必须同时提供固定官方 Windows `yt-dlp.exe` 与 FFmpeg/ffprobe 材料。下载器版本固定为 `2026.10.26`，不会使用开发机 PATH 中的另一个下载器。`scripts/ytdlp-materials.schema.json` 描述输入材料，`scripts/ytdlp-inventory.schema.json` 描述人工核对的完整组件库存；二者全部字段有中文说明。
+
+下载器材料必须包括固定 EXE、官方 LICENSE 和 THIRD_PARTY_LICENSES、GPL 文本、固定 yt-dlp 源码归档，以及实际 EXE 所含 Python、PyInstaller 和其他组件的对应源码及必要构建材料。维护者必须先完成组件和分发审核，再填写审核声明；装配工具不会自动下载、生成占位声明或推定法律完整性。库存必须绑定实际 EXE 摘要，所有许可和源码材料均有组件引用。仅复制一份通用许可证或只有 yt-dlp 源码不足以通过装配。
+
+```powershell
+# 将已审核的真实材料装入全新目录；输出路径不得已存在。
+python -B scripts/project_env.py -- python -B scripts/ytdlp_runtime.py assemble --materials-manifest 'D:\release-inputs\ytdlp-materials.json' --output .runtime/ytdlp-runtime
+python -B scripts/project_env.py -- python -B scripts/ytdlp_runtime.py verify .runtime/ytdlp-runtime/licenses/yt-dlp/yt-dlp-manifest.json --probe
+# 完整视频包；附加 --jmcomic-runtime-manifest 可生成漫画与视频组合包。
+python -B scripts/project_env.py -- python -B scripts/release.py --target windows-amd64 --tools-manifest 'D:\release-inputs\windows-tools.json' --uav-runtime-manifest .runtime/uav-runtime/uav-runtime.json --ytdlp-manifest .runtime/ytdlp-runtime/licenses/yt-dlp/yt-dlp-manifest.json
+# Windows PowerShell 5.1和PowerShell 7使用相同参数含义。
+.\scripts\release-windows.ps1 -ToolsManifest 'D:\release-inputs\windows-tools.json' -UAVRuntimeManifest '.runtime\uav-runtime\uav-runtime.json' -YtDlpManifest '.runtime\ytdlp-runtime\licenses\yt-dlp\yt-dlp-manifest.json'
+```
+
+`--uav-runtime-manifest` 缺少下载器或媒体工具时拒绝构建，不能与 `--development-without-tools` 组合。包名用 `-jmcomic`、`-uav` 表示实际内容；单独携带下载器使用 `-ytdlp`，并不宣称视频插件完整可用。运行与本地诊断见 [Windows 原生视频](uav-windows.md)。
+
+新生成 `release.json` 使用 schema **3**，保留原有字段，并显式包含可为空的 `jmcomicRuntime`、`uavRuntime`、`ytDlp`。UAV 摘要精确为 `manifest`、`sha256`、`pythonVersion`、`uavVersion`、`uavCommit`；下载器摘要为 `manifest`、`sha256`、`version`。归档验证继续接受旧 schema 1/2 的原字段集合，不会把新字段误塞入旧 schema；旧完整包由原 `tools` 清单声明并逐项核验的额外工具继续按原契约处理，schema 3 才要求下载器独立材料清单。发布清单版本与 `release-images.json` 镜像清单版本相互独立。
+
 ## 工具材料清单
 
 精确 schema 见 `scripts/tools-manifest.schema.json`，每个字段都有中文解释。以下是结构说明，不是可直接发布的伪造摘要样例：

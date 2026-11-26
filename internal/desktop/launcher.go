@@ -20,17 +20,19 @@ import (
 	"time"
 
 	"nas-content-manager/internal/app"
+	"nas-content-manager/internal/collectioncontract"
 )
 
 // controlReply 是固定本机控制协议，不包含凭据、命令或任意跳转 URL。
 type controlReply struct {
-	State             string `json:"state"`                       // starting、ready、stopping、stopped 或 failed。
-	Mode              string `json:"mode"`                        // native 或 docker。
-	URL               string `json:"url,omitempty"`               // 本实例真实就绪后的回环地址。
-	Error             string `json:"error,omitempty"`             // 脱敏中文错误说明。
-	CollectionMode    string `json:"collectionMode,omitempty"`    // 当前本机获取方式。
-	CollectionState   string `json:"collectionState,omitempty"`   // disabled、external、starting、ready、unavailable 或 failed。
-	CollectionMessage string `json:"collectionMessage,omitempty"` // 不含凭据的漫画组件中文诊断。
+	State                  string                          `json:"state"`                            // starting、ready、stopping、stopped 或 failed。
+	Mode                   string                          `json:"mode"`                             // native 或 docker。
+	URL                    string                          `json:"url,omitempty"`                    // 本实例真实就绪后的回环地址。
+	Error                  string                          `json:"error,omitempty"`                  // 脱敏中文错误说明。
+	CollectionMode         string                          `json:"collectionMode,omitempty"`         // 当前本机获取方式。
+	CollectionState        string                          `json:"collectionState,omitempty"`        // disabled、external、starting、ready、unavailable 或 failed。
+	CollectionMessage      string                          `json:"collectionMessage,omitempty"`      // 不含凭据的本机获取组件中文诊断。
+	CollectionCapabilities []collectioncontract.Capability `json:"collectionCapabilities,omitempty"` // 本次预期启用的各插件能力；不包含未配置插件。
 }
 
 // desktopCommand 串行传送本机托盘的受控配置变更。
@@ -228,7 +230,9 @@ func (c *controller) snapshot() (Config, controlReply) {
 	defer c.mu.RUnlock()
 	copyConfig := c.config
 	copyConfig.MediaRoots = append([]string(nil), c.config.MediaRoots...)
-	return copyConfig, c.reply
+	copyReply := c.reply
+	copyReply.CollectionCapabilities = append([]collectioncontract.Capability(nil), c.reply.CollectionCapabilities...)
+	return copyConfig, copyReply
 }
 
 // setState 原子发布真实阶段，不在失败时保留可点击的旧地址。
@@ -255,7 +259,7 @@ func (c *controller) handleControl(action string) controlReply {
 	case "collection-enable", "collection-disable", "collection-check":
 		cfg, _ := c.snapshot()
 		if cfg.Mode != "native" {
-			reply.Error = "本机漫画托管只适用于原生模式"
+			reply.Error = "本机获取托管只适用于原生模式"
 			break
 		}
 		if action == "collection-enable" {
@@ -353,8 +357,8 @@ func (c *controller) run(ctx context.Context) error {
 			}
 		case <-c.collectionDone:
 			c.collectionDone = nil
-			c.setCollectionState("failed", "本机漫画获取服务已退出，已有媒体仍可阅读；请查看日志后重新检测")
-			c.logger.Warn("本机获取服务意外退出，已降级漫画获取；未自动重启或重发任务")
+			c.setCollectionState("failed", "本机获取服务已退出，已有媒体仍可使用；请查看日志后重新检测")
+			c.logger.Warn("本机获取服务意外退出，已降级资源获取；未自动重启或重发任务")
 		}
 	}
 }

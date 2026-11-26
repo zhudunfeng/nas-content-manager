@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import argparse
 import codecs
 import http.server
 import importlib.metadata
@@ -186,7 +187,7 @@ def bridge_checks() -> dict[str, Any]:
     from uav_downloader.sites import jabletv, missav, hanime1, huangguo, supjav
 
     source = ROOT / "internal/collectionworker/uav_bridge.py"
-    probe = subprocess.run([sys.executable, "-I", "-B", "-c", source.read_text(encoding="utf-8")], input=b'{"action":"probe"}', capture_output=True, cwd=BASE, timeout=20, check=True)
+    probe = subprocess.run([sys.executable, "-I", "-B", "-X", "utf8", "-c", source.read_text(encoding="utf-8")], input=b'{"action":"probe"}', capture_output=True, cwd=BASE, timeout=20, check=True)
     assert json.loads(probe.stdout)["version"] == "3.8.4" and not probe.stderr
     namespace = runpy.run_path(str(source), run_name="uav_offline_verification")
     original_request = requests.sessions.Session.request
@@ -343,10 +344,21 @@ class HLSHandler(http.server.BaseHTTPRequestHandler):
         return
 
 
-def hls_checks() -> dict[str, Any]:
+def hls_checks(downloader: Path | None = None, media_tool: Path | None = None) -> dict[str, Any]:
     """用真实锁定yt-dlp和FFmpeg核验内联清单、缺片、DRM及回退隔离。"""
-    assert importlib.metadata.version("yt-dlp") == "2026.10.26"
-    ffmpeg = shutil.which("ffmpeg")
+    if downloader is None:
+        assert importlib.metadata.version("yt-dlp") == "2026.10.26"
+        invocation = [sys.executable, "-I", "-B", "-X", "utf8", "-m", "yt_dlp"]
+    else:
+        from release import digest
+        from ytdlp_runtime import EXE_SHA256, VERSION
+
+        downloader = downloader.resolve(strict=True)
+        assert digest(downloader) == EXE_SHA256, "独立下载器不是固定官方材料"
+        invocation = [str(downloader)]
+        version = subprocess.run([*invocation, "--ignore-config", "--no-plugin-dirs", "--no-js-runtimes", "--no-remote-components", "--version"], capture_output=True, check=True, timeout=30)
+        assert version.stdout.decode("utf-8").strip() == VERSION
+    ffmpeg = str(media_tool.resolve(strict=True)) if media_tool else shutil.which("ffmpeg")
     assert ffmpeg, "离线HLS验证需要FFmpeg"
     subprocess.run([ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "color=c=blue:s=64x64:d=1", "-c:v", "mpeg2video", "-f", "mpegts", str(BASE / "segment.ts")], check=True, capture_output=True, timeout=20)
     from Crypto.Cipher import AES
@@ -361,7 +373,7 @@ def hls_checks() -> dict[str, Any]:
     thread.start()
     base = f"http://127.0.0.1:{server.server_port}"
     manifest = '#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nsegment.ts\n#EXT-X-ENDLIST\n'
-    command = [sys.executable, "-I", "-B", "-m", "yt_dlp", "--ignore-config", "--no-plugin-dirs", "--no-js-runtimes", "--no-remote-components", "--no-playlist", "--no-cache-dir", "--no-warnings", "--no-progress", "--retries", "0", "--fragment-retries", "0", "--abort-on-unavailable-fragments", "--downloader", "native", "--load-info-json", "-", "--fixup", "never", "--ffmpeg-location", str(BASE / ".no-network-ffmpeg"), "--no-continue", "--no-overwrites", "--output", "media.download"]
+    command = [*invocation, "--ignore-config", "--no-plugin-dirs", "--no-js-runtimes", "--no-remote-components", "--no-playlist", "--no-cache-dir", "--no-warnings", "--no-progress", "--retries", "0", "--fragment-retries", "0", "--abort-on-unavailable-fragments", "--downloader", "native", "--load-info-json", "-", "--fixup", "never", "--ffmpeg-location", str(BASE / ".no-network-ffmpeg"), "--no-continue", "--no-overwrites", "--output", "media.download"]
     try:
         results: dict[str, Any] = {}
         for name in ("normal", "aes128", "missing", "unsupported"):
@@ -384,7 +396,7 @@ def hls_checks() -> dict[str, Any]:
                 decoded = subprocess.run([ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error", "-nostats", "-progress", "pipe:1", "-stats_period", "86400", "-xerror", "-protocol_whitelist", "file,pipe,crypto,data", "-i", str(directory / "media.download"), "-map", "0:v:0", "-f", "null", "-"], check=True, capture_output=True, timeout=20)
                 assert b"progress=end" in decoded.stdout and any(int(match) > 0 for match in re.findall(rb"frame=([0-9]+)", decoded.stdout))
         assert "/never-fetched.m3u8" not in server.requests_seen and server.requests_seen.count("/key.bin") == 1
-        return {"exitCodes": results, "requests": server.requests_seen, "inlineManifest": True, "networkFFmpegFallback": False, "aes128": True, "decodedFrames": True}
+        return {"exitCodes": results, "requests": server.requests_seen, "inlineManifest": True, "networkFFmpegFallback": False, "aes128": True, "decodedFrames": True, "downloaderKind": "official-windows-exe" if downloader else "python-module"}
     finally:
         server.shutdown()
         server.server_close()
@@ -394,9 +406,13 @@ def hls_checks() -> dict[str, Any]:
 def main() -> None:
     """运行真实解析与本机媒体回归并保存不含秘密的验证报告。"""
     global BASE
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--ytdlp", type=Path, help="可选的固定官方Windows下载器EXE；省略使用当前解释器锁定模块")
+    parser.add_argument("--ffmpeg", type=Path, help="生成和解码离线样例的真实FFmpeg路径；省略从受信测试环境查找")
+    args = parser.parse_args()
     BASE = verification_directory() / ("uav-real-bridge-" + uuid4().hex)
     BASE.mkdir(mode=0o700)
-    result = {"bridge": bridge_checks(), "hls": hls_checks(), "scope": "真实固定包解析+替代站点传输+真实本机原生HLS；不证明公网可用或Docker运行"}
+    result = {"bridge": bridge_checks(), "hls": hls_checks(args.ytdlp, args.ffmpeg), "scope": "真实固定包解析+替代站点传输+真实本机原生HLS；不证明公网可用或Docker运行"}
     (BASE / "result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False))
 

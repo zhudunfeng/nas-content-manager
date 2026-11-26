@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"math"
 	"net/http"
 	"net/url"
@@ -18,11 +19,15 @@ import (
 	"time"
 
 	contract "nas-content-manager/internal/collectioncontract"
+	"nas-content-manager/internal/uavruntime"
 )
 
 // uavVersion 与 uavCommit 锁定已审核上游源码及无头协议。
 const uavVersion = "3.8.4"
 const uavCommit = "d40f09457fbd38dd7dc94580637242afafaf3939"
+
+// uavYTDLPVersion 绑定已验证内联HLS和有限片段行为的视频下载器版本，不限制原通用网页能力。
+const uavYTDLPVersion = "2026.10.26"
 
 // uavBridge 随执行端固定分发，用户不能替换脚本或选择模块。
 //
@@ -66,7 +71,40 @@ func (s *Service) initUAV() {
 	if !s.config.UAVEnabled {
 		return
 	}
-	s.uavPython = toolPath(s.config.UAVPython)
+	defer func() {
+		if capability := s.uavCapability(); !capability.Available {
+			s.logger.Warn("视频插件未就绪，原有资源收集保持可用", "原因", capability.Reason)
+		}
+	}()
+	s.uavReason = "视频插件固定依赖探测未通过，请检查源码安装来源、版本、扩展库和证书文件"
+	// 显式覆盖优先且失败不回退；托管环境只允许受信绝对解释器或完整私有清单。
+	explicit := s.config.UAVPythonExplicit || filepath.IsAbs(s.config.UAVPython)
+	if explicit {
+		if (s.config.Managed || s.config.UAVRuntimeManifest != "") && !filepath.IsAbs(s.config.UAVPython) {
+			s.uavReason = "视频插件的显式Python配置必须是受信绝对路径，未改用其他解释器"
+			return
+		}
+		s.uavPython = toolPath(s.config.UAVPython)
+		if s.uavPython == "" {
+			s.uavReason = "视频插件显式配置的Python不存在或不可执行，未改用其他解释器"
+		}
+	} else if s.config.UAVRuntimeManifest != "" {
+		packaged, err := uavruntime.Load(s.config.UAVRuntimeManifest)
+		if err != nil {
+			s.uavReason = "视频插件私有运行时清单、架构、版本或文件完整性校验失败，请重新安装匹配的完整包"
+			return
+		}
+		s.uavPython = packaged.Python
+	} else if s.config.Managed {
+		s.uavReason = "视频插件私有运行时缺失，请安装含UAV的完整包或显式配置受信Python绝对路径"
+		return
+	} else {
+		// 普通控制台保留原有固定工具名兼容，桌面托管绝不查找系统Python。
+		s.uavPython = toolPath(s.config.UAVPython)
+		if s.uavPython == "" {
+			s.uavReason = "视频插件未找到可运行的Python，请配置受信解释器或私有运行时清单"
+		}
+	}
 	if s.uavPython == "" {
 		return
 	}
@@ -79,23 +117,73 @@ func (s *Service) initUAV() {
 	}
 	if s.callUAV(ctx, uavInput{Action: "probe"}, &probe) != nil || probe.Version != uavVersion || probe.Commit != uavCommit || probe.ProtocolVersion != 1 {
 		s.uavPython = ""
-		s.logger.Warn("视频插件依赖探测未通过，原有资源收集保持可用")
 		return
 	}
-	s.logger.Info("视频搜索下载插件已启用", "version", uavVersion)
+	s.uavReason = ""
+	s.logger.Info("视频解析依赖本地探测通过", "版本", uavVersion)
 }
 
 // uavCapability 同时要求固定解析依赖、原生下载器和离线校验工具。
 func (s *Service) uavCapability() contract.Capability {
-	c := contract.Capability{Kind: "uav", Available: s.uavPython != "" && s.ytdlp != "" && s.ffmpeg != ""}
+	c := contract.Capability{Kind: "uav", Available: s.uavPython != "" && s.ytdlp != "" && s.ytdlpVersion == uavYTDLPVersion && s.ffmpeg != ""}
 	if !s.config.UAVEnabled {
 		c.Reason = "视频插件未启用，请配置NAS_COLLECTION_WORKER_UAV_ENABLED=true"
-	} else if !c.Available {
-		c.Reason = "视频插件需要Python>=3.12、锁定UAV 3.8.4依赖、yt-dlp和ffmpeg，请检查执行端配置"
+	} else if s.uavPython == "" {
+		c.Reason = s.uavReason
+		if c.Reason == "" {
+			c.Reason = "视频插件需要受信Python和锁定UAV 3.8.4依赖，请检查执行端配置"
+		}
+	} else if s.ytdlp == "" {
+		c.Reason = "视频插件未找到可运行的固定yt-dlp下载器，请检查完整包或执行端工具配置"
+	} else if s.ytdlpVersion != uavYTDLPVersion {
+		c.Reason = "视频插件需要固定yt-dlp " + uavYTDLPVersion + "，当前下载器版本不匹配；请恢复可信完整包或匹配的执行端工具"
+	} else if s.ffmpeg == "" {
+		c.Reason = "视频插件未找到可运行的FFmpeg本地校验工具，请检查完整包或执行端工具配置"
 	} else {
 		c.Version = uavVersion
 	}
 	return c
+}
+
+// initWebTools 共享服务与视频本地诊断的下载器和离线校验工具探测，不访问网络。
+func (s *Service) initWebTools() {
+	s.ytdlp = toolPath(s.config.YTDLP)
+	s.ffmpeg = toolPath(s.config.FFmpeg)
+	s.ytdlpVersion = s.version(s.ytdlp, append(s.webArguments(), "--version")...)
+	if s.ytdlpVersion == "" {
+		s.ytdlp = ""
+	}
+	if s.version(s.ffmpeg, "-version") == "" {
+		s.ffmpeg = ""
+	}
+}
+
+// CheckUAV 仅在私有临时目录检查固定视频依赖和工具，不监听、不恢复任务或访问站点。
+func CheckUAV(ctx context.Context, config Config, logger *slog.Logger) (capability contract.Capability, result error) {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	if !config.UAVEnabled {
+		service := &Service{config: config}
+		return service.uavCapability(), nil
+	}
+	root, err := os.MkdirTemp("", "qiku-uav-check-")
+	if err != nil {
+		return contract.Capability{}, errors.New("无法建立视频诊断专用临时目录")
+	}
+	defer func() {
+		if os.RemoveAll(root) != nil {
+			result = errors.Join(result, errors.New("视频诊断临时文件未能完整清理"))
+		}
+	}()
+	if err = os.Mkdir(filepath.Join(root, "private-state"), 0700); err != nil {
+		return contract.Capability{}, errors.New("无法建立视频诊断状态目录")
+	}
+	config.DataDir = root
+	service := &Service{config: config, logger: logger, ctx: ctx}
+	service.initWebTools()
+	service.initUAV()
+	return service.uavCapability(), nil
 }
 
 // callUAV 通过标准输入执行固定有界JSON协议，不泄漏工具错误原文。
@@ -110,7 +198,7 @@ func (s *Service) callUAV(ctx context.Context, input uavInput, output any) error
 	if err != nil {
 		return errors.New("视频插件请求编码失败")
 	}
-	body, err := s.runTool(ctx, s.uavPython, []string{"-I", "-B", "-c", uavBridge}, filepath.Join(s.config.DataDir, "private-state"), bytes.NewReader(data), 1<<20, input.Action != "probe")
+	body, err := s.runTool(ctx, s.uavPython, []string{"-I", "-B", "-X", "utf8", "-c", uavBridge}, filepath.Join(s.config.DataDir, "private-state"), bytes.NewReader(data), 1<<20, input.Action != "probe")
 	if err != nil {
 		return err
 	}
