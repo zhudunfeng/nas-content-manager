@@ -59,6 +59,10 @@ dependencies, accepts a script/command or selects a Python argument.
   mismatched owners, reparse aliases and remote state are not adopted. Apply a
   private Windows DACL only to newly created or verified instance-owned roots;
   do not reset unrelated user directory permissions.
+- Windows defaults to the executable-adjacent `qiku-data/profiles/<mode>` profile.
+  Within the program directory, managed state is allowed only in its dedicated
+  `qiku-data` subtree; `tools`, `runtimes`, program-root placement and overlap with
+  business/media roots remain forbidden. Explicit external profiles still work.
 - Managed mode builds a child-only environment and clears inherited app worker
   URL/token/read-root/HTTP settings as a group before injecting its verified
   connection. Disabled mode clears that whole tuple. External mode keeps it and

@@ -94,7 +94,9 @@ disabled/unavailable, and 1 means diagnostic execution/cleanup failure.
 - At least one expected plugin available permits ready with partial reasons;
   all expected plugins unavailable means unavailable. Process/handshake failure
   means failed. Preserve existing state enums and fixed IPC control actions.
-- Program files may be read-only. State/secrets/temp/logs use the owned profile.
+- Program files may be read-only when an explicit writable `--profile` is used.
+  The default executable-adjacent `qiku-data` layout requires a writable parent.
+  State/secrets/temp/logs use the owned profile.
   Quit, cancellation and upgrade wait for owned process and image handle release;
   never terminate by image name or stop an external worker.
 

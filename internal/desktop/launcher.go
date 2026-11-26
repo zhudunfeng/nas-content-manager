@@ -121,6 +121,9 @@ func Main(args []string) int {
 		return 0
 	}
 	if err = privateDirectory(profile); err != nil {
+		if o.Profile == "" {
+			err = fmt.Errorf("程序目录下的栖库用户数据目录不可创建或不可限制权限，请检查目录权限或使用 --profile 指定可写目录：%w", err)
+		}
 		return reportFailure(o.Headless, err)
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -189,6 +192,7 @@ func Main(args []string) int {
 		return reportFailure(o.Headless, errors.New("无法创建本机诊断日志"))
 	}
 	defer closer.Close()
+	logger.Info("本机用户数据目录已确定", "mode", c.Mode, "profile", profile, "dataDir", c.DataDir)
 	ctrl := &controller{config: c, profile: profile, options: o, logger: logger, commands: make(chan desktopCommand, 4), cancel: cancel, reply: controlReply{State: "starting", Mode: c.Mode}}
 	bridgeMu.Lock()
 	active = ctrl

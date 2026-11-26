@@ -601,3 +601,13 @@ HLS 解码时长下界容差为 `max(0.5 秒, EXTINF 总时长的 2%)`，只能�
 - 最终 Go vet、清理临时测试后的包编译、gofmt、Python AST、Vue 严格类型检查及生产构建通过。Windows 与 Linux amd64／arm64 主服务和 worker 共六个产物构建成功；Linux 仅交叉编译。工程证据 `.runtime/verify/jmadvanced-final-checks-20261125-2/result.json` 为 passed，记录源码／产物摘要；临时测试和源码漂移均为空。
 
 最终高级协议证据为 `.runtime/verify/jmcomic-advanced-20261125T073227515799Z-1ec0d7/`；原漫画、UAV 与 baseline 分别为 `.runtime/verify/jmadvanced-final-{jmcomic,uav,baseline}-20261125-1/`。早期 fixture 格式、Windows 快照替换冲突及辅助工具路径失败均保留并说明修复，未混入最终通过数量。真实公网站点、账号、Docker、Linux 运行及物理 NAS 未实测；账号／Cookie／收藏夹、PDF／ZIP 与任意上游插件仍未开放。本轮自有服务和浏览器已关闭，临时单元测试源码已删除，任务进入 review；未自动提交、部署或归档。
+
+
+## 2026-11-26 Windows 程序同级用户配置目录
+
+Windows 桌面默认 profile 改为真实 `栖库.exe` 旁的 `qiku-data/profiles/native`，原生数据库默认位于其 `data`；Docker 本机 profile 独立，业务命名卷不变。显式目录与保存配置优先级不变；不自动迁移旧 C 盘数据，无权限时明确提示 `--profile`，不回退用户目录。升级保留完整 `qiku-data`，移动程序不改写已保存的绝对业务/媒体路径。
+
+- 最终真实内嵌 GUI 产物完成 20 类桌面回归及 10 种图标检查，实际 worker 完成 11 类托管回归，包含不传 `--profile` 的实际默认布局。实际 Windows DACL 拒写、无回退、显式可写目录启动通过；稀疏慢流/空闲退出 0.090/0.048 秒，包含 EXE 原位更新与配置/账号重启保留。
+- 临时 Go 行为 3 顶层组/5 子场景、gofmt、全包 vet、清源包编译、Python AST、Vue 严格类型/生产构建、发行边界 131 项和实际归档 23 文件校验通过。临时单元测试已删除。Linux amd64/arm64 CLI、worker、桌面占位入口共 6 个产物仅交叉编译，未运行 Linux。
+- 最终 EXE SHA-256：`b34ae1803ba0b505717e37fe9fa178b5cd36945cc49711c28ded9dd3f3b258b1`；归档 `.runtime\releases\windows-portable-profile\qiku-0.1.0-windows-amd64-development.zip` 为未附 FFmpeg/可选 Python 的开发验证包。原始总报告 `.runtime/verify/windows-portable-profile/final-result.json`，完整说明 `.trellis/tasks/11-26-windows-portable-profile/research/final-validation.md`，独立审查同目录 `quality-review.md`。
+- 初轮整根 LOCALAPPDATA 哨兵因默认浏览器的 Chrome Crashpad 缓存误报，已保存成员证据、修正为栖库专属目录断言后重跑通过。干净 Windows VM、完整离线工具/插件包、真实公网站点、Docker 部署及真实 Linux 未实测；未自动提交、部署或归档。

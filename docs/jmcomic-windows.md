@@ -8,7 +8,7 @@ Windows 原生入口可托管独立获取 worker，由 worker 调用随包私有
 - **含 JMComic 的完整漫画包**：程序旁有 `nas-collection-worker.exe`、`jmcomic-runtime.json`、`runtimes/jmcomic/` 和对应许可。Python 与依赖已在构建端装配，终端不执行 pip、不修改系统 PATH，也不使用全局 Python。
 - **开发包**：文件名和发行元数据明确标明未带齐媒体工具；即使另有漫画运行时，也不能当作完整离线媒体发行包。
 
-解压后保持整个程序目录结构。不要直接从 ZIP 运行，不要只复制 Python EXE 或把开发虚拟环境复制到另一台电脑充当运行包。程序目录可以只读；配置、下载、检查点、秘密与日志保存在本机 profile 中。
+解压后保持整个程序目录结构。不要直接从 ZIP 运行，不要只复制 Python EXE 或把开发虚拟环境复制到另一台电脑充当运行包。默认 profile 位于程序目录下的 `qiku-data`，因此该目录需要可写；若程序目录只读，使用 `--profile` 指定可写位置。配置、下载、检查点、秘密与日志保存在 profile 中。
 
 ## 启用与使用
 
@@ -62,7 +62,7 @@ $env:NAS_COLLECTION_WORKER_JMCOMIC_RUNTIME_MANIFEST = (Resolve-Path '.\jmcomic-r
 
 ## 数据位置与故障处理
 
-默认原生 profile 为 `%LOCALAPPDATA%\Qiku\profiles\native`；托管实例使用其中 `collection-managed/` 的自有数据和秘密目录，worker 日志位于 `logs/collection-worker.log`。不要把 SQLite、检查点或令牌放在 UNC／映射网络盘。不要删除或复制实例所有权标记来强行接管未知目录。
+默认原生 profile 为 `栖库.exe` 同级的 `qiku-data\profiles\native`；托管实例使用其中 `collection-managed/` 的自有数据和秘密目录，worker 日志位于 `logs/collection-worker.log`。程序目录只读时请使用 `--profile` 指定可写目录。不要把 SQLite、检查点或令牌放在 UNC／映射网络盘。不要删除或复制实例所有权标记来强行接管未知目录。
 
 | 现象 | 处理方式 |
 | --- | --- |

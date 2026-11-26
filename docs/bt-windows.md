@@ -9,7 +9,7 @@ Windows 原生桌面可以连接已经安装的 **qBittorrent** 下载器及 **J
 1. 在 Windows 安装 qBittorrent，在“选项 → Web UI”启用远程控制，监听 `127.0.0.1`，例如端口 `8080`，设置自己的用户名和固定密码。保留鉴权、Host 校验和 CSRF 保护。这里填写的是 qB WebUI 密码，不是栖库管理员密码。
 2. 安装 Windows 版 Jackett 或 Prowlarr，保护管理页，添加并测试自己有权使用的索引器。单独复制每个索引器的 Torznab 地址及 API Key；最多接入 8 个来源。
 3. 创建专用下载根，例如 `E:\QikuDownloads`，以及其中的 `staging`、`complete` 目录。此目录必须与栖库 `data`、普通媒体根隔离，不能把整个 `E:\` 同时授权为普通媒体根。仅 `complete` 子目录作为受门禁保护的媒体根。
-4. 从托盘退出栖库再修改下方配置。默认原生配置目录是 `%LOCALAPPDATA%\Qiku\profiles\native`；使用过 `--profile` 时改用对应目录。
+4. 从托盘退出栖库再修改下方配置。默认原生配置目录是 `栖库.exe` 同级的 `qiku-data\profiles\native`；使用 `--profile` 时改用对应目录。
 
 同一 Windows 上运行 qB 时，应用和引擎的下载根应填写同一绝对目录。Windows 的中文、空格和盘符路径可用，JSON 中推荐使用 `/`，例如 `E:/我的下载/BT`，或者使用转义后的 `E:\\我的下载\\BT`。不支持 UNC／设备路径作为引擎下载根。远程或容器 qB 必须明确设置 `engineRoot`，并保证 `root` 确实映射到同一批文件，不能把不相干的两个目录当作映射。
 
@@ -18,8 +18,9 @@ Windows 原生桌面可以连接已经安装的 **qBittorrent** 下载器及 **J
 在 PowerShell 创建私密目录并写入密码；密码由交互框输入，不放在命令行、Git 或普通日志。示例中的 profile 和下载根按实际位置修改。
 
 ```powershell
-# 当前用户的原生桌面配置目录；自定义 --profile 时同步修改。
-$profileDir = Join-Path $env:LOCALAPPDATA 'Qiku\profiles\native'
+# 栖库.exe 同级的原生桌面配置目录；自定义 --profile 时同步修改。
+$programDir = Split-Path -Parent (Resolve-Path '.\栖库.exe').Path
+$profileDir = Join-Path $programDir 'qiku-data\profiles\native'
 # 专用于 BT 载荷的绝对根，不能位于应用数据或普通媒体授权根内。
 $downloadRoot = 'E:\QikuDownloads'
 $privateDir = Join-Path $profileDir 'bt'

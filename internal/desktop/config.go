@@ -16,6 +16,9 @@ import (
 	"strings"
 )
 
+// portableDataDirectoryName 是 Windows 程序同级专用用户数据目录，不能存放程序或运行时材料。
+const portableDataDirectoryName = "qiku-data"
+
 // Config 是每个运行模式独立保存的本机启动配置，不存引擎凭据。
 type Config struct {
 	SchemaVersion  int      `json:"schemaVersion"`  // 配置格式版本，当前为 2；兼容显式迁移旧版 1。
@@ -32,7 +35,7 @@ type Config struct {
 
 // Options 保存显式命令行参数，与持久配置分开以保证优先级。
 type Options struct {
-	Profile        string   // 配置/日志目录；空值使用当前用户固定位置。
+	Profile        string   // 本机配置、日志与组件状态目录；空值使用程序同级 qiku-data 配置根。
 	Mode           string   // 显式选择 native 或 docker。
 	DataDir        string   // 显式指定本地业务数据目录。
 	MediaRoots     []string // 重复 --media-root 明确授权多个目录。
@@ -62,7 +65,7 @@ func ParseOptions(args []string, output io.Writer) (Options, error) {
 	var roots stringsFlag
 	f := flag.NewFlagSet("栖库", flag.ContinueOnError)
 	f.SetOutput(output)
-	f.StringVar(&o.Profile, "profile", "", "本机配置与日志目录，默认当前用户 LocalAppData/Qiku/profiles/模式")
+	f.StringVar(&o.Profile, "profile", "", "本机配置、日志与组件状态目录，默认程序目录/qiku-data/profiles/模式")
 	f.StringVar(&o.Mode, "mode", "native", "运行模式：native 原生媒体，docker 完整容器模式")
 	f.StringVar(&o.DataDir, "data-dir", "", "本地业务数据目录，保留已有账号、索引与缓存")
 	f.Var(&roots, "media-root", "授权媒体根目录，可以重复指定")
@@ -97,16 +100,16 @@ func ParseOptions(args []string, output io.Writer) (Options, error) {
 	return o, nil
 }
 
-// profilePath 选择固定配置位置，避免当前工作目录变化产生空库。
+// profilePath 选择稳定的本机配置位置，默认落在程序同级数据根且不受当前工作目录影响。
 func profilePath(o Options) (string, error) {
 	if o.Profile != "" {
 		return filepath.Abs(o.Profile)
 	}
-	base, err := os.UserCacheDir()
+	base, err := defaultProfileRoot()
 	if err != nil {
-		return "", errors.New("无法定位当前用户的本机应用目录")
+		return "", err
 	}
-	return filepath.Join(base, "Qiku", "profiles", o.Mode), nil
+	return filepath.Join(base, o.Mode), nil
 }
 
 // loadConfig 有界读取严格格式，损坏配置不覆盖、不偷偷生成新数据库。

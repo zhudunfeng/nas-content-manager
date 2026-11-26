@@ -283,11 +283,34 @@ def main() -> None:
         shutil.copy2(source_binary, binary)
         expected_digest = file_digest(source_binary)
         assert file_digest(binary) == expected_digest, "隔离程序副本与原始构建产物不一致"
-        profile = root / "profiles" / "native"
+        profile = binary.parent / "qiku-data" / "profiles" / "native"
         media = root / "中文 资料;音乐"
         foreign = root / "任意 工作目录"
         media.mkdir()
         foreign.mkdir()
+        forbidden_user_root = root / "不得回退的用户目录"
+        environment["LOCALAPPDATA"] = str(forbidden_user_root)
+        default_config = execute(binary, ["--headless", "--print-config"], environment, foreign)
+        assert default_config.returncode == 0, f"默认桌面配置不可读取：{default_config.stderr[-1500:]}"
+        default_data = Path(json.loads(default_config.stdout)["dataDir"])
+        expected_default_data = binary.parent / "qiku-data" / "profiles" / "native" / "data"
+        assert default_data == expected_default_data, "默认数据目录未落在 EXE 同级 qiku-data 根或受当前工作目录影响"
+        docker_config = execute(binary, ["--headless", "--mode", "docker", "--print-config"], environment, foreign)
+        assert docker_config.returncode == 0, f"Docker profile 配置不可读取：{docker_config.stderr[-1500:]}"
+        docker_data = Path(json.loads(docker_config.stdout)["dataDir"])
+        assert docker_data == binary.parent / "qiku-data" / "profiles" / "docker" / "data" and docker_data != default_data, "native 与 Docker 默认 profile 未隔离"
+        environment_data = root / "环境业务目录"
+        environment_override = dict(environment, NAS_DATA_DIR=str(environment_data))
+        env_config = execute(binary, ["--headless", "--print-config"], environment_override, foreign)
+        assert env_config.returncode == 0 and Path(json.loads(env_config.stdout)["dataDir"]) == environment_data, "NAS_DATA_DIR 未覆盖默认目录"
+        override = root / "自定义业务目录"
+        custom_profile = root / "自定义配置目录"
+        profile_config = execute(binary, ["--headless", "--profile", str(custom_profile), "--print-config"], environment, foreign)
+        assert profile_config.returncode == 0 and Path(json.loads(profile_config.stdout)["dataDir"]) == custom_profile / "data", "显式 --profile 未决定默认业务目录"
+        custom_override = dict(environment, NAS_DATA_DIR=str(environment_data))
+        custom_config = execute(binary, ["--headless", "--profile", str(custom_profile), "--data-dir", str(override), "--print-config"], custom_override, foreign)
+        assert custom_config.returncode == 0 and Path(json.loads(custom_config.stdout)["dataDir"]) == override, "显式 --data-dir 未优先于 NAS_DATA_DIR"
+        assert not profile.exists() and not custom_profile.exists(), "仅打印配置不应创建用户数据目录"
         (media / "只读 原文.txt").write_text("启动器验证保留原文。", encoding="utf-8")
         source_before = (media / "只读 原文.txt").read_bytes()
         # EPUB 后缀仅用于文件流协议样本，不交给阅读器解码，也不启动媒体探测工具。
@@ -301,7 +324,7 @@ def main() -> None:
         log_path = root / "process-output.txt"
         with log_path.open("wb") as output:
             try:
-                command = [str(binary), *desktop_flags, "--no-browser", "--profile", str(profile), "--media-root", str(media), "--port", str(preferred)]
+                command = [str(binary), *desktop_flags, "--no-browser", "--media-root", str(media), "--port", str(preferred)]
                 process = subprocess.Popen(command, cwd=foreign, env=environment, stdout=output, stderr=output)
                 processes.append(process)
                 reply = wait_ready(binary, profile, process, environment, foreign)
@@ -325,7 +348,7 @@ def main() -> None:
                 config_before = (profile / "desktop.json").read_bytes()
                 config = json.loads(config_before)
                 assert config["port"] == actual_port
-                duplicate = execute(binary, ["--headless", "--no-browser", "--profile", str(profile)], environment, foreign)
+                duplicate = execute(binary, ["--headless", "--no-browser"], environment, foreign)
                 assert duplicate.returncode == 0 and process.poll() is None, duplicate.stderr
                 assert (profile / "desktop.json").read_bytes() == config_before, "重复启动改写了已有配置"
                 collision = execute(binary, ["--headless", "--no-browser", "--profile", str(root / "second-profile"), "--data-dir", config["dataDir"], "--media-root", str(media)], environment, foreign)
@@ -393,10 +416,12 @@ def main() -> None:
                     assert config_path.read_text(encoding="utf-8") == malformed_data, f"坏配置被覆盖：{label}"
                     assert not (invalid_profile / "data" / "library.db").exists(), f"坏配置建立新库：{label}"
                 assert not (foreign / "library.db").exists(), "空数据路径在任意工作目录建立了数据库"
+                # 托盘重复启动会打开默认浏览器，其私有缓存不属于栖库用户配置。
+                assert not (forbidden_user_root / "Qiku").exists(), "默认用户配置静默回退到 LOCALAPPDATA/Qiku"
                 assert (media / "只读 原文.txt").read_bytes() == source_before
                 if args.with_tray:
                     print(json.dumps({"nativeTray": "passed", "iconSizes": icon_sizes, "checks": ["内嵌图标逐帧匹配ICO", "首次启动与原位覆盖后重启的独立大小图标", "真实托盘退出后EXE立即释放"]}, ensure_ascii=False))
-                print(json.dumps({"result": "passed", "platform": "windows", "resourceMode": "explicit-web-dir" if args.web_dir else "embedded", "exitSeconds": exit_durations, "checks": ["中文/空格/分号路径", "任意工作目录", "端口冲突实际避让", "健康与HTML就绪", "真实命名管道", "重复启动", "同数据目录跨profile拒绝", "5GiB稀疏慢流中断与快速退出", "HTTP和IPC关闭", "EXE优先独占打开/原位覆盖/SHA-256校验", "完整程序目录重命名与恢复", "数据库/锁/日志/媒体独占打开与重命名", "空闲退出", "覆盖后立即重启配置与账号保留", "重复JSON键拒绝且不覆盖", "保存配置完整字段/null/空相对路径拒绝", "源文件保持"]}, ensure_ascii=False))
+                print(json.dumps({"result": "passed", "platform": "windows", "resourceMode": "explicit-web-dir" if args.web_dir else "embedded", "exitSeconds": exit_durations, "checks": ["EXE同级默认profile与数据目录", "native/Docker默认profile隔离", "显式profile/data-dir覆盖", "中文/空格/分号路径", "任意工作目录", "端口冲突实际避让", "健康与HTML就绪", "真实命名管道", "重复启动", "同数据目录跨profile拒绝", "5GiB稀疏慢流中断与快速退出", "HTTP和IPC关闭", "EXE优先独占打开/原位覆盖/SHA-256校验", "完整程序目录重命名与恢复", "数据库/锁/日志/媒体独占打开与重命名", "空闲退出", "覆盖后立即重启配置与账号保留", "重复JSON键拒绝且不覆盖", "保存配置完整字段/null/空相对路径拒绝", "源文件保持"]}, ensure_ascii=False))
             except BaseException:
                 output.flush()
                 print(log_path.read_text(encoding="utf-8", errors="replace")[-12000:])

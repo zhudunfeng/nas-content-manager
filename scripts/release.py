@@ -361,6 +361,7 @@ def build(args: argparse.Namespace) -> Path:
             (stage / "release.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             notice = "Windows：双击栖库.exe。Linux：执行 ./start.sh。\n原生与容器配置数据独立；升级前退出旧版并备份。\nDocker完整模式需要Docker环境和release-images.json，不自动安装Docker/WSL。\n"
             if platform == "windows":
+                notice += "Windows用户配置、日志和本机组件状态默认保存在栖库.exe旁的qiku-data/profiles/模式；原生业务数据默认在该配置目录的data下，不再默认使用C盘用户目录。\n可用--profile指定可写配置目录，原生业务数据另可用--data-dir指定。程序目录只读时会明确报错，不自动回退用户目录。\n升级前退出并备份，原位置更新时保留整个qiku-data。旧版用户目录不自动迁移；移动程序不会自动改写已保存的绝对业务或媒体路径。\n"
                 notice += "Windows原生BT可连接已安装的qBittorrent与Jackett/Prowlarr，按docs/bt-windows.md配置bt.json后双击使用。\n"
             if args.development_without_tools:
                 notice += "注意：这是未携带FFmpeg的开发验证包，不是完整离线发布版。\n"

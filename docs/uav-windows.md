@@ -6,7 +6,7 @@ Windows 原生桌面入口通过同一个托管获取 worker 调用独立 UAV �
 
 选择含 UAV 的可信完整 Windows 包，核对归档摘要后解压整个目录。包内应有 `nas-collection-worker.exe`、`uav-runtime.json`、`runtimes/uav/`、`tools/yt-dlp.exe`、FFmpeg/ffprobe 及相应许可材料。仅携带 Python 或单独复制 EXE 不能组成完整功能包。
 
-终端无需安装 Python、pip、Go、Node 或 Docker，不修改系统 PATH。不要直接从 ZIP 运行，也不要将开发机 venv 复制成便携运行时。程序目录允许只读，配置、秘密、日志和暂存位于本机 profile；媒体仍使用已授权的业务目录。
+终端无需安装 Python、pip、Go、Node 或 Docker，不修改系统 PATH。不要直接从 ZIP 运行，也不要将开发机 venv 复制成便携运行时。默认 profile 位于程序目录下的 `qiku-data`，因此该目录需要可写；若程序目录只读，使用 `--profile` 指定可写位置。配置、秘密、日志和暂存位于本机 profile；媒体仍使用已授权的业务目录。
 
 1. 启动 `栖库.exe`。新原生 profile 在有 worker 和至少一种随包插件清单时选择托管；已有停用或外接配置继续保留。
 2. 需要时在托盘选择「启用本机资源获取」，查看漫画、视频各自的依赖状态；也可用固定 IPC 命令启用或重新检测。
@@ -55,7 +55,7 @@ UAV 与 JMComic 各自拥有独立运行时和清单，不能互相覆盖 site-p
 
 ## 数据与排错
 
-默认原生 profile 为 `%LOCALAPPDATA%\Qiku\profiles\native`。托管 worker 使用其中 `collection-managed/`，日志在 `logs/collection-worker.log`。不要把 SQLite、令牌或所有权标记迁到 UNC/网络目录，也不要删除标记来接管未知目录。
+默认原生 profile 为 `栖库.exe` 同级的 `qiku-data\profiles\native`。托管 worker 使用其中 `collection-managed/`，日志在 `logs/collection-worker.log`。程序目录只读时请使用 `--profile` 指定可写目录。不要把 SQLite、令牌或所有权标记迁到 UNC/网络目录，也不要删除标记来接管未知目录。
 
 | 状态 | 处理 |
 | --- | --- |

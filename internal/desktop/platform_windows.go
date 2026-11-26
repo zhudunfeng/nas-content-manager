@@ -14,6 +14,23 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+// defaultProfileRoot 返回栖库.exe 同级的用户数据 profile 根目录。
+func defaultProfileRoot() (string, error) {
+	executable, err := os.Executable()
+	if err != nil || strings.TrimSpace(executable) == "" {
+		return "", errors.New("无法定位栖库.exe所在目录，请使用 --profile 指定本机配置目录")
+	}
+	absolute, err := filepath.Abs(executable)
+	if err != nil {
+		return "", errors.New("无法规范化栖库.exe路径，请使用 --profile 指定本机配置目录")
+	}
+	absolute, err = filepath.EvalSymlinks(absolute)
+	if err != nil {
+		return "", errors.New("无法核实栖库.exe所在目录，请使用 --profile 指定本机配置目录")
+	}
+	return filepath.Join(filepath.Dir(absolute), portableDataDirectoryName, "profiles"), nil
+}
+
 // currentUserSID 返回当前用户身份，仅用于本机命名对象和私密 ACL。
 func currentUserSID() (string, error) {
 	user, err := windows.GetCurrentProcessToken().GetTokenUser()

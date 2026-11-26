@@ -8,8 +8,18 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 )
+
+// defaultProfileRoot 保留非 Windows 桌面占位实现的既有用户缓存路径。
+func defaultProfileRoot() (string, error) {
+	base, err := os.UserCacheDir()
+	if err != nil {
+		return "", errors.New("无法定位当前用户的本机应用目录")
+	}
+	return filepath.Join(base, "Qiku", "profiles"), nil
+}
 
 // unsupportedDesktop 明确 Linux 使用原 CLI，避免引入桌面环境依赖。
 func unsupportedDesktop() error {

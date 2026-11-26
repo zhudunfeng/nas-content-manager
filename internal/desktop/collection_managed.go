@@ -43,10 +43,15 @@ func prepareCollectionDirectory(profile string, cfg Config, programDir string) (
 	if !strings.EqualFold(filepath.Clean(canonical), filepath.Clean(root)) || strings.HasPrefix(canonical, `\\`) {
 		return "", errors.New("本机获取状态目录不能使用链接别名或网络共享")
 	}
-	for _, protected := range append([]string{cfg.DataDir, programDir}, cfg.MediaRoots...) {
+	programDir = canonicalConfigPath(programDir)
+	// 程序内仅允许专用用户数据子树，不能把获取状态写入 tools、runtimes 或程序根。
+	if pathContains(root, programDir) || pathContains(programDir, root) && !pathContains(filepath.Join(programDir, portableDataDirectoryName), root) {
+		return "", errors.New("程序目录内的本机获取状态必须位于专用 qiku-data 子目录")
+	}
+	for _, protected := range append([]string{cfg.DataDir}, cfg.MediaRoots...) {
 		protected = canonicalConfigPath(protected)
 		if pathContains(root, protected) || pathContains(protected, root) {
-			return "", errors.New("本机获取状态目录不能与程序、业务数据或媒体授权目录重叠")
+			return "", errors.New("本机获取状态目录不能与业务数据或媒体授权目录重叠")
 		}
 	}
 	created := false

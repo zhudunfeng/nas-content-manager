@@ -346,10 +346,11 @@ def main() -> int:
         profile = root / "新 配置"
         output_path = root / "启动诊断.log"
         with output_path.open("wb") as output:
-            def launch(target_profile: Path, mode: str, extra_environment: dict[str, str] | None = None) -> subprocess.Popen[bytes]:
-                """只启动本轮隔离副本，并登记精确进程以便异常清理。"""
+            def launch(target_profile: Path, mode: str, extra_environment: dict[str, str] | None = None, *, use_default_profile: bool = False) -> subprocess.Popen[bytes]:
+                """只启动本轮隔离副本；默认目录场景省略配置参数，并登记精确进程。"""
                 env = {**environment, **(extra_environment or {})}
-                process = subprocess.Popen([str(binary), "--headless", "--no-browser", "--profile", str(target_profile), "--media-root", str(media), "--collection-mode", mode], cwd=foreign, env=env, stdout=output, stderr=output)
+                profile_flags = [] if use_default_profile else ["--profile", str(target_profile)]
+                process = subprocess.Popen([str(binary), "--headless", "--no-browser", *profile_flags, "--media-root", str(media), "--collection-mode", mode], cwd=foreign, env=env, stdout=output, stderr=output)
                 processes.append(process)
                 return process
 
@@ -462,9 +463,25 @@ def main() -> int:
                     assert result.returncode == 0 and json.loads(result.stdout)["collectionMode"] == "managed"
                     assert not (default_profile / "desktop.json").exists()
                     checks.append("新完整包profile自动选择managed，print-config仍无写入")
+                expected = "ready" if args.python or runtime_python or uav_python else "unavailable"
+                # 不传 profile 真实启动 worker，防止专用目录隔离规则阻断程序同级布局。
+                portable_profile = program / "qiku-data/profiles/native"
+                process = launch(portable_profile, "managed", use_default_profile=True)
+                reply = wait_ready(binary, portable_profile, process, environment, foreign)
+                assert reply["collectionState"] == expected, reply
+                portable_config = json.loads((portable_profile / "desktop.json").read_bytes())
+                assert Path(portable_config["dataDir"]) == portable_profile / "data"
+                portable_state = portable_profile / "collection-managed"
+                assert json.loads((portable_state / "owner.json").read_bytes())["instanceId"] == portable_config["instanceId"]
+                assert all((portable_state / name).is_dir() for name in ("data", "secrets", "tmp"))
+                handles = wait_handles(descendants(process.pid))
+                assert handles, "默认程序同级配置未启动真实worker"
+                quit_instance(portable_profile, process)
+                assert_processes_released(handles)
+                checks.append("不传profile的程序同级配置、数据库及托管状态落盘，真实worker启动退出")
+
                 process = launch(profile, "managed", {**polluted, "PYTHONPATH": str(foreign), "PYTHONHOME": str(foreign), "PATH": str(foreign)})
                 reply = wait_ready(binary, profile, process, environment, foreign)
-                expected = "ready" if args.python or runtime_python or uav_python else "unavailable"
                 assert reply["collectionState"] == expected, reply
                 expected_kinds = ({"jmcomic"} if args.python or runtime_python else set()) | ({"uav"} if uav_python else set())
                 actual_capabilities = {item["kind"]: item for item in reply.get("collectionCapabilities", [])}
