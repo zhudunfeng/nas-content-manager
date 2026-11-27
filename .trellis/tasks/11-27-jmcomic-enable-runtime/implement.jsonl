@@ -1,0 +1,5 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/backend/jmcomic-windows-contract.md", "reason": "漫画私有运行时与托管所有权"}
+{"file": ".trellis/spec/backend/uav-windows-contract.md", "reason": "自动初始化对齐基线"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "桌面生命周期及隔离环境"}

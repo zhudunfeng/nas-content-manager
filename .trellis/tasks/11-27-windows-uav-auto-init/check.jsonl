@@ -1,0 +1,7 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/spec/backend/uav-windows-contract.md", "reason": "UAV 自动初始化依赖与现有隔离/生命周期合同"}
+{"file": ".trellis/spec/backend/jmcomic-windows-contract.md", "reason": "UAV 自动初始化依赖与现有隔离/生命周期合同"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "UAV 自动初始化依赖与现有隔离/生命周期合同"}
+{"file": ".trellis/spec/backend/collection-contract.md", "reason": "UAV 自动初始化依赖与现有隔离/生命周期合同"}
+{"file": ".trellis/spec/backend/runtime-contract.md", "reason": "UAV 自动初始化依赖与现有隔离/生命周期合同"}

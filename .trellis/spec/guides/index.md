@@ -23,6 +23,8 @@ These guides help you **ask the right questions before coding**.
 |-------|---------|-------------|
 | [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md) | Identify patterns and reduce duplication | When you notice repeated patterns |
 | [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md) | Think through data flow across layers | Features spanning multiple layers |
+| [Archive Retrospective Guide](./archive-retrospective-guide.md) | Preserve reusable decisions, evidence and unfinished work | Before any single-task or batch archive |
+| [November 2026 Archive Summary](../../tasks/archive/2026-11/ARCHIVE-SUMMARY.md) | Project lessons and evidence from the 50-task archive batch | Before extending existing runtime, collection, plugin or NAS work |
 
 ---
 

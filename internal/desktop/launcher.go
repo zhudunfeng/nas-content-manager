@@ -21,18 +21,22 @@ import (
 
 	"nas-content-manager/internal/app"
 	"nas-content-manager/internal/collectioncontract"
+	"nas-content-manager/internal/jmcomicbootstrap"
+	"nas-content-manager/internal/uavbootstrap"
 )
 
 // controlReply 是固定本机控制协议，不包含凭据、命令或任意跳转 URL。
 type controlReply struct {
-	State                  string                          `json:"state"`                            // starting、ready、stopping、stopped 或 failed。
-	Mode                   string                          `json:"mode"`                             // native 或 docker。
-	URL                    string                          `json:"url,omitempty"`                    // 本实例真实就绪后的回环地址。
-	Error                  string                          `json:"error,omitempty"`                  // 脱敏中文错误说明。
-	CollectionMode         string                          `json:"collectionMode,omitempty"`         // 当前本机获取方式。
-	CollectionState        string                          `json:"collectionState,omitempty"`        // disabled、external、starting、ready、unavailable 或 failed。
-	CollectionMessage      string                          `json:"collectionMessage,omitempty"`      // 不含凭据的本机获取组件中文诊断。
-	CollectionCapabilities []collectioncontract.Capability `json:"collectionCapabilities,omitempty"` // 本次预期启用的各插件能力；不包含未配置插件。
+	State                     string                          `json:"state"`                               // starting、ready、stopping、stopped 或 failed。
+	Mode                      string                          `json:"mode"`                                // native 或 docker。
+	URL                       string                          `json:"url,omitempty"`                       // 本实例真实就绪后的回环地址。
+	Error                     string                          `json:"error,omitempty"`                     // 脱敏中文错误说明。
+	CollectionMode            string                          `json:"collectionMode,omitempty"`            // 当前本机获取方式。
+	CollectionState           string                          `json:"collectionState,omitempty"`           // disabled、external、starting、ready、unavailable 或 failed。
+	CollectionMessage         string                          `json:"collectionMessage,omitempty"`         // 不含凭据的本机获取组件中文诊断。
+	CollectionCapabilities    []collectioncontract.Capability `json:"collectionCapabilities,omitempty"`    // 本次预期启用的各插件能力；不包含未配置插件。
+	CollectionInitialization  *collectionInitialization       `json:"collectionInitialization,omitempty"`  // 当前优先展示的依赖初始化阶段，保留单插件协议兼容性。
+	CollectionInitializations []collectionInitialization      `json:"collectionInitializations,omitempty"` // 本轮各插件独立准备状态，不包含来源地址或私有路径。
 }
 
 // desktopCommand 串行传送本机托盘的受控配置变更。
@@ -43,19 +47,27 @@ type desktopCommand struct {
 
 // controller 串行管理共享核心，保证旧数据库句柄退出后才启动新实例。
 type controller struct {
-	mu             sync.RWMutex        // 状态和配置快照锁。
-	config         Config              // 已保存的当前启动配置。
-	profile        string              // 当前模式的本机配置根。
-	options        Options             // 本次交互与诊断参数。
-	environment    desktopEnvironment  // 进程启动时的环境与程序同级文件快照，内部重启不重新读取。
-	logger         *slog.Logger        // 有界中文日志。
-	reply          controlReply        // 供托盘和本机 IPC 读取的状态。
-	commands       chan desktopCommand // 有界串行生命周期指令。
-	cancel         context.CancelFunc  // 取消整个启动器。
-	serviceCancel  context.CancelFunc  // 取消当前原生或容器监视服务。
-	serviceDone    chan error          // 当前共享核心退出结果。
-	collection     *managedCollection  // 本实例托管的获取服务；外接服务永不归属此字段。
-	collectionDone <-chan struct{}     // 托管子树真实退出信号；与媒体服务独立。
+	mu                       sync.RWMutex                  // 状态和配置快照锁。
+	config                   Config                        // 已保存的当前启动配置。
+	profile                  string                        // 当前模式的本机配置根。
+	options                  Options                       // 本次交互与诊断参数。
+	environment              desktopEnvironment            // 进程启动时的环境与程序同级文件快照，内部重启不重新读取。
+	logger                   *slog.Logger                  // 有界中文日志。
+	reply                    controlReply                  // 供托盘和本机 IPC 读取的状态。
+	commands                 chan desktopCommand           // 有界串行生命周期指令。
+	cancel                   context.CancelFunc            // 取消整个启动器。
+	serviceCancel            context.CancelFunc            // 取消当前原生或容器监视服务。
+	serviceDone              chan error                    // 当前共享核心退出结果。
+	collection               *managedCollection            // 本实例托管的获取服务；外接服务永不归属此字段。
+	collectionDone           <-chan struct{}               // 托管子树真实退出信号；与媒体服务独立。
+	initialization           *collectionInitializationTask // 当前串行生命周期拥有的后台依赖准备批次。
+	initializationDone       <-chan struct{}               // 整批初始化及其清理全部完成后的信号。
+	initializationStatusTask *collectionInitializationTask // 仅在状态锁内识别仍允许发布进度的批次。
+	jmcomicPaths             jmcomicbootstrap.Paths        // 本轮已选择或准备完成的受信漫画依赖路径。
+	uavPaths                 uavbootstrap.Paths            // 本轮已选择或准备完成的受信视频依赖路径。
+	initializationAttempted  map[string]bool               // 本轮各插件至多准备一次，失败需主动重检或重新启动。
+	initializationActivating bool                          // 整批依赖自动激活时不重复打开媒体库页面。
+	initializationCleanupErr error                         // 未完成的清理错误持续阻止本进程内的替换和重启。
 }
 
 // Main 执行本机启动流程；返回码由薄平台入口传给操作系统。
@@ -244,6 +256,12 @@ func (c *controller) snapshot() (Config, controlReply) {
 	copyConfig.MediaRoots = append([]string(nil), c.config.MediaRoots...)
 	copyReply := c.reply
 	copyReply.CollectionCapabilities = append([]collectioncontract.Capability(nil), c.reply.CollectionCapabilities...)
+	copyReply.CollectionInitializations = append([]collectionInitialization(nil), c.reply.CollectionInitializations...)
+	if c.reply.CollectionInitialization != nil {
+		initialization := *c.reply.CollectionInitialization
+		copyReply.CollectionInitialization = &initialization
+	}
+	copyReply = collectionInitializationReply(copyReply)
 	return copyConfig, copyReply
 }
 
@@ -327,6 +345,7 @@ func (c *controller) run(ctx context.Context) error {
 				c.logger.Error("本机服务未能完整停止，已拒绝重启", "error", err)
 				continue
 			}
+			c.resetCollectionInitialization()
 			if command.Kind == "docker-stop" {
 				lastErr = c.stopDocker(ctx)
 				if lastErr != nil {
@@ -348,6 +367,18 @@ func (c *controller) run(ctx context.Context) error {
 				c.mu.Unlock()
 			}
 			start()
+		case <-c.initializationDone:
+			if c.completeCollectionInitialization(ctx) {
+				if err := c.stop(); err != nil {
+					lastErr = err
+					c.setState("failed", "", err)
+					c.logger.Error("插件依赖准备完成，但服务未完整停止，已拒绝自动载入", "原因", err)
+					continue
+				}
+				c.initializationActivating = true
+				start()
+				c.initializationActivating = false
+			}
 		case err := <-c.serviceDone:
 			c.serviceDone = nil
 			if ctx.Err() != nil {
@@ -359,6 +390,7 @@ func (c *controller) run(ctx context.Context) error {
 			if err == nil {
 				err = errors.New("服务意外停止，请查看日志后重新启动")
 			}
+			err = errors.Join(err, c.stopCollectionInitialization())
 			lastErr = err
 			c.setState("failed", "", err)
 			c.logger.Error("服务已停止", "error", err)
@@ -369,6 +401,9 @@ func (c *controller) run(ctx context.Context) error {
 			}
 		case <-c.collectionDone:
 			c.collectionDone = nil
+			if err := c.stopCollectionInitialization(); err != nil {
+				c.logger.Error("获取服务退出后插件依赖未能完整清理，已拒绝自动重启", "原因", err)
+			}
 			c.setCollectionState("failed", "本机获取服务已退出，已有媒体仍可使用；请查看日志后重新检测")
 			c.logger.Warn("本机获取服务意外退出，已降级资源获取；未自动重启或重发任务")
 		}
@@ -472,7 +507,10 @@ func (c *controller) start(ctx context.Context) error {
 		}
 		c.setState("ready", url, nil)
 		c.logger.Info("本机媒体库已就绪", "模式", "原生媒体", "地址", url)
-		if cfg.AutoOpen && !c.options.NoBrowser && !c.options.Headless {
+		if c.collection != nil {
+			c.beginCollectionInitialization(ctx, c.collection)
+		}
+		if cfg.AutoOpen && !c.options.NoBrowser && !c.options.Headless && !c.initializationActivating {
 			go c.openPage()
 		}
 		return nil
@@ -496,8 +534,9 @@ func (c *controller) start(ctx context.Context) error {
 
 // stop 等待共享核心关闭数据库和工作协程，不强杀其他用户进程。
 func (c *controller) stop() error {
+	initializationErr := c.stopCollectionInitialization()
 	if c.serviceCancel == nil {
-		return c.stopCollection()
+		return errors.Join(initializationErr, c.stopCollection())
 	}
 	c.setState("stopping", "", nil)
 	c.serviceCancel()
@@ -507,16 +546,19 @@ func (c *controller) stop() error {
 			c.serviceDone = nil
 			c.serviceCancel = nil
 			if err != nil && !cancellationOnly(err) {
-				return errors.Join(err, c.stopCollection())
+				return errors.Join(initializationErr, err, c.stopCollection())
 			}
 		case <-time.After(30 * time.Second):
 			// 主服务取消已发出；即使其排空超时，也先完成本实例可选进程的退出屏障。
-			return errors.Join(errors.New("服务仍在有序关闭，已拒绝重启；请等待进程退出后重试"), c.stopCollection())
+			return errors.Join(initializationErr, errors.New("服务仍在有序关闭，已拒绝重启；请等待进程退出后重试"), c.stopCollection())
 		}
 	}
 	c.serviceCancel = nil
 	if err := c.stopCollection(); err != nil {
-		return err
+		return errors.Join(initializationErr, err)
+	}
+	if initializationErr != nil {
+		return initializationErr
 	}
 	c.setState("stopped", "", nil)
 	return nil

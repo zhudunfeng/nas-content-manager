@@ -1,0 +1,29 @@
+{
+  "id": "vite-proxy-origin",
+  "name": "vite-proxy-origin",
+  "title": "修复 Vite 开发代理导致同源写请求被拒绝",
+  "description": "",
+  "status": "completed",
+  "dev_type": "fullstack",
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-20",
+  "completedAt": "2026-11-27",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "web/vite.config.ts",
+    ".trellis/spec/frontend/app-contract.md"
+  ],
+  "notes": "2026-11-20：显式保留开发代理Host，修复同源修改请求误判；十二项真实请求、十二项隔离传输与四项独立安全抽样通过，跨站403保持。类型检查/生产构建、diff-check和任务上下文校验通过，证据记录于research/。临时验证源码与自有服务已清理，保留用户服务和前两轮修复，未提交或归档。",
+  "meta": {}
+}

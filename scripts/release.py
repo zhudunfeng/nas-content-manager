@@ -368,8 +368,18 @@ def build(args: argparse.Namespace) -> Path:
                 notice += "可复制程序旁.env.example为.env，按中文说明配置视频/漫画开关及现有NAS_参数；命令行优先于进程环境变量，进程环境变量优先于.env。修改后从托盘退出再启动；升级保留.env，详情见docs/windows.md。\n"
             if args.development_without_tools:
                 notice += "注意：这是未携带FFmpeg的开发验证包，不是完整离线发布版。\n"
-            notice += "已携带固定私有漫画运行时，可在桌面设置中启用托管获取。\n" if jmcomic_runtime else "这是漫画基础包；已发布漫画可读，在线获取需另配受信运行时或外接执行端。\n"
-            notice += "已携带固定私有视频运行时、下载器及媒体工具；各插件本地就绪状态独立显示，站点可用性需单独验证。\n" if uav_runtime else "视频在线获取需另配受信运行时或外接执行端。\n"
+            if jmcomic_runtime:
+                notice += "已携带固定私有漫画运行时，可在桌面设置中启用托管获取。\n"
+            elif args.target == "windows-amd64":
+                notice += "Windows x64原生托管模式明确开启JMComic且未指定自定义Python时，会自动准备固定漫画依赖；首次准备需要网络，完成后会短暂重启本机服务。已验证依赖可离线复用，首次完全离线运行需匹配完整漫画包，详情见docs/jmcomic-windows.md。\n"
+            else:
+                notice += "这是漫画基础包；已发布漫画可读，在线获取需另配受信运行时或外接执行端。\n"
+            if uav_runtime:
+                notice += "已携带固定私有视频运行时、下载器及媒体工具；各插件本地就绪状态独立显示，站点可用性需单独验证。\n"
+            elif args.target == "windows-amd64":
+                notice += "Windows x64原生托管模式明确开启UAV且未指定自定义Python时，会自动准备固定视频依赖；首次准备需要网络，完成后会短暂重启本机服务。已验证依赖可离线复用，首次完全离线运行需匹配完整视频包，详情见docs/uav-windows.md。\n"
+            else:
+                notice += "视频在线获取需另配受信运行时或外接执行端。\n"
             if yt_dlp:
                 notice += "固定下载器的许可、对应源码库存和构建材料位于licenses/yt-dlp；机器校验不替代人工分发审查。\n"
             (stage / "开始使用.txt").write_text(notice, encoding="utf-8")

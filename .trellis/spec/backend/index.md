@@ -47,7 +47,7 @@ Run `go vet ./...`, `go test ./...`, `go build ./cmd/nas`, and the isolated `scr
 | [Cross-platform contract](./cross-platform-contract.md) | Shared lifecycle, Windows launcher, embedded assets, immutable desktop deployments and releases | Implemented |
 | [Collection contract](./collection-contract.md) | Multi-source collection, durable worker, publication and exact import coverage | Implemented |
 | [JMComic plugin contract](./jmcomic-contract.md) | Optional fixed Python adapter, bounded search, complete comic publication and original reader handoff | Implemented locally; target pending |
-| [Windows JMComic contract](./jmcomic-windows-contract.md) | Private Python inventory, desktop collection ownership, schema-2 migration and package identity | Implemented locally; target pending |
+| [Windows JMComic contract](./jmcomic-windows-contract.md) | Private Python inventory, opt-in verified preparation, desktop collection ownership and package identity | Implemented locally; target pending |
 | [UAV plugin contract](./uav-contract.md) | Fixed five-site search, SupJav fallback/TS normalization, scoped CDN relay and validated video import | Implemented locally; target pending |
 | [Windows UAV contract](./uav-windows-contract.md) | Private video runtime provenance, shared desktop worker, downloader materials and release schema 3 | Implemented locally; target pending |
 | [Windows BT contract](./bt-windows-contract.md) | Native external qB/Torznab profile, Windows engine-path equivalence and persistent private references | Implemented locally; real peers/target pending |

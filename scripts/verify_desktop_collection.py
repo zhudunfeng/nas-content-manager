@@ -325,6 +325,8 @@ def main() -> int:
     source = args.binary.resolve(strict=True)
     worker_source = args.worker.resolve(strict=True)
     environment = {key: value for key, value in os.environ.items() if not key.upper().startswith(("NAS_", "ENGINE_", "QBT_", "JACKETT_", "PYTHONPATH", "PYTHONHOME"))}
+    # 本地完整包/损坏负例不访问物料站点；真实在线初始化另由 verify_uav_bootstrap 验证。
+    environment.update(HTTPS_PROXY="http://127.0.0.1:1", HTTP_PROXY="http://127.0.0.1:1", NO_PROXY="")
     if args.web_dir:
         environment["NAS_WEB_DIR"] = str(args.web_dir.resolve(strict=True))
     if args.python:
@@ -443,6 +445,8 @@ def main() -> int:
                     shutil.copyfile(args.ytdlp.resolve(strict=True), tools / "yt-dlp.exe")
                     ffmpeg_source = args.ffmpeg.resolve(strict=True)
                     shutil.copyfile(ffmpeg_source, tools / "ffmpeg.exe")
+                    if (ffmpeg_source.parent / "ffprobe.exe").is_file():
+                        shutil.copyfile(ffmpeg_source.parent / "ffprobe.exe", tools / "ffprobe.exe")
                     for dll in ffmpeg_source.parent.glob("*.dll"):
                         shutil.copyfile(dll, tools / dll.name)
                     diagnostic_environment = {**environment, "NAS_COLLECTION_WORKER_UAV_ENABLED": "true", "NAS_COLLECTION_WORKER_UAV_RUNTIME_MANIFEST": str(program / "uav-runtime.json"), "NAS_COLLECTION_WORKER_YTDLP": str(tools / "yt-dlp.exe"), "NAS_COLLECTION_WORKER_FFMPEG": str(tools / "ffmpeg.exe"), "NAS_COLLECTION_WORKER_SOURCES_FILE": str(root / "不存在的授权配置"), "NAS_COLLECTION_WORKER_JMCOMIC_ENABLED": "非法配置", "PYTHONPATH": str(foreign), "PYTHONHOME": str(foreign)}

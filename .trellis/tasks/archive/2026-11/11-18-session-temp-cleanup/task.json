@@ -1,0 +1,32 @@
+{
+  "id": "session-temp-cleanup",
+  "name": "session-temp-cleanup",
+  "title": "固定会话临时文件清理脚本",
+  "description": "生成默认预览、显式按清单执行的Windows会话缓存清理脚本，限定目标归属并保留审计结果。",
+  "status": "completed",
+  "dev_type": "backend",
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-18",
+  "completedAt": "2026-11-27",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "scripts/clean-session-temp.ps1",
+    "docs/session-temp-cleanup.md",
+    "docs/verification.md",
+    "README.md",
+    ".trellis/spec/backend/cross-platform-contract.md"
+  ],
+  "notes": "脚本、文档、规范已完成。PS7/5.1各55项实现与各34项独立隔离断言通过，默认及全选真实只读预览通过；最终25182文件/1735601734逻辑字节，读回缺失0/变化0。临时测试源与fixture已清除。真实C盘递归删除命令被工具策略拒绝，未通过脚本重试；缓存仍保留，由用户手动执行。未提交或归档。",
+  "meta": {}
+}

@@ -1,0 +1,28 @@
+{
+  "id": "resource-collection-plan",
+  "name": "resource-collection-plan",
+  "title": "NAS 资源收集功能规划",
+  "description": "多来源资源收集代码与本机质量验证完成：RSS/BT、网页音视频、自有音乐和本地/远程导入；保留目标NAS/Docker/真实来源与故障环境验收。",
+  "status": "completed",
+  "dev_type": "fullstack",
+  "scope": "resource-collection",
+  "package": null,
+  "priority": "P2",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-19",
+  "completedAt": "2026-11-27",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "11-20-collection-external-api"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "2026-11-20完成trellis-check与spec同步；core/rss-bt/web本地开发验收完成，文件/发布子任务保留部署核验。未提交、未归档、未部署，证据见research/runtime-validation.md。",
+  "meta": {}
+}

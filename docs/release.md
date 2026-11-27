@@ -33,7 +33,7 @@ sh scripts/release-linux.sh --target linux-arm64 --tools-manifest /srv/release-i
 
 ## 可选 Windows 漫画运行时
 
-默认基础包不包含 JMComic 私有 Python。完整漫画包由维护者显式提供 `--jmcomic-runtime-manifest`；当前只接受 `windows-amd64`，不得将其作为 Linux 或 ARM64 运行时。装配流程及离线参数见 [Windows 原生漫画](jmcomic-windows.md#构建端装配)。
+默认基础包不包含 JMComic 私有 Python。Windows x64 原生托管模式明确开启漫画、且未指定自定义 Python 时，程序会优先复用有效随包/profile 依赖，缺失时后台准备固定官方材料；首次准备需要网络。需要完整离线漫画包时，由维护者显式提供 `--jmcomic-runtime-manifest`；当前只接受 `windows-amd64`，不得将其作为 Linux 或 ARM64 运行时。启用策略、装配流程及离线参数见 [Windows 原生漫画](jmcomic-windows.md)。
 
 ```powershell
 # 装配至全新目录；依赖由哈希锁文件控制，终端不运行pip。
@@ -46,7 +46,7 @@ python -B scripts/project_env.py -- python -B scripts/release.py --target window
 .\scripts\release-windows.ps1 -ToolsManifest 'D:\release-inputs\windows-tools.json' -JMComicRuntimeManifest '.runtime\jmcomic-runtime\jmcomic-runtime.json'
 ```
 
-运行时清单严格记录目标、解释器和依赖版本、锁文件摘要、来源、许可及每文件大小／摘要，打包与归档校验同时核对普通文件、路径别名和 PE 架构。完整保留 native 扩展、DLL、CA、包数据和 `.dist-info`；不能用复制开发 venv、只放 `.py` 或启动时联网补包代替。只在全部验证通过后发布；文件摘要检查不替代许可审核、DLL 完整闭包或干净机器验收。
+运行时清单严格记录目标、解释器和依赖版本、锁文件摘要、来源、许可及每文件大小／摘要，打包与归档校验同时核对普通文件、路径别名和 PE 架构。完整保留 native 扩展、DLL、CA、包数据和 `.dist-info`；不能用复制开发 venv、只放 `.py` 或运行不受锁定的 pip 安装代替。终端自动准备使用同一严格库存，并在最终目录真实探针成功后才原子发布。文件摘要检查不替代许可审核、DLL 完整闭包或干净机器验收。
 
 程序及运行时放只读安装目录，配置／任务／秘密留在 profile。更新先正常退出本实例并等待 worker／Python 释放，再成套替换文件；不覆盖用户任务和检查点，不自动升级依赖。
 
@@ -55,7 +55,7 @@ python -B scripts/project_env.py -- python -B scripts/release.py --target window
 视频包通过 `--uav-runtime-manifest` 显式装入独立 UAV embedded Python，当前只支持 `windows-amd64`。UAV 3.8.4 固定到 commit `d40f09457fbd38dd7dc94580637242afafaf3939`；解析依赖、构建依赖和派生 wheel 摘要分别记录，保留原始源码来源身份。UAV 和 JMComic 可同时装入同一个发行包，各自拥有独立解释器、依赖目录和文件清单。
 
 ```powershell
-# 联网仅发生在维护者装配阶段，终端不运行pip或自动升级依赖。
+# 生成离线完整包的维护者装配材料；终端自动初始化也不运行pip或自动升级依赖。
 python -B scripts/project_env.py -- python -B scripts/uav_runtime.py assemble --output .runtime/uav-runtime
 python -B scripts/project_env.py -- python -B scripts/uav_runtime.py verify .runtime/uav-runtime/uav-runtime.json --probe
 # 离线装配需另提供官方Python归档、依赖wheel及wheel-sources.json、固定UAV源码和构建wheel目录。
@@ -77,6 +77,19 @@ python -B scripts/project_env.py -- python -B scripts/release.py --target window
 ```
 
 `--uav-runtime-manifest` 缺少下载器或媒体工具时拒绝构建，不能与 `--development-without-tools` 组合。包名用 `-jmcomic`、`-uav` 表示实际内容；单独携带下载器使用 `-ytdlp`，并不宣称视频插件完整可用。运行与本地诊断见 [Windows 原生视频](uav-windows.md)。
+
+### Windows UAV 在线初始化资源
+
+新版桌面内嵌固定还原配方、小型已安装代码载荷和运行时库存，Windows x64 托管 UAV 缺依赖时由原生 Go 后台获取固定官方物料。当前组合为 Python 3.14.4、UAV 3.8.4、yt-dlp 2026.10.26 与 Gyan FFmpeg 9.0.2 essentials 静态构建。终端不需要 pip 或构建工具。构建维护者更新已验证运行时后重新生成并比对：
+
+```powershell
+# 输入必须先通过完整库存与真实私有Python探测；原始下载物料缓存留在.runtime。
+python -B scripts/project_env.py -- python -B scripts/uav_bootstrap.py --runtime-manifest .runtime/uav-runtime/uav-runtime.json
+# CI/维护者核验已提交资源的确定性；本命令不更新输出文件。
+python -B scripts/project_env.py -- python -B scripts/uav_bootstrap.py --runtime-manifest .runtime/uav-runtime/uav-runtime.json --check
+```
+
+`internal/uavbootstrap/assets/runtime.json` 和 `recipe.json` 必须保持 LF；`.gitattributes` 锁定其检出字节。`payload.zip` 是已装配代码、许可及必要规范化元数据的安装载荷，具有独立 SHA256，不是原始构建 wheel；`builtWheelSha256` 保留原始构建回执。运行时只接受编译配方中精确来源、大小、摘要和映射，不执行下载脚本。在线功能不会把开发包标为完整离线发行包，不修改 release schema 3 的人工材料审查要求；正式发布仍须核对下载链上组件的许可与对应源码及干净 Windows 行为。
 
 新生成 `release.json` 使用 schema **3**，保留原有字段，并显式包含可为空的 `jmcomicRuntime`、`uavRuntime`、`ytDlp`。UAV 摘要精确为 `manifest`、`sha256`、`pythonVersion`、`uavVersion`、`uavCommit`；下载器摘要为 `manifest`、`sha256`、`version`。归档验证继续接受旧 schema 1/2 的原字段集合，不会把新字段误塞入旧 schema；旧完整包由原 `tools` 清单声明并逐项核验的额外工具继续按原契约处理，schema 3 才要求下载器独立材料清单。发布清单版本与 `release-images.json` 镜像清单版本相互独立。
 

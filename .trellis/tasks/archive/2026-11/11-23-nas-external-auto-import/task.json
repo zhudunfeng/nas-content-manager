@@ -1,0 +1,49 @@
+{
+  "id": "nas-external-auto-import",
+  "name": "nas-external-auto-import",
+  "title": "S09 打通外部完成目录自动入库",
+  "description": "S09：依据父路线按小PR交付，具体范围、切片与验收见prd.md；当前仅规划，尚未实施。",
+  "status": "completed",
+  "dev_type": "fullstack",
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-23",
+  "completedAt": "2026-11-27",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "step": "S09",
+    "recommended_order": 9,
+    "milestone": "M3",
+    "relative_size": "L",
+    "depends_on": [
+      "11-23-nas-validation-baseline",
+      "11-23-nas-events-notifications"
+    ],
+    "dependency_semantics": "depends_on为整项完成依赖；可提前实施的切片见slice_dependencies，不意味着必须等所有前置完成才开始",
+    "slice_dependencies": {
+      "mapping_discovery_register": [
+        "S01"
+      ],
+      "event_integration": [
+        "S04"
+      ],
+      "automatic_release_gate": [
+        "可信完成目录及宿主ACL证据"
+      ]
+    },
+    "readiness": "planned_not_implemented",
+    "release_evidence": "local_and_target_recorded_separately"
+  }
+}

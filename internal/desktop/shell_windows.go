@@ -336,6 +336,13 @@ func showTrayMenu(window uintptr) {
 		for _, plugin := range collectionPlugins {
 			appendMenu(menu, 2, 0, plugin.name+" · "+collectionPluginState(reply, plugin.kind))
 		}
+		if reply.CollectionMode == "managed" {
+			for _, plugin := range collectionPlugins {
+				if initialization := collectionInitializationForKind(reply, plugin.kind); initialization != nil {
+					appendMenu(menu, 2, 0, collectionInitializationLabel(initialization))
+				}
+			}
+		}
 		appendMenu(menu, 0, 10, "启用本机资源获取")
 		appendMenu(menu, 0, 11, "停用本机资源获取")
 		appendMenu(menu, 0, 12, "重新检测获取组件")

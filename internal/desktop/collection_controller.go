@@ -59,6 +59,14 @@ func collectionReadiness(capabilities []collectioncontract.Capability) (string, 
 
 // collectionPluginState 为托盘固定插件生成短状态，不把未配置的可选插件标为损坏。
 func collectionPluginState(reply controlReply, kind string) string {
+	if initialization := collectionInitializationForKind(reply, kind); initialization != nil && reply.CollectionMode == "managed" && (reply.CollectionState == "ready" || reply.CollectionState == "unavailable") {
+		switch initialization.State {
+		case "initializing":
+			return "正在初始化"
+		case "failed":
+			return "初始化失败"
+		}
+	}
 	switch reply.CollectionState {
 	case "disabled":
 		return "已停用"

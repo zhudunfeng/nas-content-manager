@@ -1,0 +1,3008 @@
+{
+  "schemaVersion": 1,
+  "runtimeManifestSha256": "e9febd69f4954f07cf4ecabe35334f1c78b028a528dc1be0fd280c01374150d1",
+  "payloadSha256": "f23e1c250b19353e5a36038bb4a971147878daea5add394b0e43d66f8fd46b5c",
+  "artifacts": [
+    {
+      "name": "python",
+      "url": "https://www.python.org/ftp/python/3.14.4/python-3.14.4-embed-amd64.zip",
+      "sha256": "cda80a9b1e75c0f1b4f9872ca1b417f0d19bce32facc811aea9180e70fad5fb9",
+      "size": 12034740,
+      "format": "zip",
+      "files": [
+        {
+          "source": "python.exe",
+          "destination": "runtimes/uav/python.exe"
+        },
+        {
+          "source": "pythonw.exe",
+          "destination": "runtimes/uav/pythonw.exe"
+        },
+        {
+          "source": "python314.dll",
+          "destination": "runtimes/uav/python314.dll"
+        },
+        {
+          "source": "python3.dll",
+          "destination": "runtimes/uav/python3.dll"
+        },
+        {
+          "source": "vcruntime140.dll",
+          "destination": "runtimes/uav/vcruntime140.dll"
+        },
+        {
+          "source": "vcruntime140_1.dll",
+          "destination": "runtimes/uav/vcruntime140_1.dll"
+        },
+        {
+          "source": "LICENSE.txt",
+          "destination": "runtimes/uav/LICENSE.txt"
+        },
+        {
+          "source": "pyexpat.pyd",
+          "destination": "runtimes/uav/pyexpat.pyd"
+        },
+        {
+          "source": "select.pyd",
+          "destination": "runtimes/uav/select.pyd"
+        },
+        {
+          "source": "unicodedata.pyd",
+          "destination": "runtimes/uav/unicodedata.pyd"
+        },
+        {
+          "source": "winsound.pyd",
+          "destination": "runtimes/uav/winsound.pyd"
+        },
+        {
+          "source": "_asyncio.pyd",
+          "destination": "runtimes/uav/_asyncio.pyd"
+        },
+        {
+          "source": "_bz2.pyd",
+          "destination": "runtimes/uav/_bz2.pyd"
+        },
+        {
+          "source": "_ctypes.pyd",
+          "destination": "runtimes/uav/_ctypes.pyd"
+        },
+        {
+          "source": "_decimal.pyd",
+          "destination": "runtimes/uav/_decimal.pyd"
+        },
+        {
+          "source": "_elementtree.pyd",
+          "destination": "runtimes/uav/_elementtree.pyd"
+        },
+        {
+          "source": "_hashlib.pyd",
+          "destination": "runtimes/uav/_hashlib.pyd"
+        },
+        {
+          "source": "_lzma.pyd",
+          "destination": "runtimes/uav/_lzma.pyd"
+        },
+        {
+          "source": "_multiprocessing.pyd",
+          "destination": "runtimes/uav/_multiprocessing.pyd"
+        },
+        {
+          "source": "_overlapped.pyd",
+          "destination": "runtimes/uav/_overlapped.pyd"
+        },
+        {
+          "source": "_queue.pyd",
+          "destination": "runtimes/uav/_queue.pyd"
+        },
+        {
+          "source": "_remote_debugging.pyd",
+          "destination": "runtimes/uav/_remote_debugging.pyd"
+        },
+        {
+          "source": "_socket.pyd",
+          "destination": "runtimes/uav/_socket.pyd"
+        },
+        {
+          "source": "_sqlite3.pyd",
+          "destination": "runtimes/uav/_sqlite3.pyd"
+        },
+        {
+          "source": "_ssl.pyd",
+          "destination": "runtimes/uav/_ssl.pyd"
+        },
+        {
+          "source": "_uuid.pyd",
+          "destination": "runtimes/uav/_uuid.pyd"
+        },
+        {
+          "source": "_wmi.pyd",
+          "destination": "runtimes/uav/_wmi.pyd"
+        },
+        {
+          "source": "_zoneinfo.pyd",
+          "destination": "runtimes/uav/_zoneinfo.pyd"
+        },
+        {
+          "source": "_zstd.pyd",
+          "destination": "runtimes/uav/_zstd.pyd"
+        },
+        {
+          "source": "libcrypto-3.dll",
+          "destination": "runtimes/uav/libcrypto-3.dll"
+        },
+        {
+          "source": "libffi-8.dll",
+          "destination": "runtimes/uav/libffi-8.dll"
+        },
+        {
+          "source": "libssl-3.dll",
+          "destination": "runtimes/uav/libssl-3.dll"
+        },
+        {
+          "source": "sqlite3.dll",
+          "destination": "runtimes/uav/sqlite3.dll"
+        },
+        {
+          "source": "python314.zip",
+          "destination": "runtimes/uav/python314.zip"
+        },
+        {
+          "source": "python.cat",
+          "destination": "runtimes/uav/python.cat"
+        }
+      ]
+    },
+    {
+      "name": "requests",
+      "url": "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl",
+      "sha256": "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0",
+      "size": 73075,
+      "format": "zip",
+      "files": [
+        {
+          "source": "requests/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/__init__.py"
+        },
+        {
+          "source": "requests/__version__.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/__version__.py"
+        },
+        {
+          "source": "requests/_internal_utils.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/_internal_utils.py"
+        },
+        {
+          "source": "requests/_types.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/_types.py"
+        },
+        {
+          "source": "requests/adapters.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/adapters.py"
+        },
+        {
+          "source": "requests/api.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/api.py"
+        },
+        {
+          "source": "requests/auth.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/auth.py"
+        },
+        {
+          "source": "requests/certs.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/certs.py"
+        },
+        {
+          "source": "requests/compat.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/compat.py"
+        },
+        {
+          "source": "requests/cookies.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/cookies.py"
+        },
+        {
+          "source": "requests/exceptions.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/exceptions.py"
+        },
+        {
+          "source": "requests/help.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/help.py"
+        },
+        {
+          "source": "requests/hooks.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/hooks.py"
+        },
+        {
+          "source": "requests/models.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/models.py"
+        },
+        {
+          "source": "requests/packages.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/packages.py"
+        },
+        {
+          "source": "requests/py.typed",
+          "destination": "runtimes/uav/Lib/site-packages/requests/py.typed"
+        },
+        {
+          "source": "requests/sessions.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/sessions.py"
+        },
+        {
+          "source": "requests/status_codes.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/status_codes.py"
+        },
+        {
+          "source": "requests/structures.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/structures.py"
+        },
+        {
+          "source": "requests/utils.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests/utils.py"
+        },
+        {
+          "source": "requests-2.34.2.dist-info/licenses/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/requests-2.34.2.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "requests-2.34.2.dist-info/licenses/NOTICE",
+          "destination": "runtimes/uav/Lib/site-packages/requests-2.34.2.dist-info/licenses/NOTICE"
+        },
+        {
+          "source": "requests-2.34.2.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/requests-2.34.2.dist-info/METADATA"
+        },
+        {
+          "source": "requests-2.34.2.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/requests-2.34.2.dist-info/WHEEL"
+        },
+        {
+          "source": "requests-2.34.2.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/requests-2.34.2.dist-info/top_level.txt"
+        },
+        {
+          "source": "requests-2.34.2.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/requests-2.34.2.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "charset-normalizer",
+      "url": "https://files.pythonhosted.org/packages/a0/4e/0d31216be12c3146dd282b043957805d4dda8806cd7b99c90273d251f0f2/charset_normalizer-3.5.3-cp314-cp314-win_amd64.whl",
+      "sha256": "b66a0e045cf859d7418f26a554509b65f21ebb6d90a95152460781939e8264f4",
+      "size": 218705,
+      "format": "zip",
+      "files": [
+        {
+          "source": "charset_normalizer/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/__init__.py"
+        },
+        {
+          "source": "charset_normalizer/__main__.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/__main__.py"
+        },
+        {
+          "source": "charset_normalizer/api.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/api.py"
+        },
+        {
+          "source": "charset_normalizer/cd.cp314-win_amd64.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/cd.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "charset_normalizer/cd.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/cd.py"
+        },
+        {
+          "source": "charset_normalizer/constant.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/constant.py"
+        },
+        {
+          "source": "charset_normalizer/legacy.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/legacy.py"
+        },
+        {
+          "source": "charset_normalizer/md.cp314-win_amd64.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/md.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "charset_normalizer/md.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/md.py"
+        },
+        {
+          "source": "charset_normalizer/models.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/models.py"
+        },
+        {
+          "source": "charset_normalizer/py.typed",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/py.typed"
+        },
+        {
+          "source": "charset_normalizer/utils.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/utils.py"
+        },
+        {
+          "source": "charset_normalizer/version.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/version.py"
+        },
+        {
+          "source": "charset_normalizer/cli/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/cli/__init__.py"
+        },
+        {
+          "source": "charset_normalizer/cli/__main__.py",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer/cli/__main__.py"
+        },
+        {
+          "source": "charset_normalizer-3.5.3.dist-info/licenses/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer-3.5.3.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "charset_normalizer-3.5.3.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer-3.5.3.dist-info/METADATA"
+        },
+        {
+          "source": "charset_normalizer-3.5.3.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer-3.5.3.dist-info/WHEEL"
+        },
+        {
+          "source": "charset_normalizer-3.5.3.dist-info/entry_points.txt",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer-3.5.3.dist-info/entry_points.txt"
+        },
+        {
+          "source": "charset_normalizer-3.5.3.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer-3.5.3.dist-info/top_level.txt"
+        },
+        {
+          "source": "charset_normalizer-3.5.3.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/charset_normalizer-3.5.3.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "idna",
+      "url": "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl",
+      "sha256": "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c",
+      "size": 69583,
+      "format": "zip",
+      "files": [
+        {
+          "source": "idna/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/idna/__init__.py"
+        },
+        {
+          "source": "idna/__main__.py",
+          "destination": "runtimes/uav/Lib/site-packages/idna/__main__.py"
+        },
+        {
+          "source": "idna/cli.py",
+          "destination": "runtimes/uav/Lib/site-packages/idna/cli.py"
+        },
+        {
+          "source": "idna/codec.py",
+          "destination": "runtimes/uav/Lib/site-packages/idna/codec.py"
+        },
+        {
+          "source": "idna/compat.py",
+          "destination": "runtimes/uav/Lib/site-packages/idna/compat.py"
+        },
+        {
+          "source": "idna/core.py",
+          "destination": "runtimes/uav/Lib/site-packages/idna/core.py"
+        },
+        {
+          "source": "idna/idnadata.py",
+          "destination": "runtimes/uav/Lib/site-packages/idna/idnadata.py"
+        },
+        {
+          "source": "idna/intranges.py",
+          "destination": "runtimes/uav/Lib/site-packages/idna/intranges.py"
+        },
+        {
+          "source": "idna/package_data.py",
+          "destination": "runtimes/uav/Lib/site-packages/idna/package_data.py"
+        },
+        {
+          "source": "idna/py.typed",
+          "destination": "runtimes/uav/Lib/site-packages/idna/py.typed"
+        },
+        {
+          "source": "idna/uts46data.py",
+          "destination": "runtimes/uav/Lib/site-packages/idna/uts46data.py"
+        },
+        {
+          "source": "idna-3.20.dist-info/entry_points.txt",
+          "destination": "runtimes/uav/Lib/site-packages/idna-3.20.dist-info/entry_points.txt"
+        },
+        {
+          "source": "idna-3.20.dist-info/licenses/LICENSE.md",
+          "destination": "runtimes/uav/Lib/site-packages/idna-3.20.dist-info/licenses/LICENSE.md"
+        },
+        {
+          "source": "idna-3.20.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/idna-3.20.dist-info/WHEEL"
+        },
+        {
+          "source": "idna-3.20.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/idna-3.20.dist-info/METADATA"
+        },
+        {
+          "source": "idna-3.20.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/idna-3.20.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "urllib3",
+      "url": "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl",
+      "sha256": "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3",
+      "size": 135717,
+      "format": "zip",
+      "files": [
+        {
+          "source": "urllib3/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/__init__.py"
+        },
+        {
+          "source": "urllib3/_base_connection.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/_base_connection.py"
+        },
+        {
+          "source": "urllib3/_collections.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/_collections.py"
+        },
+        {
+          "source": "urllib3/_request_methods.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/_request_methods.py"
+        },
+        {
+          "source": "urllib3/_version.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/_version.py"
+        },
+        {
+          "source": "urllib3/connection.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/connection.py"
+        },
+        {
+          "source": "urllib3/connectionpool.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/connectionpool.py"
+        },
+        {
+          "source": "urllib3/exceptions.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/exceptions.py"
+        },
+        {
+          "source": "urllib3/fields.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/fields.py"
+        },
+        {
+          "source": "urllib3/filepost.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/filepost.py"
+        },
+        {
+          "source": "urllib3/poolmanager.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/poolmanager.py"
+        },
+        {
+          "source": "urllib3/py.typed",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/py.typed"
+        },
+        {
+          "source": "urllib3/response.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/response.py"
+        },
+        {
+          "source": "urllib3/contrib/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/contrib/__init__.py"
+        },
+        {
+          "source": "urllib3/contrib/pyopenssl.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/contrib/pyopenssl.py"
+        },
+        {
+          "source": "urllib3/contrib/socks.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/contrib/socks.py"
+        },
+        {
+          "source": "urllib3/contrib/emscripten/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/contrib/emscripten/__init__.py"
+        },
+        {
+          "source": "urllib3/contrib/emscripten/connection.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/contrib/emscripten/connection.py"
+        },
+        {
+          "source": "urllib3/contrib/emscripten/emscripten_fetch_worker.js",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/contrib/emscripten/emscripten_fetch_worker.js"
+        },
+        {
+          "source": "urllib3/contrib/emscripten/fetch.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/contrib/emscripten/fetch.py"
+        },
+        {
+          "source": "urllib3/contrib/emscripten/request.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/contrib/emscripten/request.py"
+        },
+        {
+          "source": "urllib3/contrib/emscripten/response.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/contrib/emscripten/response.py"
+        },
+        {
+          "source": "urllib3/http2/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/http2/__init__.py"
+        },
+        {
+          "source": "urllib3/http2/connection.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/http2/connection.py"
+        },
+        {
+          "source": "urllib3/http2/probe.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/http2/probe.py"
+        },
+        {
+          "source": "urllib3/util/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/__init__.py"
+        },
+        {
+          "source": "urllib3/util/connection.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/connection.py"
+        },
+        {
+          "source": "urllib3/util/proxy.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/proxy.py"
+        },
+        {
+          "source": "urllib3/util/request.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/request.py"
+        },
+        {
+          "source": "urllib3/util/response.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/response.py"
+        },
+        {
+          "source": "urllib3/util/retry.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/retry.py"
+        },
+        {
+          "source": "urllib3/util/ssl_.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/ssl_.py"
+        },
+        {
+          "source": "urllib3/util/ssl_match_hostname.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/ssl_match_hostname.py"
+        },
+        {
+          "source": "urllib3/util/ssltransport.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/ssltransport.py"
+        },
+        {
+          "source": "urllib3/util/timeout.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/timeout.py"
+        },
+        {
+          "source": "urllib3/util/url.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/url.py"
+        },
+        {
+          "source": "urllib3/util/util.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/util.py"
+        },
+        {
+          "source": "urllib3/util/wait.py",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3/util/wait.py"
+        },
+        {
+          "source": "urllib3-2.8.0.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3-2.8.0.dist-info/METADATA"
+        },
+        {
+          "source": "urllib3-2.8.0.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3-2.8.0.dist-info/WHEEL"
+        },
+        {
+          "source": "urllib3-2.8.0.dist-info/licenses/LICENSE.txt",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3-2.8.0.dist-info/licenses/LICENSE.txt"
+        },
+        {
+          "source": "urllib3-2.8.0.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/urllib3-2.8.0.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "pysocks",
+      "url": "https://files.pythonhosted.org/packages/8d/59/b4572118e098ac8e46e399a1dd0f2d85403ce8bbaad9ec79373ed6badaf9/PySocks-1.7.1-py3-none-any.whl",
+      "sha256": "2725bd0a9925919b9b51739eea5f9e2bae91e83288108a9ad338b2e3a4435ee5",
+      "size": 16725,
+      "format": "zip",
+      "files": [
+        {
+          "source": "socks.py",
+          "destination": "runtimes/uav/Lib/site-packages/socks.py"
+        },
+        {
+          "source": "sockshandler.py",
+          "destination": "runtimes/uav/Lib/site-packages/sockshandler.py"
+        },
+        {
+          "source": "PySocks-1.7.1.dist-info/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/pysocks-1.7.1.dist-info/LICENSE"
+        },
+        {
+          "source": "PySocks-1.7.1.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/pysocks-1.7.1.dist-info/METADATA"
+        },
+        {
+          "source": "PySocks-1.7.1.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/pysocks-1.7.1.dist-info/WHEEL"
+        },
+        {
+          "source": "PySocks-1.7.1.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/pysocks-1.7.1.dist-info/top_level.txt"
+        }
+      ]
+    },
+    {
+      "name": "beautifulsoup4",
+      "url": "https://files.pythonhosted.org/packages/88/c6/92fcd42f1ba33e1184263f25bfabf3d27c383410470f169e4b8163bf9c17/beautifulsoup4-4.15.0-py3-none-any.whl",
+      "sha256": "d6f88de62e1d4e38ecb1077eb9724cd0eff29d2a08ca16a401e9b9e93f117cf9",
+      "size": 109924,
+      "format": "zip",
+      "files": [
+        {
+          "source": "bs4/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/__init__.py"
+        },
+        {
+          "source": "bs4/_deprecation.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/_deprecation.py"
+        },
+        {
+          "source": "bs4/_typing.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/_typing.py"
+        },
+        {
+          "source": "bs4/_warnings.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/_warnings.py"
+        },
+        {
+          "source": "bs4/css.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/css.py"
+        },
+        {
+          "source": "bs4/dammit.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/dammit.py"
+        },
+        {
+          "source": "bs4/diagnose.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/diagnose.py"
+        },
+        {
+          "source": "bs4/element.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/element.py"
+        },
+        {
+          "source": "bs4/exceptions.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/exceptions.py"
+        },
+        {
+          "source": "bs4/filter.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/filter.py"
+        },
+        {
+          "source": "bs4/formatter.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/formatter.py"
+        },
+        {
+          "source": "bs4/py.typed",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/py.typed"
+        },
+        {
+          "source": "bs4/builder/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/builder/__init__.py"
+        },
+        {
+          "source": "bs4/builder/_html5lib.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/builder/_html5lib.py"
+        },
+        {
+          "source": "bs4/builder/_htmlparser.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/builder/_htmlparser.py"
+        },
+        {
+          "source": "bs4/builder/_lxml.py",
+          "destination": "runtimes/uav/Lib/site-packages/bs4/builder/_lxml.py"
+        },
+        {
+          "source": "beautifulsoup4-4.15.0.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/beautifulsoup4-4.15.0.dist-info/METADATA"
+        },
+        {
+          "source": "beautifulsoup4-4.15.0.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/beautifulsoup4-4.15.0.dist-info/WHEEL"
+        },
+        {
+          "source": "beautifulsoup4-4.15.0.dist-info/licenses/AUTHORS",
+          "destination": "runtimes/uav/Lib/site-packages/beautifulsoup4-4.15.0.dist-info/licenses/AUTHORS"
+        },
+        {
+          "source": "beautifulsoup4-4.15.0.dist-info/licenses/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/beautifulsoup4-4.15.0.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "beautifulsoup4-4.15.0.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/beautifulsoup4-4.15.0.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "m3u8",
+      "url": "https://files.pythonhosted.org/packages/f8/31/50f3c38b38ff28635ff9c4a4afefddccc5f1b57457b539bdbdf75ce18669/m3u8-6.0.0-py3-none-any.whl",
+      "sha256": "566d0748739c552dad10f8c87150078de6a0ec25071fa48e6968e96fc6dcba5d",
+      "size": 24133,
+      "format": "zip",
+      "files": [
+        {
+          "source": "m3u8/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8/__init__.py"
+        },
+        {
+          "source": "m3u8/httpclient.py",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8/httpclient.py"
+        },
+        {
+          "source": "m3u8/mixins.py",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8/mixins.py"
+        },
+        {
+          "source": "m3u8/model.py",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8/model.py"
+        },
+        {
+          "source": "m3u8/parser.py",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8/parser.py"
+        },
+        {
+          "source": "m3u8/protocol.py",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8/protocol.py"
+        },
+        {
+          "source": "m3u8/version_matching.py",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8/version_matching.py"
+        },
+        {
+          "source": "m3u8/version_matching_rules.py",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8/version_matching_rules.py"
+        },
+        {
+          "source": "m3u8-6.0.0.dist-info/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8-6.0.0.dist-info/LICENSE"
+        },
+        {
+          "source": "m3u8-6.0.0.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8-6.0.0.dist-info/METADATA"
+        },
+        {
+          "source": "m3u8-6.0.0.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8-6.0.0.dist-info/WHEEL"
+        },
+        {
+          "source": "m3u8-6.0.0.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8-6.0.0.dist-info/top_level.txt"
+        },
+        {
+          "source": "m3u8-6.0.0.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/m3u8-6.0.0.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "pycryptodome",
+      "url": "https://files.pythonhosted.org/packages/f3/10/f375e028f5e3b10b4858010ffa391e66c7b61a410284bdc3e0f351edefc7/pycryptodome-4.6.0-cp39-abi3-win_amd64.whl",
+      "sha256": "0500c66f8cc33db5450f24aedd10a6e430e4d83c377dbd8ca0e845ae27b4312f",
+      "size": 1898936,
+      "format": "zip",
+      "files": [
+        {
+          "source": "Crypto/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/__init__.py"
+        },
+        {
+          "source": "Crypto/py.typed",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/py.typed"
+        },
+        {
+          "source": "Crypto/Cipher/AEGIS.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/AEGIS.py"
+        },
+        {
+          "source": "Crypto/Cipher/AES.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/AES.py"
+        },
+        {
+          "source": "Crypto/Cipher/ARC2.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/ARC2.py"
+        },
+        {
+          "source": "Crypto/Cipher/ARC4.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/ARC4.py"
+        },
+        {
+          "source": "Crypto/Cipher/Blowfish.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/Blowfish.py"
+        },
+        {
+          "source": "Crypto/Cipher/CAST.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/CAST.py"
+        },
+        {
+          "source": "Crypto/Cipher/ChaCha20.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/ChaCha20.py"
+        },
+        {
+          "source": "Crypto/Cipher/ChaCha20_Poly1305.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/ChaCha20_Poly1305.py"
+        },
+        {
+          "source": "Crypto/Cipher/DES.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/DES.py"
+        },
+        {
+          "source": "Crypto/Cipher/DES3.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/DES3.py"
+        },
+        {
+          "source": "Crypto/Cipher/PKCS1_OAEP.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/PKCS1_OAEP.py"
+        },
+        {
+          "source": "Crypto/Cipher/PKCS1_v1_5.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/PKCS1_v1_5.py"
+        },
+        {
+          "source": "Crypto/Cipher/Salsa20.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/Salsa20.py"
+        },
+        {
+          "source": "Crypto/Cipher/_ARC4.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_ARC4.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_EKSBlowfish.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_EKSBlowfish.py"
+        },
+        {
+          "source": "Crypto/Cipher/_Salsa20.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_Salsa20.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_Salsa20_avx2_bmi2.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_Salsa20_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/__init__.py"
+        },
+        {
+          "source": "Crypto/Cipher/_chacha20.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_chacha20.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_chacha20_avx2_bmi2.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_chacha20_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_cbc.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_cbc.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_ccm.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_ccm.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_cfb.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_cfb.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_ctr.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_ctr.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_eax.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_eax.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_ecb.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_ecb.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_gcm.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_gcm.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_gcm_siv.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_gcm_siv.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_kw.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_kw.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_kwp.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_kwp.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_ocb.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_ocb.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_ofb.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_ofb.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_openpgp.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_openpgp.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_siv.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_siv.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_xts.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_mode_xts.py"
+        },
+        {
+          "source": "Crypto/Cipher/_pkcs1_decode.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_pkcs1_decode.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_pkcs1_oaep_decode.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_pkcs1_oaep_decode.py"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_aegis.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_aegis.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_aegis_aesni.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_aegis_aesni.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_aes.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_aes.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_aesni.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_aesni.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_arc2.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_arc2.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_blowfish.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_blowfish.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_cast.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_cast.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_cbc.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_cbc.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_cfb.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_cfb.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_ctr.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_ctr.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_des.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_des.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_des3.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_des3.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_ecb.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_ecb.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_eksblowfish.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_eksblowfish.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_ocb.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_ocb.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_ofb.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_ofb.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_xts.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_raw_xts.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_state_machine.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/_state_machine.py"
+        },
+        {
+          "source": "Crypto/Cipher/oaep.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Cipher/oaep.py"
+        },
+        {
+          "source": "Crypto/Hash/BLAKE2b.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/BLAKE2b.py"
+        },
+        {
+          "source": "Crypto/Hash/BLAKE2s.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/BLAKE2s.py"
+        },
+        {
+          "source": "Crypto/Hash/CMAC.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/CMAC.py"
+        },
+        {
+          "source": "Crypto/Hash/HMAC.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/HMAC.py"
+        },
+        {
+          "source": "Crypto/Hash/KMAC128.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/KMAC128.py"
+        },
+        {
+          "source": "Crypto/Hash/KMAC256.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/KMAC256.py"
+        },
+        {
+          "source": "Crypto/Hash/KangarooTwelve.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/KangarooTwelve.py"
+        },
+        {
+          "source": "Crypto/Hash/MD2.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/MD2.py"
+        },
+        {
+          "source": "Crypto/Hash/MD4.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/MD4.py"
+        },
+        {
+          "source": "Crypto/Hash/MD5.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/MD5.py"
+        },
+        {
+          "source": "Crypto/Hash/Poly1305.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/Poly1305.py"
+        },
+        {
+          "source": "Crypto/Hash/RIPEMD.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/RIPEMD.py"
+        },
+        {
+          "source": "Crypto/Hash/RIPEMD160.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/RIPEMD160.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHA.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA1.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHA1.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA224.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHA224.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA256.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHA256.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA384.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHA384.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA3_224.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHA3_224.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA3_256.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHA3_256.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA3_384.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHA3_384.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA3_512.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHA3_512.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA512.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHA512.py"
+        },
+        {
+          "source": "Crypto/Hash/SHAKE128.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHAKE128.py"
+        },
+        {
+          "source": "Crypto/Hash/SHAKE256.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/SHAKE256.py"
+        },
+        {
+          "source": "Crypto/Hash/TupleHash128.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/TupleHash128.py"
+        },
+        {
+          "source": "Crypto/Hash/TupleHash256.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/TupleHash256.py"
+        },
+        {
+          "source": "Crypto/Hash/TurboSHAKE128.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/TurboSHAKE128.py"
+        },
+        {
+          "source": "Crypto/Hash/TurboSHAKE256.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/TurboSHAKE256.py"
+        },
+        {
+          "source": "Crypto/Hash/_BLAKE2b.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_BLAKE2b.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_BLAKE2s.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_BLAKE2s.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_MD2.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_MD2.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_MD4.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_MD4.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_MD5.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_MD5.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_RIPEMD160.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_RIPEMD160.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA1.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_SHA1.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA224.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_SHA224.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA224_shani.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_SHA224_shani.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA256.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_SHA256.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA256_shani.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_SHA256_shani.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA384.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_SHA384.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA512.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_SHA512.pyd"
+        },
+        {
+          "source": "Crypto/Hash/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/__init__.py"
+        },
+        {
+          "source": "Crypto/Hash/_ghash_clmul.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_ghash_clmul.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_ghash_portable.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_ghash_portable.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_k12.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_k12.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_k12_avx2_bmi2.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_k12_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_keccak.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_keccak.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_keccak_avx2_bmi2.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_keccak_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_poly1305.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/_poly1305.pyd"
+        },
+        {
+          "source": "Crypto/Hash/cSHAKE128.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/cSHAKE128.py"
+        },
+        {
+          "source": "Crypto/Hash/cSHAKE256.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/cSHAKE256.py"
+        },
+        {
+          "source": "Crypto/Hash/keccak.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Hash/keccak.py"
+        },
+        {
+          "source": "Crypto/IO/PEM.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/IO/PEM.py"
+        },
+        {
+          "source": "Crypto/IO/PKCS8.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/IO/PKCS8.py"
+        },
+        {
+          "source": "Crypto/IO/_PBES.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/IO/_PBES.py"
+        },
+        {
+          "source": "Crypto/IO/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/IO/__init__.py"
+        },
+        {
+          "source": "Crypto/Math/Numbers.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Math/Numbers.py"
+        },
+        {
+          "source": "Crypto/Math/Primality.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Math/Primality.py"
+        },
+        {
+          "source": "Crypto/Math/_IntegerBase.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Math/_IntegerBase.py"
+        },
+        {
+          "source": "Crypto/Math/_IntegerNat.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Math/_IntegerNat.py"
+        },
+        {
+          "source": "Crypto/Math/_IntegerNative.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Math/_IntegerNative.py"
+        },
+        {
+          "source": "Crypto/Math/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Math/__init__.py"
+        },
+        {
+          "source": "Crypto/Math/_nat.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Math/_nat.pyd"
+        },
+        {
+          "source": "Crypto/Math/_nat_bmi2_adx.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Math/_nat_bmi2_adx.pyd"
+        },
+        {
+          "source": "Crypto/Protocol/DH.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Protocol/DH.py"
+        },
+        {
+          "source": "Crypto/Protocol/HPKE.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Protocol/HPKE.py"
+        },
+        {
+          "source": "Crypto/Protocol/KDF.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Protocol/KDF.py"
+        },
+        {
+          "source": "Crypto/Protocol/SecretSharing.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Protocol/SecretSharing.py"
+        },
+        {
+          "source": "Crypto/Protocol/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Protocol/__init__.py"
+        },
+        {
+          "source": "Crypto/Protocol/_scrypt.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Protocol/_scrypt.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/DSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/DSA.py"
+        },
+        {
+          "source": "Crypto/PublicKey/ECC.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/ECC.py"
+        },
+        {
+          "source": "Crypto/PublicKey/ElGamal.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/ElGamal.py"
+        },
+        {
+          "source": "Crypto/PublicKey/Hybrid.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/Hybrid.py"
+        },
+        {
+          "source": "Crypto/PublicKey/MLDSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/MLDSA.py"
+        },
+        {
+          "source": "Crypto/PublicKey/MLKEM.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/MLKEM.py"
+        },
+        {
+          "source": "Crypto/PublicKey/RSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/RSA.py"
+        },
+        {
+          "source": "Crypto/PublicKey/SLHDSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/SLHDSA.py"
+        },
+        {
+          "source": "Crypto/PublicKey/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/__init__.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_curve.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_curve.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_curve25519.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_curve25519.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_ec_lib.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_ec_lib.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_ec_nat.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_ec_nat.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_ec_nat_bmi2_adx.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_ec_nat_bmi2_adx.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_ed25519.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_ed25519.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_edwards.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_edwards.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_fips205.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_fips205.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_mldsa.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_mldsa.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_mldsa_avx2_bmi2.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_mldsa_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_mlkem.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_mlkem.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_mlkem_avx2_bmi2.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_mlkem_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_montgomery.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_montgomery.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_nist_ecc.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_nist_ecc.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_openssh.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_openssh.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_point.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_point.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_slhdsa.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_slhdsa.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_slhdsa_avx2_bmi2.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_slhdsa_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_slhdsa_shani.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/PublicKey/_slhdsa_shani.pyd"
+        },
+        {
+          "source": "Crypto/Random/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Random/__init__.py"
+        },
+        {
+          "source": "Crypto/Random/random.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Random/random.py"
+        },
+        {
+          "source": "Crypto/SelfTest/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/__main__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/__main__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/loader.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/loader.py"
+        },
+        {
+          "source": "Crypto/SelfTest/plugin.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/plugin.py"
+        },
+        {
+          "source": "Crypto/SelfTest/st_common.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/st_common.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/common.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/common.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_AEGIS.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_AEGIS.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_AES.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_AES.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_ARC2.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_ARC2.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_ARC4.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_ARC4.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_Blowfish.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_Blowfish.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_CAST.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_CAST.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_CBC.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_CBC.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_CCM.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_CCM.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_CFB.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_CFB.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_CTR.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_CTR.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_ChaCha20.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_ChaCha20.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_ChaCha20_Poly1305.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_ChaCha20_Poly1305.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_DES.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_DES.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_DES3.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_DES3.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_EAX.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_EAX.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_GCM.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_GCM.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_GCM_SIV.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_GCM_SIV.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_KW.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_KW.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_OCB.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_OCB.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_OFB.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_OFB.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_OpenPGP.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_OpenPGP.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_SIV.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_SIV.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_Salsa20.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_Salsa20.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_XTS.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_XTS.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_message_too_long.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_message_too_long.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_pkcs1_15.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_pkcs1_15.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_pkcs1_oaep.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_pkcs1_oaep.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_shared_objects.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Cipher/test_shared_objects.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/common.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/common.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_BLAKE2.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_BLAKE2.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_CMAC.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_CMAC.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_HMAC.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_HMAC.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_KMAC.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_KMAC.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_KangarooTwelve.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_KangarooTwelve.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_MD2.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_MD2.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_MD4.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_MD4.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_MD5.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_MD5.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_Poly1305.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_Poly1305.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_RIPEMD160.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_RIPEMD160.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA1.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA1.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA224.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA224.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA256.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA256.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA384.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA384.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA3_224.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA3_224.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA3_256.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA3_256.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA3_384.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA3_384.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA3_512.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA3_512.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA512.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA512.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHAKE.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_SHAKE.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_TupleHash.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_TupleHash.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_TurboSHAKE.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_TurboSHAKE.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_cSHAKE.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_cSHAKE.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_keccak.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_keccak.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_oneshot_digest.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_oneshot_digest.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_shared_objects.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Hash/test_shared_objects.py"
+        },
+        {
+          "source": "Crypto/SelfTest/IO/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/IO/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/IO/test_PBES.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/IO/test_PBES.py"
+        },
+        {
+          "source": "Crypto/SelfTest/IO/test_PEM.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/IO/test_PEM.py"
+        },
+        {
+          "source": "Crypto/SelfTest/IO/test_PKCS8.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/IO/test_PKCS8.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Math/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Math/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Math/test_Numbers.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Math/test_Numbers.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Math/test_Primality.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Math/test_Primality.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Math/test_nat.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Math/test_nat.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Protocol/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/test_HPKE.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Protocol/test_HPKE.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/test_KDF.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Protocol/test_KDF.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/test_SecretSharing.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Protocol/test_SecretSharing.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/test_ecdh.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Protocol/test_ecdh.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/test_rfc1751.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Protocol/test_rfc1751.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_DSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_DSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_Curve25519.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_Curve25519.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_Curve448.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_Curve448.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_Ed25519.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_Ed25519.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_Ed448.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_Ed448.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_NIST.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_NIST.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_secp256k1.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_secp256k1.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ElGamal.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ElGamal.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_Hybrid.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_Hybrid.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_MLDSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_MLDSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_MLKEM.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_MLKEM.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_RSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_RSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_SLHDSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_SLHDSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_Curve25519.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_Curve25519.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_Curve448.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_Curve448.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_DSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_DSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_ECC.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_ECC.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_MLDSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_MLDSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_MLKEM.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_MLKEM.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_RSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_RSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_SLHDSA.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_SLHDSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_passphrase.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_passphrase.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Random/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Random/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Random/test_random.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Random/test_random.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Signature/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_dss.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Signature/test_dss.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_eddsa.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Signature/test_eddsa.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_mldsa.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Signature/test_mldsa.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_pkcs1_15.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Signature/test_pkcs1_15.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_pss.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Signature/test_pss.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_slhdsa.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Signature/test_slhdsa.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Util/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_Counter.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Util/test_Counter.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_Padding.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Util/test_Padding.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_asn1.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Util/test_asn1.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_cpu_features.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Util/test_cpu_features.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_number.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Util/test_number.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_raw_api.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Util/test_raw_api.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_rfc1751.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Util/test_rfc1751.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_strxor.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Util/test_strxor.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_threads.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/SelfTest/Util/test_threads.py"
+        },
+        {
+          "source": "Crypto/Signature/DSS.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Signature/DSS.py"
+        },
+        {
+          "source": "Crypto/Signature/PKCS1_PSS.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Signature/PKCS1_PSS.py"
+        },
+        {
+          "source": "Crypto/Signature/PKCS1_v1_5.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Signature/PKCS1_v1_5.py"
+        },
+        {
+          "source": "Crypto/Signature/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Signature/__init__.py"
+        },
+        {
+          "source": "Crypto/Signature/eddsa.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Signature/eddsa.py"
+        },
+        {
+          "source": "Crypto/Signature/mldsa.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Signature/mldsa.py"
+        },
+        {
+          "source": "Crypto/Signature/pkcs1_15.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Signature/pkcs1_15.py"
+        },
+        {
+          "source": "Crypto/Signature/pss.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Signature/pss.py"
+        },
+        {
+          "source": "Crypto/Signature/slhdsa.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Signature/slhdsa.py"
+        },
+        {
+          "source": "Crypto/Util/Counter.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/Counter.py"
+        },
+        {
+          "source": "Crypto/Util/Padding.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/Padding.py"
+        },
+        {
+          "source": "Crypto/Util/RFC1751.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/RFC1751.py"
+        },
+        {
+          "source": "Crypto/Util/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/__init__.py"
+        },
+        {
+          "source": "Crypto/Util/_base64.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/_base64.pyd"
+        },
+        {
+          "source": "Crypto/Util/_bytes.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/_bytes.py"
+        },
+        {
+          "source": "Crypto/Util/_cpu_features.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/_cpu_features.py"
+        },
+        {
+          "source": "Crypto/Util/_cpuid_c.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/_cpuid_c.pyd"
+        },
+        {
+          "source": "Crypto/Util/_file_system.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/_file_system.py"
+        },
+        {
+          "source": "Crypto/Util/_raw_api.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/_raw_api.py"
+        },
+        {
+          "source": "Crypto/Util/_strxor.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/_strxor.pyd"
+        },
+        {
+          "source": "Crypto/Util/_threads.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/_threads.py"
+        },
+        {
+          "source": "Crypto/Util/_typing.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/_typing.py"
+        },
+        {
+          "source": "Crypto/Util/asn1.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/asn1.py"
+        },
+        {
+          "source": "Crypto/Util/number.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/number.py"
+        },
+        {
+          "source": "Crypto/Util/strxor.py",
+          "destination": "runtimes/uav/Lib/site-packages/Crypto/Util/strxor.py"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/licenses/LICENSE.rst",
+          "destination": "runtimes/uav/Lib/site-packages/pycryptodome-4.6.0.dist-info/licenses/LICENSE.rst"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/licenses/src/mldsa-native/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/pycryptodome-4.6.0.dist-info/licenses/src/mldsa-native/LICENSE"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/licenses/src/mlkem-native/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/pycryptodome-4.6.0.dist-info/licenses/src/mlkem-native/LICENSE"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/pycryptodome-4.6.0.dist-info/METADATA"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/pycryptodome-4.6.0.dist-info/WHEEL"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/pycryptodome-4.6.0.dist-info/top_level.txt"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/pycryptodome-4.6.0.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "cloudscraper",
+      "url": "https://files.pythonhosted.org/packages/81/97/fc88803a451029688dffd7eb446dc1b529657577aec13aceff1cc9628c5d/cloudscraper-1.2.71-py2.py3-none-any.whl",
+      "sha256": "76f50ca529ed2279e220837befdec892626f9511708e200d48d5bb76ded679b0",
+      "size": 99652,
+      "format": "zip",
+      "files": [
+        {
+          "source": "cloudscraper/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/__init__.py"
+        },
+        {
+          "source": "cloudscraper/cloudflare.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/cloudflare.py"
+        },
+        {
+          "source": "cloudscraper/exceptions.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/exceptions.py"
+        },
+        {
+          "source": "cloudscraper/help.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/help.py"
+        },
+        {
+          "source": "cloudscraper/captcha/2captcha.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/captcha/2captcha.py"
+        },
+        {
+          "source": "cloudscraper/captcha/9kw.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/captcha/9kw.py"
+        },
+        {
+          "source": "cloudscraper/captcha/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/captcha/__init__.py"
+        },
+        {
+          "source": "cloudscraper/captcha/anticaptcha.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/captcha/anticaptcha.py"
+        },
+        {
+          "source": "cloudscraper/captcha/capmonster.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/captcha/capmonster.py"
+        },
+        {
+          "source": "cloudscraper/captcha/capsolver.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/captcha/capsolver.py"
+        },
+        {
+          "source": "cloudscraper/captcha/deathbycaptcha.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/captcha/deathbycaptcha.py"
+        },
+        {
+          "source": "cloudscraper/interpreters/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/interpreters/__init__.py"
+        },
+        {
+          "source": "cloudscraper/interpreters/chakracore.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/interpreters/chakracore.py"
+        },
+        {
+          "source": "cloudscraper/interpreters/encapsulated.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/interpreters/encapsulated.py"
+        },
+        {
+          "source": "cloudscraper/interpreters/js2py.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/interpreters/js2py.py"
+        },
+        {
+          "source": "cloudscraper/interpreters/jsunfuck.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/interpreters/jsunfuck.py"
+        },
+        {
+          "source": "cloudscraper/interpreters/native.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/interpreters/native.py"
+        },
+        {
+          "source": "cloudscraper/interpreters/nodejs.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/interpreters/nodejs.py"
+        },
+        {
+          "source": "cloudscraper/interpreters/v8.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/interpreters/v8.py"
+        },
+        {
+          "source": "cloudscraper/user_agent/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/user_agent/__init__.py"
+        },
+        {
+          "source": "cloudscraper/user_agent/browsers.json",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper/user_agent/browsers.json"
+        },
+        {
+          "source": "cloudscraper-1.2.71.dist-info/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper-1.2.71.dist-info/LICENSE"
+        },
+        {
+          "source": "cloudscraper-1.2.71.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper-1.2.71.dist-info/METADATA"
+        },
+        {
+          "source": "cloudscraper-1.2.71.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper-1.2.71.dist-info/WHEEL"
+        },
+        {
+          "source": "cloudscraper-1.2.71.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper-1.2.71.dist-info/top_level.txt"
+        },
+        {
+          "source": "cloudscraper-1.2.71.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/cloudscraper-1.2.71.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "curl-cffi",
+      "url": "https://files.pythonhosted.org/packages/a1/9f/e860ed1a3fc55c06ea2a148613d07342dc6c6ec2844a2f0ee864eb1b19ce/curl_cffi-0.17.0-cp310-abi3-win_amd64.whl",
+      "sha256": "4c3993c7df155d622869b82a56adb018440587fd3faffeaf8d01cc016d2e1357",
+      "size": 2108164,
+      "format": "zip",
+      "files": [
+        {
+          "source": "curl_cffi/aio.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/aio.py"
+        },
+        {
+          "source": "curl_cffi/const.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/const.py"
+        },
+        {
+          "source": "curl_cffi/curl.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/curl.py"
+        },
+        {
+          "source": "curl_cffi/fingerprints.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/fingerprints.py"
+        },
+        {
+          "source": "curl_cffi/py.typed",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/py.typed"
+        },
+        {
+          "source": "curl_cffi/utils.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/utils.py"
+        },
+        {
+          "source": "curl_cffi/_asyncio_selector.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/_asyncio_selector.py"
+        },
+        {
+          "source": "curl_cffi/_wrapper.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/_wrapper.pyd"
+        },
+        {
+          "source": "curl_cffi/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/__init__.py"
+        },
+        {
+          "source": "curl_cffi/__main__.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/__main__.py"
+        },
+        {
+          "source": "curl_cffi/__version__.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/__version__.py"
+        },
+        {
+          "source": "curl_cffi/cli/doctor.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/cli/doctor.py"
+        },
+        {
+          "source": "curl_cffi/cli/output.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/cli/output.py"
+        },
+        {
+          "source": "curl_cffi/cli/parse.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/cli/parse.py"
+        },
+        {
+          "source": "curl_cffi/cli/pro.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/cli/pro.py"
+        },
+        {
+          "source": "curl_cffi/cli/request.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/cli/request.py"
+        },
+        {
+          "source": "curl_cffi/cli/run.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/cli/run.py"
+        },
+        {
+          "source": "curl_cffi/cli/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/cli/__init__.py"
+        },
+        {
+          "source": "curl_cffi/requests/cache.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/cache.py"
+        },
+        {
+          "source": "curl_cffi/requests/cookies.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/cookies.py"
+        },
+        {
+          "source": "curl_cffi/requests/errors.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/errors.py"
+        },
+        {
+          "source": "curl_cffi/requests/exceptions.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/exceptions.py"
+        },
+        {
+          "source": "curl_cffi/requests/headers.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/headers.py"
+        },
+        {
+          "source": "curl_cffi/requests/impersonate.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/impersonate.py"
+        },
+        {
+          "source": "curl_cffi/requests/models.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/models.py"
+        },
+        {
+          "source": "curl_cffi/requests/session.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/session.py"
+        },
+        {
+          "source": "curl_cffi/requests/streams.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/streams.py"
+        },
+        {
+          "source": "curl_cffi/requests/utils.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/utils.py"
+        },
+        {
+          "source": "curl_cffi/requests/websockets.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/websockets.py"
+        },
+        {
+          "source": "curl_cffi/requests/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi/requests/__init__.py"
+        },
+        {
+          "source": "curl_cffi.libs/libcurl-impersonate-ae864b926b0a86bfa3b18a664407a1ab.dll",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi.libs/libcurl-impersonate-ae864b926b0a86bfa3b18a664407a1ab.dll"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/DELVEWHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi-0.17.0.dist-info/DELVEWHEEL"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/entry_points.txt",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi-0.17.0.dist-info/entry_points.txt"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi-0.17.0.dist-info/METADATA"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi-0.17.0.dist-info/RECORD"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi-0.17.0.dist-info/top_level.txt"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi-0.17.0.dist-info/WHEEL"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/licenses/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/curl_cffi-0.17.0.dist-info/licenses/LICENSE"
+        }
+      ]
+    },
+    {
+      "name": "certifi",
+      "url": "https://files.pythonhosted.org/packages/6d/39/5eec3296860b94ac20bb8ed807725b88f6adfab3f343df592afd975f5f86/certifi-2026.11.20-py3-none-any.whl",
+      "sha256": "7422df25243767b9877031a2248cb14d09ddac9beee846f4cef3d5c9191d488f",
+      "size": 127913,
+      "format": "zip",
+      "files": [
+        {
+          "source": "certifi/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/certifi/__init__.py"
+        },
+        {
+          "source": "certifi/__main__.py",
+          "destination": "runtimes/uav/Lib/site-packages/certifi/__main__.py"
+        },
+        {
+          "source": "certifi/cacert.pem",
+          "destination": "runtimes/uav/Lib/site-packages/certifi/cacert.pem"
+        },
+        {
+          "source": "certifi/core.py",
+          "destination": "runtimes/uav/Lib/site-packages/certifi/core.py"
+        },
+        {
+          "source": "certifi/py.typed",
+          "destination": "runtimes/uav/Lib/site-packages/certifi/py.typed"
+        },
+        {
+          "source": "certifi/tests/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/certifi/tests/__init__.py"
+        },
+        {
+          "source": "certifi/tests/test_certify.py",
+          "destination": "runtimes/uav/Lib/site-packages/certifi/tests/test_certify.py"
+        },
+        {
+          "source": "certifi-2026.11.20.dist-info/licenses/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/certifi-2026.11.20.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "certifi-2026.11.20.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/certifi-2026.11.20.dist-info/METADATA"
+        },
+        {
+          "source": "certifi-2026.11.20.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/certifi-2026.11.20.dist-info/WHEEL"
+        },
+        {
+          "source": "certifi-2026.11.20.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/certifi-2026.11.20.dist-info/top_level.txt"
+        },
+        {
+          "source": "certifi-2026.11.20.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/certifi-2026.11.20.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "cffi",
+      "url": "https://files.pythonhosted.org/packages/a7/06/1c3e01e3ba14c39f6d10bfbac52753b7e22259e38088e5cfe1d704918690/cffi-2.1.1-cp314-cp314-win_amd64.whl",
+      "sha256": "3222ba5d678f80a030e6afbcc33dc1ae5cb45facabb61cee2c7016b8432fde48",
+      "size": 187949,
+      "format": "zip",
+      "files": [
+        {
+          "source": "_cffi_backend.cp314-win_amd64.pyd",
+          "destination": "runtimes/uav/Lib/site-packages/_cffi_backend.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "cffi/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/__init__.py"
+        },
+        {
+          "source": "cffi/_cffi_errors.h",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/_cffi_errors.h"
+        },
+        {
+          "source": "cffi/_cffi_gen_src.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/_cffi_gen_src.py"
+        },
+        {
+          "source": "cffi/_cffi_include.h",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/_cffi_include.h"
+        },
+        {
+          "source": "cffi/_embedding.h",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/_embedding.h"
+        },
+        {
+          "source": "cffi/_imp_emulation.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/_imp_emulation.py"
+        },
+        {
+          "source": "cffi/_shimmed_dist_utils.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/_shimmed_dist_utils.py"
+        },
+        {
+          "source": "cffi/api.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/api.py"
+        },
+        {
+          "source": "cffi/backend_ctypes.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/backend_ctypes.py"
+        },
+        {
+          "source": "cffi/cffi_opcode.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/cffi_opcode.py"
+        },
+        {
+          "source": "cffi/commontypes.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/commontypes.py"
+        },
+        {
+          "source": "cffi/cparser.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/cparser.py"
+        },
+        {
+          "source": "cffi/error.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/error.py"
+        },
+        {
+          "source": "cffi/ffiplatform.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/ffiplatform.py"
+        },
+        {
+          "source": "cffi/gen_src.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/gen_src.py"
+        },
+        {
+          "source": "cffi/lock.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/lock.py"
+        },
+        {
+          "source": "cffi/model.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/model.py"
+        },
+        {
+          "source": "cffi/parse_c_type.h",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/parse_c_type.h"
+        },
+        {
+          "source": "cffi/pkgconfig.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/pkgconfig.py"
+        },
+        {
+          "source": "cffi/recompiler.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/recompiler.py"
+        },
+        {
+          "source": "cffi/setuptools_ext.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/setuptools_ext.py"
+        },
+        {
+          "source": "cffi/vengine_cpy.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/vengine_cpy.py"
+        },
+        {
+          "source": "cffi/vengine_gen.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/vengine_gen.py"
+        },
+        {
+          "source": "cffi/verifier.py",
+          "destination": "runtimes/uav/Lib/site-packages/cffi/verifier.py"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/licenses/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/cffi-2.1.1.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/cffi-2.1.1.dist-info/METADATA"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/cffi-2.1.1.dist-info/WHEEL"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/entry_points.txt",
+          "destination": "runtimes/uav/Lib/site-packages/cffi-2.1.1.dist-info/entry_points.txt"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/cffi-2.1.1.dist-info/top_level.txt"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/cffi-2.1.1.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "pyparsing",
+      "url": "https://files.pythonhosted.org/packages/38/bb/d215ee7c73b61497b28a5503f9f53523f294fcc936762b7caf90e0c1c2b5/pyparsing-3.3.3-py3-none-any.whl",
+      "sha256": "ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4",
+      "size": 126420,
+      "format": "zip",
+      "files": [
+        {
+          "source": "pyparsing/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/__init__.py"
+        },
+        {
+          "source": "pyparsing/actions.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/actions.py"
+        },
+        {
+          "source": "pyparsing/common.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/common.py"
+        },
+        {
+          "source": "pyparsing/core.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/core.py"
+        },
+        {
+          "source": "pyparsing/exceptions.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/exceptions.py"
+        },
+        {
+          "source": "pyparsing/helpers.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/helpers.py"
+        },
+        {
+          "source": "pyparsing/py.typed",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/py.typed"
+        },
+        {
+          "source": "pyparsing/results.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/results.py"
+        },
+        {
+          "source": "pyparsing/testing.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/testing.py"
+        },
+        {
+          "source": "pyparsing/unicode.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/unicode.py"
+        },
+        {
+          "source": "pyparsing/util.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/util.py"
+        },
+        {
+          "source": "pyparsing/warnings.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/warnings.py"
+        },
+        {
+          "source": "pyparsing/ai/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/ai/__init__.py"
+        },
+        {
+          "source": "pyparsing/ai/best_practices.md",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/ai/best_practices.md"
+        },
+        {
+          "source": "pyparsing/ai/show_best_practices/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/ai/show_best_practices/__init__.py"
+        },
+        {
+          "source": "pyparsing/ai/show_best_practices/__main__.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/ai/show_best_practices/__main__.py"
+        },
+        {
+          "source": "pyparsing/diagram/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/diagram/__init__.py"
+        },
+        {
+          "source": "pyparsing/tools/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/tools/__init__.py"
+        },
+        {
+          "source": "pyparsing/tools/cvt_pyparsing_pep8_names.py",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing/tools/cvt_pyparsing_pep8_names.py"
+        },
+        {
+          "source": "pyparsing-3.3.3.dist-info/licenses/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing-3.3.3.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "pyparsing-3.3.3.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing-3.3.3.dist-info/WHEEL"
+        },
+        {
+          "source": "pyparsing-3.3.3.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing-3.3.3.dist-info/METADATA"
+        },
+        {
+          "source": "pyparsing-3.3.3.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/pyparsing-3.3.3.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "requests-toolbelt",
+      "url": "https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl",
+      "sha256": "cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06",
+      "size": 54481,
+      "format": "zip",
+      "files": [
+        {
+          "source": "requests_toolbelt/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/__init__.py"
+        },
+        {
+          "source": "requests_toolbelt/_compat.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/_compat.py"
+        },
+        {
+          "source": "requests_toolbelt/exceptions.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/exceptions.py"
+        },
+        {
+          "source": "requests_toolbelt/sessions.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/sessions.py"
+        },
+        {
+          "source": "requests_toolbelt/streaming_iterator.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/streaming_iterator.py"
+        },
+        {
+          "source": "requests_toolbelt/adapters/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/adapters/__init__.py"
+        },
+        {
+          "source": "requests_toolbelt/adapters/appengine.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/adapters/appengine.py"
+        },
+        {
+          "source": "requests_toolbelt/adapters/fingerprint.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/adapters/fingerprint.py"
+        },
+        {
+          "source": "requests_toolbelt/adapters/host_header_ssl.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/adapters/host_header_ssl.py"
+        },
+        {
+          "source": "requests_toolbelt/adapters/socket_options.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/adapters/socket_options.py"
+        },
+        {
+          "source": "requests_toolbelt/adapters/source.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/adapters/source.py"
+        },
+        {
+          "source": "requests_toolbelt/adapters/ssl.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/adapters/ssl.py"
+        },
+        {
+          "source": "requests_toolbelt/adapters/x509.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/adapters/x509.py"
+        },
+        {
+          "source": "requests_toolbelt/auth/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/auth/__init__.py"
+        },
+        {
+          "source": "requests_toolbelt/auth/_digest_auth_compat.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/auth/_digest_auth_compat.py"
+        },
+        {
+          "source": "requests_toolbelt/auth/guess.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/auth/guess.py"
+        },
+        {
+          "source": "requests_toolbelt/auth/handler.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/auth/handler.py"
+        },
+        {
+          "source": "requests_toolbelt/auth/http_proxy_digest.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/auth/http_proxy_digest.py"
+        },
+        {
+          "source": "requests_toolbelt/cookies/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/cookies/__init__.py"
+        },
+        {
+          "source": "requests_toolbelt/cookies/forgetful.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/cookies/forgetful.py"
+        },
+        {
+          "source": "requests_toolbelt/downloadutils/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/downloadutils/__init__.py"
+        },
+        {
+          "source": "requests_toolbelt/downloadutils/stream.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/downloadutils/stream.py"
+        },
+        {
+          "source": "requests_toolbelt/downloadutils/tee.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/downloadutils/tee.py"
+        },
+        {
+          "source": "requests_toolbelt/multipart/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/multipart/__init__.py"
+        },
+        {
+          "source": "requests_toolbelt/multipart/decoder.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/multipart/decoder.py"
+        },
+        {
+          "source": "requests_toolbelt/multipart/encoder.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/multipart/encoder.py"
+        },
+        {
+          "source": "requests_toolbelt/threaded/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/threaded/__init__.py"
+        },
+        {
+          "source": "requests_toolbelt/threaded/pool.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/threaded/pool.py"
+        },
+        {
+          "source": "requests_toolbelt/threaded/thread.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/threaded/thread.py"
+        },
+        {
+          "source": "requests_toolbelt/utils/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/utils/__init__.py"
+        },
+        {
+          "source": "requests_toolbelt/utils/deprecated.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/utils/deprecated.py"
+        },
+        {
+          "source": "requests_toolbelt/utils/dump.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/utils/dump.py"
+        },
+        {
+          "source": "requests_toolbelt/utils/formdata.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/utils/formdata.py"
+        },
+        {
+          "source": "requests_toolbelt/utils/user_agent.py",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt/utils/user_agent.py"
+        },
+        {
+          "source": "requests_toolbelt-1.0.0.dist-info/AUTHORS.rst",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt-1.0.0.dist-info/AUTHORS.rst"
+        },
+        {
+          "source": "requests_toolbelt-1.0.0.dist-info/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt-1.0.0.dist-info/LICENSE"
+        },
+        {
+          "source": "requests_toolbelt-1.0.0.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt-1.0.0.dist-info/METADATA"
+        },
+        {
+          "source": "requests_toolbelt-1.0.0.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt-1.0.0.dist-info/WHEEL"
+        },
+        {
+          "source": "requests_toolbelt-1.0.0.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt-1.0.0.dist-info/top_level.txt"
+        },
+        {
+          "source": "requests_toolbelt-1.0.0.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/requests_toolbelt-1.0.0.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "soupsieve",
+      "url": "https://files.pythonhosted.org/packages/f6/f7/be207468cac6ad79389f36cf1fce4f2836960df91659979ec486c727bb2e/soupsieve-4.1.3-py3-none-any.whl",
+      "sha256": "7a390d1a57d1ab7bb228531e9b8a750a5ebf87db774e0ef6faeeac057d22a5bf",
+      "size": 59792,
+      "format": "zip",
+      "files": [
+        {
+          "source": "soupsieve/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve/__init__.py"
+        },
+        {
+          "source": "soupsieve/__meta__.py",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve/__meta__.py"
+        },
+        {
+          "source": "soupsieve/bidi.py",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve/bidi.py"
+        },
+        {
+          "source": "soupsieve/css_match.py",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve/css_match.py"
+        },
+        {
+          "source": "soupsieve/css_parser.py",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve/css_parser.py"
+        },
+        {
+          "source": "soupsieve/css_types.py",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve/css_types.py"
+        },
+        {
+          "source": "soupsieve/pretty.py",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve/pretty.py"
+        },
+        {
+          "source": "soupsieve/py.typed",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve/py.typed"
+        },
+        {
+          "source": "soupsieve/util.py",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve/util.py"
+        },
+        {
+          "source": "soupsieve-4.1.3.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve-4.1.3.dist-info/METADATA"
+        },
+        {
+          "source": "soupsieve-4.1.3.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve-4.1.3.dist-info/WHEEL"
+        },
+        {
+          "source": "soupsieve-4.1.3.dist-info/licenses/LICENSE.md",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve-4.1.3.dist-info/licenses/LICENSE.md"
+        },
+        {
+          "source": "soupsieve-4.1.3.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/soupsieve-4.1.3.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "typing-extensions",
+      "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+      "size": 45571,
+      "format": "zip",
+      "files": [
+        {
+          "source": "typing_extensions.py",
+          "destination": "runtimes/uav/Lib/site-packages/typing_extensions.py"
+        },
+        {
+          "source": "typing_extensions-4.16.0.dist-info/licenses/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/typing_extensions-4.16.0.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "typing_extensions-4.16.0.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/typing_extensions-4.16.0.dist-info/WHEEL"
+        },
+        {
+          "source": "typing_extensions-4.16.0.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/typing_extensions-4.16.0.dist-info/METADATA"
+        },
+        {
+          "source": "typing_extensions-4.16.0.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/typing_extensions-4.16.0.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "pycparser",
+      "url": "https://files.pythonhosted.org/packages/b6/ae/315bbeee126a769cbde43cf4908acb4b40408d8bf8bbf334dd7368d8dadf/pycparser-3.12-py3-none-any.whl",
+      "sha256": "a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e",
+      "size": 62600,
+      "format": "zip",
+      "files": [
+        {
+          "source": "pycparser/__init__.py",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser/__init__.py"
+        },
+        {
+          "source": "pycparser/_ast_gen.py",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser/_ast_gen.py"
+        },
+        {
+          "source": "pycparser/_c_ast.cfg",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser/_c_ast.cfg"
+        },
+        {
+          "source": "pycparser/ast_transforms.py",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser/ast_transforms.py"
+        },
+        {
+          "source": "pycparser/c_ast.py",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser/c_ast.py"
+        },
+        {
+          "source": "pycparser/c_generator.py",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser/c_generator.py"
+        },
+        {
+          "source": "pycparser/c_lexer.py",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser/c_lexer.py"
+        },
+        {
+          "source": "pycparser/c_parser.py",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser/c_parser.py"
+        },
+        {
+          "source": "pycparser-3.12.dist-info/licenses/LICENSE",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser-3.12.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "pycparser-3.12.dist-info/METADATA",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser-3.12.dist-info/METADATA"
+        },
+        {
+          "source": "pycparser-3.12.dist-info/WHEEL",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser-3.12.dist-info/WHEEL"
+        },
+        {
+          "source": "pycparser-3.12.dist-info/top_level.txt",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser-3.12.dist-info/top_level.txt"
+        },
+        {
+          "source": "pycparser-3.12.dist-info/RECORD",
+          "destination": "runtimes/uav/Lib/site-packages/pycparser-3.12.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "yt-dlp",
+      "url": "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/yt-dlp.exe",
+      "sha256": "f5389d3698ecde4ef06f4e6b1ce0294fe9ac1396228c8990b8d3416d6d177a7d",
+      "size": 23575744,
+      "format": "raw",
+      "files": [
+        {
+          "source": "",
+          "destination": "tools/yt-dlp.exe"
+        }
+      ]
+    },
+    {
+      "name": "ffmpeg",
+      "url": "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.2-essentials_build.zip",
+      "sha256": "60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba",
+      "size": 114768076,
+      "format": "zip",
+      "files": [
+        {
+          "source": "ffmpeg-9.0.2-essentials_build/bin/ffmpeg.exe",
+          "destination": "tools/ffmpeg.exe"
+        },
+        {
+          "source": "ffmpeg-9.0.2-essentials_build/bin/ffprobe.exe",
+          "destination": "tools/ffprobe.exe"
+        },
+        {
+          "source": "ffmpeg-9.0.2-essentials_build/LICENSE",
+          "destination": "licenses/ffmpeg/LICENSE"
+        },
+        {
+          "source": "ffmpeg-9.0.2-essentials_build/README.txt",
+          "destination": "licenses/ffmpeg/README.txt"
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "path": "licenses/ffmpeg/LICENSE",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "size": 35147
+    },
+    {
+      "path": "licenses/ffmpeg/README.txt",
+      "sha256": "0342de6bb39dd421cbec2c00d89ad274b640d75ad3f2cab09ffd647ce2d8f949",
+      "size": 41577
+    },
+    {
+      "path": "licenses/yt-dlp/LICENSE",
+      "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c",
+      "size": 1211
+    },
+    {
+      "path": "licenses/yt-dlp/THIRD_PARTY_LICENSES.txt",
+      "sha256": "472aefe951c7db35e1657c1d13fd337140511ed6f2b329205105ad441c5a02b7",
+      "size": 243550
+    },
+    {
+      "path": "tools/ffmpeg.exe",
+      "sha256": "3256173f3f8bffd7df12227c68adf68025edb1832273a9530688a7bb1ed8edec",
+      "size": 105423872
+    },
+    {
+      "path": "tools/ffprobe.exe",
+      "sha256": "f0d36ecbbdd3bcfac3efa078c96c7271c2e68b3810595552ac3b7f17e9a65c52",
+      "size": 105221120
+    },
+    {
+      "path": "tools/yt-dlp.exe",
+      "sha256": "f5389d3698ecde4ef06f4e6b1ce0294fe9ac1396228c8990b8d3416d6d177a7d",
+      "size": 23575744
+    }
+  ]
+}

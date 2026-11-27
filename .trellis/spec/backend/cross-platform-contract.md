@@ -38,6 +38,18 @@ actions are defined in the [Windows JMComic contract](./jmcomic-windows-contract
 The [Windows UAV contract](./uav-windows-contract.md) extends that worker to
 independent comic/video capabilities, separate private runtimes and release
 schema 3; it does not add another desktop configuration or database version.
+Windows x64 opt-in automatic initialization applies to both JMComic and UAV. It
+owns one profile-local background batch, waits for media readiness, and prepares
+independent plugin inventories in JMComic → UAV order. Ordinary failure preserves
+the other plugin's opportunity; cancellation or cleanup failure stops the batch.
+After the batch, verified files activate at most once through the controller's
+serial stop/start path. Pending user commands, pending media-service termination,
+an exited worker or a changed enable gate prevent stale activation; do not consume
+the service termination error merely to test its presence. Stop/recheck/disable/quit
+wait for the batch and its owned probe Job. Preserve the singular initialization
+IPC field and report per-kind facts in the optional array; only real worker
+capabilities establish availability. This never installs dependencies for
+disabled/external modes or a custom Python.
 The nine original fields below remain required; only absent profiles receive defaults.
 
 - Default Windows profile is `<real 栖库.exe directory>/qiku-data/profiles/native` or `docker`, based on `os.Executable`, absolute normalization and symlink resolution, never the caller's CWD or `LOCALAPPDATA`. Native business data defaults to the native profile's `data` directory; Docker business data remains in its Linux named volumes. The program directory must be writable for this default layout; fail with a Chinese `--profile` hint if it is read-only, never fall back to a C-drive user directory. Precedence: explicit CLI > applicable process environment > executable-adjacent `.env` > saved JSON > defaults. Original CLI does not read desktop JSON or this desktop `.env`.

@@ -16,6 +16,10 @@ contracts remain authoritative. No database or desktop-JSON migration is added.
 uavruntime.Load(manifestPath string) (uavruntime.Runtime, error)
 // CheckUAV 仅在自有临时目录探测固定视频依赖和本地工具。
 collectionworker.CheckUAV(ctx context.Context, config Config, logger *slog.Logger) (collectioncontract.Capability, error)
+// Resolve 只读解析当前编译配方对应的已发布依赖，不联网。
+uavbootstrap.Resolve(root string) (uavbootstrap.Paths, error)
+// Initialize 在已核验的collection-managed根中还原固定材料，真实离线探测后才发布。
+uavbootstrap.Initialize(ctx context.Context, root string, report func(uavbootstrap.Progress), probe func(context.Context, uavbootstrap.Paths) error) (uavbootstrap.Paths, error)
 ```
 
 Fixed CLI additions:
@@ -65,10 +69,10 @@ runtime is a build output, never a copied development venv or runtime pip instal
 | --- | --- |
 | `NAS_COLLECTION_WORKER_UAV_ENABLED` | Existing opt-in; manual native default false, desktop derives controlled plugin enablement |
 | `NAS_COLLECTION_WORKER_UAV_PYTHON` | Trusted explicit interpreter override; managed mode requires absolute path; invalid explicit configuration never falls back |
-| `NAS_COLLECTION_WORKER_UAV_RUNTIME_MANIFEST` | Optional absolute private runtime manifest path; managed desktop supplies executable-adjacent `uav-runtime.json` |
+| `NAS_COLLECTION_WORKER_UAV_RUNTIME_MANIFEST` | Optional absolute private runtime manifest path; managed desktop selects valid packaged or profile-published manifest |
 | `UAVPythonExplicit` | Internal distinction between explicit input and platform default; not a browser argument |
-| `NAS_COLLECTION_WORKER_YTDLP` | Existing fixed downloader path; managed desktop supplies absolute packaged executable |
-| `NAS_COLLECTION_WORKER_FFMPEG` | Existing offline validator path; managed desktop supplies absolute packaged executable |
+| `NAS_COLLECTION_WORKER_YTDLP` | Existing fixed downloader path; managed desktop supplies an absolute packaged or verified profile executable |
+| `NAS_COLLECTION_WORKER_FFMPEG` | Existing offline validator path; managed desktop supplies an absolute packaged or verified profile executable |
 
 Interpreter resolution is explicit override, else manifest, else a fixed tool name
 only in ordinary non-managed CLI mode. No managed PATH fallback. Specific local
@@ -85,7 +89,8 @@ disabled/unavailable, and 1 means diagnostic execution/cleanup failure.
 - Reuse the one worker, private inherited pipe protocol, random loopback binding,
   authenticated capabilities/root challenge and Windows process ownership.
 - New native profiles may choose managed when the adjacent worker and either
-  supported plugin manifest exist. Presence selects a mode, not availability.
+  supported plugin manifest exist, or UAV is explicitly enabled. Presence or
+  opt-in selects a mode, not availability.
   Preserve old disabled/external settings and explicit external tuple precedence.
 - Build child-only configuration for each configured plugin and absolute tools.
   Keep per-kind expected capabilities; do not report an absent optional package
@@ -99,6 +104,73 @@ disabled/unavailable, and 1 means diagnostic execution/cleanup failure.
   State/secrets/temp/logs use the owned profile.
   Quit, cancellation and upgrade wait for owned process and image handle release;
   never terminate by image name or stop an external worker.
+
+### 5.1 Windows x64 automatic UAV initialization
+
+- Trigger only for native + managed + expected/enabled UAV with no explicit
+  `UAV_PYTHON`. Explicit false, saved disabled/external and ordinary external
+  execution perform zero installation. Generic collection-enable does not
+  choose an otherwise unconfigured video plugin. Invalid custom Python never
+  falls back or installs. JMComic uses the same shared safety engine and desktop
+  preparation batch with its own independent inventory; see the
+  [JMComic automatic preparation contract](jmcomic-windows-contract.md#automatic-private-dependency-preparation).
+- Prefer statically valid packaged runtime/tools, then `uavbootstrap.Resolve`
+  from the owned profile. Actual worker capability is still authoritative.
+  Start background initialization only after basic media reports ready and
+  the real worker reports UAV unavailable. Downloads must not block media
+  startup. Failure is attempted once per start; user recheck/next launch retries.
+- The caller holds the profile instance lease and prepares the existing private
+  `collection-managed` root. Installer owns only its fixed `uav-bootstrap`
+  namespace with exact owner marker. Reject unknown existing directories,
+  UNC/reparse/alias paths, and undeclared files. Never install into program root,
+  global Python, PATH, registry or user-level environment.
+- Embed `assets/runtime.json`, `recipe.json`, `payload.zip`. Recipe schema 1 binds
+  runtime/payload SHA256, 20 fixed HTTPS artifacts with exact sizes/hashes/member
+  mappings, and seven extra tool/license file records. Payload consists of
+  verified installed UAV code, licenses and normalized metadata/._pth overlays;
+  it is not the original wheel. Keep original `builtWheelSha256` provenance.
+  JSON resource bytes use LF through scoped `.gitattributes` rules. Generation
+  includes exact runtime bytes and `bootstrap-receipt.json` recipe bytes.
+- Native Go downloads use standard TLS, inherited process proxy, finite time/
+  size budgets, cancellation, and a narrow GitHub release CDN redirect list.
+  Retry transient network/408/429/5xx at most three times with cancellable 1s/3s
+  waits; never retry integrity/source/cleanup failures. Check the final native
+  file path UTF-16 budget before downloads and in Resolve: at
+  most 248 units, reserving loader overhead rather than assuming `<260` is
+  sufficient. Real curl_cffi imports failed at 251–260 units in Windows
+  reproduction. Reject with a Chinese shorter-profile instruction.
+  Match exact SHA256 and length. ZIPs reject traversal, ADS/device/case aliases,
+  duplicates, links, encryption, oversized members/expansion and CRC failures.
+  Extract only compile-time mapped members; do not execute pip/download scripts.
+- Stage under random `stage-<32hex>`; validate full file closure, tool PE/size/
+  hashes and unchanged `uavruntime.Load`, then rename to immutable short
+  `gen-<32hex>` and validate again. Run a desktop-owned Job-managed worker
+  `--check-uav` (60s cap) at this exact final location before atomically replacing
+  bounded strict `current.json`. A successful staging probe never proves final
+  Windows native DLL readiness; retain all 32 hex identity characters.
+  Current schema 1 has exactly schemaVersion, recipeSha256, generation. Failed
+  stages never replace current. Only delete files owned by this exact attempt;
+  cleanup errors are `ErrCleanup` and block unsafe restart/replacement.
+- Completion is consumed by the controller serial loop after the fixed
+  JMComic→UAV batch, which performs at most one ordered core/worker restart for
+  successful results. Ordinary failure in one plugin does not block the other;
+  cancellation or cleanup failure stops the batch. Do not mutate lifecycle fields
+  from a background goroutine or claim uninterrupted media activation. Do not
+  reopen the browser during automatic activation. Stop/recheck/disable/quit and
+  unexpected core/worker exit cancel and wait; stale results cannot re-enable
+  disabled UAV. Ordinary network failure only degrades video capability.
+- IPC retains optional `collectionInitialization`: kind=`jmcomic|uav`, state=
+  `initializing|ready|failed`, sanitized Chinese stage, downloadedBytes, totalBytes.
+- `collectionInitializations` additionally preserves per-kind states for a
+  multi-plugin batch. Counts represent the current material, never fabricated
+  aggregate percentages. Tray and capability reasons use matching kind. A ready initializer state never
+  substitutes for worker `Capability.Available`.
+- Build generation: `scripts/uav_bootstrap.py --runtime-manifest <verified>`;
+  `--check` regenerates and byte-compares assets. Reusable online integration:
+  `scripts/verify_uav_bootstrap.py`. Local negative harnesses explicitly block
+  child download proxies for deterministic offline assertions. Retain separate
+  offline complete-package release audits; automatic local acquisition does not
+  assert corresponding-source/redistribution review or mutate release identity.
 
 ## 6. Downloader and release identity
 
@@ -141,6 +213,12 @@ disabled/unavailable, and 1 means diagnostic execution/cleanup failure.
 5. Record clean Windows, live site, Linux/Docker and ARM64 separately. Cross-builds,
    offline fixtures and this developer machine cannot satisfy those acceptance
    categories. Delete only newly generated temporary unit-test sources after runs.
+6. For automatic initialization, use the actual packaged desktop and worker with
+   a read-only program directory, Chinese/space profile, foreign CWD and polluted
+   Python environment. Assert 20 fixed artifacts, real final-path probe, actual
+   capability ready, H.264 encode/probe/decode and post-quit image release.
+   Restart with a failing proxy and assert every published byte/mtime/current is
+   unchanged. Inject final-probe failure/cancellation and retain the old selection.
 
 ### Desktop harness prerequisites
 
@@ -165,6 +243,10 @@ disabled/unavailable, and 1 means diagnostic execution/cleanup failure.
 | Condition | Required behavior |
 | --- | --- |
 | UAV disabled | Diagnostic exit 2; no site request, runtime extraction or durable state |
+| Enabled native/managed UAV, no explicit Python, unavailable worker capability | Initialize in background only after media ready; final probe succeeds before atomic publication and serial activation |
+| Disabled/external mode or explicit custom Python | Zero automatic installation; an invalid override still never falls back |
+| Final native path exceeds248 UTF-16 units | Refuse before download and give sanitized Chinese shorter-profile instruction |
+| Download/integrity/final-probe failure or cancellation | No half-published selection; clean only this attempt, preserve old current; cleanup failure blocks unsafe restart |
 | Invalid diagnostic boolean or temporary-directory/cleanup failure | Exit 1 with sanitized Chinese failure |
 | Managed explicit Python is relative, absent or invalid | UAV unavailable; do not fall back to manifest/PATH; another ready plugin remains usable |
 | Manifest/source/RECORD/native architecture or CA check fails | UAV unavailable with local integrity reason, worker and basic media remain available |
@@ -180,6 +262,8 @@ disabled/unavailable, and 1 means diagnostic execution/cleanup failure.
 - Good: an offline-assembled UAV runtime and an independent JMComic runtime share
   one worker; real imports and matching local tools produce two ready capabilities.
   Breaking one explicit interpreter disables only its own plugin.
+  Alternatively, enabled native/managed UAV without packaged files prepares fixed
+  dependencies once, then reuses the verified profile generation offline.
 - Base: a media-only package has no optional runtime. Its existing media and
   disabled/external settings remain usable, and status does not invent an expected
   video capability. A UAV-only package does not require JMComic files.
@@ -200,4 +284,9 @@ Wrong: reuse a JMComic assembler by monkeypatching its module globals;
        flatten both plugins into one site-packages directory.
 Correct: share bounded low-level helpers in runtime_common/privateruntime,
          retain separate manifests, dependency/source contracts and directories.
+
+Wrong: run the real Python probe in stage-<id>, rename to a longer directory,
+       then publish current.json based only on `<260` canonical file paths.
+Correct: reserve native loader path overhead, use short gen-<32hex>, revalidate
+         and actually probe that final location before publishing current.json.
 ```

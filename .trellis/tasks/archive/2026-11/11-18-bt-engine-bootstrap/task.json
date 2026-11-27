@@ -1,0 +1,57 @@
+{
+  "id": "bt-engine-bootstrap",
+  "name": "bt-engine-bootstrap",
+  "title": "实现 BT 搜索与下载引擎一键初始化",
+  "description": "可选私有助手、固定qB/Jackett模板、运行时自动接入与恢复；按用户授权远程隔离Docker验收并清理本任务资源",
+  "status": "completed",
+  "dev_type": "fullstack",
+  "scope": "bt-engine-bootstrap",
+  "package": null,
+  "priority": "P2",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-18",
+  "completedAt": "2026-11-27",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    ".trellis/tasks/11-18-bt-engine-bootstrap/prd.md",
+    ".trellis/tasks/11-18-bt-engine-bootstrap/info.md",
+    ".trellis/tasks/11-18-bt-engine-bootstrap/research/repository-impact.md",
+    ".trellis/tasks/11-18-bt-engine-bootstrap/research/engine-bootstrap-options.md",
+    ".trellis/tasks/11-18-bt-engine-bootstrap/implement.jsonl",
+    ".trellis/tasks/11-18-bt-engine-bootstrap/check.jsonl",
+    "docs/engines.md",
+    ".trellis/spec/backend/engine-bootstrap-contract.md",
+    ".trellis/tasks/11-18-bt-engine-bootstrap/research/implementation-verification.md"
+  ],
+  "notes": "用户2026-11-18明确要求按计划实现，授权192.168.1.233远程Docker部署测试和任务专属资源清理；保留既有未提交功能。",
+  "meta": {
+    "phase": "3-finish",
+    "next_step": "3.4_user_review",
+    "planning_delivered": true,
+    "requirements_confirmation": "approved_2026-11-18",
+    "implementation_started": true,
+    "implementation_completed": true,
+    "quality_gate": "passed",
+    "docker_validation": "partial_environment_limits_cleanup_verified",
+    "recommended_architecture": "optional_private_helper_fixed_docker_engine_templates",
+    "managed_engines": [
+      "qbittorrent",
+      "jackett"
+    ],
+    "future_probe_gates": [
+      "兼容宿主上的助手完整固定两引擎成功闭环",
+      "真实已配置站点同步和BT载荷",
+      "arm64实机与真实大影片性能"
+    ],
+    "remote_cleanup": "verified_no_task_resources",
+    "full_default_engine_success": "pending_compatible_docker_and_registry"
+  }
+}

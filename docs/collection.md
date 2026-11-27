@@ -76,7 +76,7 @@ docker compose -f compose.yaml -f compose.engines.yaml -f compose.collection.yam
 
 ## 原生/Windows对接
 
-Windows 桌面提供关闭、本机托管与外接三种获取模式；含私有运行时的完整漫画包可由启动器管理 worker、专用令牌和实际回环端口，见 [Windows 原生漫画](jmcomic-windows.md)。下述手工连接方式仍用于独立主服务和外接 worker。
+Windows 桌面提供关闭、本机托管与外接三种获取模式；新版 Windows x64 托管明确启用漫画后会自动准备缺失的独立私有依赖，启动器管理 worker、专用令牌和实际回环端口，首次离线使用可选完整漫画包，见 [Windows 原生漫画](jmcomic-windows.md)。下述手工连接方式仍用于独立主服务和外接 worker。
 
 原生主服务和worker必须能读到同一获取数据实体；两侧路径可以不同，配置`NAS_COLLECTION_READ_ROOT`指向主服务侧的只读映射。仅设置相同字符串路径不代表映射成立，连接检查会验证随机探针和执行端身份。
 

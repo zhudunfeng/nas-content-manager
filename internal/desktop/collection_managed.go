@@ -17,6 +17,8 @@ import (
 
 	"nas-content-manager/internal/collectioncontract"
 	"nas-content-manager/internal/collectioncontrol"
+	"nas-content-manager/internal/jmcomicbootstrap"
+	"nas-content-manager/internal/uavbootstrap"
 )
 
 // managedCollection 保存本实例私有控制句柄，凭据不写入桌面状态响应。
@@ -34,6 +36,10 @@ type managedCollection struct {
 	capabilities []collectioncontract.Capability // 各启用插件的真实本地能力，不代表站点可达。
 	once         sync.Once                       // 防止退出和错误清理重复发送停止。
 	stopErr      error                           // 有序停止的完整结果。
+	programDir   string                          // 只用于固定 worker 及随包工具的已核验程序根。
+	root         string                          // 已验证归属的 profile 获取状态根。
+	autoUAV      bool                            // 当前真实启用视频且未配置自定义解释器，允许自动准备固定依赖。
+	autoJMComic  bool                            // 当前真实启用漫画且未配置自定义解释器，允许独立自动准备。
 }
 
 // prepareCollectionDirectory 只创建本实例专用目录，拒绝接管未知目录或链接别名。
@@ -177,6 +183,30 @@ func (c *controller) startManagedCollection(ctx context.Context, cfg Config) (*m
 	if err != nil {
 		return nil, err
 	}
+	autoJMComic := automaticCollectionPluginEnabled(expected, "jmcomic", c.environment.get("NAS_COLLECTION_WORKER_JMCOMIC_PYTHON"))
+	if autoJMComic {
+		paths := c.jmcomicPaths
+		if paths.Manifest == "" && !packagedJMComicPresent(programDir) {
+			// 漫画只采用自身严格验证的已发布代次，不借用视频解释器或系统 Python。
+			paths, _ = jmcomicbootstrap.Resolve(root)
+		}
+		if paths.Manifest != "" {
+			c.jmcomicPaths = paths
+			environment = collectionEnvironmentWithJMComicPaths(environment, paths)
+		}
+	}
+	autoUAV := automaticCollectionPluginEnabled(expected, "uav", c.environment.get("NAS_COLLECTION_WORKER_UAV_PYTHON"))
+	if autoUAV {
+		paths := c.uavPaths
+		if paths.Manifest == "" && !packagedUAVPresent(programDir) {
+			// 只有已通过编译期库存验证的已发布 generation 才能替代缺失随包文件。
+			paths, _ = uavbootstrap.Resolve(root)
+		}
+		if paths.Manifest != "" {
+			c.uavPaths = paths
+			environment = collectionEnvironmentWithUAVPaths(environment, paths)
+		}
+	}
 	childInput, input, err := os.Pipe()
 	if err != nil {
 		return nil, errors.New("无法创建获取服务私有输入通道")
@@ -213,7 +243,7 @@ func (c *controller) startManagedCollection(ctx context.Context, cfg Config) (*m
 	}
 	nonceBytes := make([]byte, 32)
 	_, err = rand.Read(nonceBytes)
-	m := &managedCollection{process: process, input: input, output: output, log: log, nonce: hex.EncodeToString(nonceBytes), instanceID: cfg.InstanceID, readRoot: filepath.Join(root, "data"), tokenFile: filepath.Join(root, "secrets", "token"), expected: expected}
+	m := &managedCollection{process: process, input: input, output: output, log: log, nonce: hex.EncodeToString(nonceBytes), instanceID: cfg.InstanceID, readRoot: filepath.Join(root, "data"), tokenFile: filepath.Join(root, "secrets", "token"), expected: expected, programDir: programDir, root: root, autoUAV: autoUAV, autoJMComic: autoJMComic}
 	if err != nil {
 		return nil, errors.Join(errors.New("无法生成获取服务关联值"), m.stop())
 	}

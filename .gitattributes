@@ -1,0 +1,5 @@
+# 初始化资源摘要绑定精确字节，Windows 检出时不可转换为 CRLF。
+/internal/uavbootstrap/assets/*.json text eol=lf
+/internal/uavbootstrap/assets/*.zip -text
+/internal/jmcomicbootstrap/assets/*.json text eol=lf
+/internal/jmcomicbootstrap/assets/*.zip -text

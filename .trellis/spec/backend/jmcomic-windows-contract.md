@@ -19,6 +19,10 @@ jmcomicruntime.Load(manifestPath string) (jmcomicruntime.Runtime, error)
 collectionworker.RunManaged(ctx context.Context, config Config, logger *slog.Logger, input io.ReadCloser, output io.Writer) error
 // CheckJMComic 仅在自有临时目录执行固定的本地依赖探测。
 collectionworker.CheckJMComic(ctx context.Context, config Config, logger *slog.Logger) (collectioncontract.Capability, error)
+// Resolve 只读解析编译配方匹配的已发布漫画依赖，不联网。
+jmcomicbootstrap.Resolve(root string) (jmcomicbootstrap.Paths, error)
+// Initialize 还原锁定材料，最终路径真实离线探测后才原子发布。
+jmcomicbootstrap.Initialize(ctx context.Context, root string, report func(jmcomicbootstrap.Progress), probe func(context.Context, jmcomicbootstrap.Paths) error) (jmcomicbootstrap.Paths, error)
 ```
 
 Fixed command interfaces:
@@ -30,6 +34,7 @@ nas-collection-worker.exe --check-jmcomic
 栖库.exe --control collection-enable|collection-disable|collection-check
 python -B scripts/jmcomic_runtime.py assemble --output <new-directory>
 python -B scripts/jmcomic_runtime.py verify <manifest> --probe
+python -B scripts/jmcomic_bootstrap.py --runtime-manifest <verified-manifest> [--check]
 python -B scripts/release.py --target windows-amd64 --jmcomic-runtime-manifest <manifest>
 ```
 
@@ -50,7 +55,9 @@ dependencies, accepts a script/command or selects a Python argument.
   `desktop.v1.json`; refuse to overwrite a different backup. `--print-config`
   must remain read-only.
 - New native profiles prefer explicit external configuration; otherwise select
-  `managed` only when the adjacent worker and manifest are present. CLI overrides
+  `managed` when the adjacent worker and a supported manifest are present, or
+  when either JMComic or UAV is explicitly enabled for Windows x64 automatic
+  initialization. This never overrides saved disabled/external choices. CLI overrides
   process `NAS_DESKTOP_COLLECTION_MODE`, which overrides executable-adjacent
   `.env`, which overrides saved mode. The [cross-platform contract](./cross-platform-contract.md#windows-executable-adjacent-dotenv-source)
   defines the immutable desktop source, explicit-empty semantics and worker allowlist. Docker cannot use
@@ -137,6 +144,57 @@ trees. No runtime pip, user-site imports or copied development venv is allowed.
 Checksums establish consistency with a trusted package, not an independent
 publisher signature or clean-system DLL compatibility.
 
+### Automatic private dependency preparation
+
+- Trigger only on Windows amd64 native + managed + expected/enabled JMComic,
+  with no nonempty explicit `JMCOMIC_PYTHON`. Explicit false, disabled/external,
+  an invalid custom interpreter and an unconfigured plugin perform no automatic
+  installation. Generic collection-enable does not opt in an unconfigured plugin.
+- Prefer statically valid adjacent runtime, then `jmcomicbootstrap.Resolve` in
+  the verified owned profile. Start preparation only after basic media is ready
+  and the real worker reports this enabled plugin unavailable. Preserve strict
+  custom-interpreter priority and authoritative worker capability results.
+- `internal/runtimebootstrap` is the shared safety engine; plugin wrappers own
+  immutable independent Config/plan/cache, exact resource bytes, namespace and
+  the existing strict `jmcomicruntime.Load` / `uavruntime.Load` callback. Keep UAV
+  owner marker, recipe bytes, `uav-bootstrap/current.json` and generations
+  compatible. JMComic owns only `collection-managed/jm-bootstrap`, with exact
+  marker component `jm-bootstrap`; it never installs video tools or mixes Python
+  environments. Callers hold the profile lease and verify its parent ownership.
+- Embed independent `assets/runtime.json`, `recipe.json`, `payload.zip` generated
+  from a strictly verified runtime and its nine locked official materials.
+  Recipe schema 1 binds exact runtime/payload SHA256, artifact URL/length/hash and
+  member mappings, and `tools:[]`. The installed-file payload is distinct from
+  original wheels; preserve all licenses and full file/parent-directory closure.
+  Scoped `.gitattributes` fixes JSON LF bytes and treats payload as binary.
+- Keep shared finite TLS/proxy/redirect, retry, ZIP alias/link/CRC/expansion,
+  inventory, PE and source constraints. Validate every final native file path
+  against 248 UTF-16 units before downloading and in Resolve; reject long
+  profiles with Chinese shorter-`--profile` guidance. No runtime pip or global
+  environment changes. Stage in a random owned directory, strictly validate,
+  rename to `gen-<32hex>`, revalidate and execute Job-owned `--check-jmcomic` at
+  that exact final location before atomic `current.json` publication. Failure or
+  cancellation preserves old selection bytes and deletes only this attempt;
+  `ErrCleanup` prevents unsafe replacement/restart.
+- Desktop uses one fixed-order JMComic→UAV preparation batch. Ordinary failure
+  retains that plugin's reason and continues the other; cancellation or cleanup
+  failure stops the batch. After all results and cleanup complete, the controller
+  serial loop activates successful results with at most one ordered core/worker
+  restart, without reopening the browser. Active playback/download connections
+  may close. User commands, stop, unexpected service/worker exit and quit revoke
+  progress ownership, cancel and wait; stale completion cannot enable a plugin.
+- Each plugin gets at most one automatic attempt per start/recheck. No infinite
+  retries. Preserve failure per kind across successful activation of the other
+  plugin. IPC retains optional `collectionInitialization` for the current or
+  priority display and adds optional `collectionInitializations` array for all
+  attempted kinds. Each item has `kind:jmcomic|uav`, `state:initializing|ready|failed`,
+  sanitized Chinese `stage`, `downloadedBytes` and `totalBytes` (current artifact
+  only). Snapshot copies both structures. Tray and unavailable capability reason
+  use matching kind; preparation ready never means actual capability available.
+- Automatic downloads do not alter release schema or nullable included-runtime
+  summaries. An online-capable development archive is not a complete offline
+  distribution. Full offline packages and license/source review remain separate.
+
 Every release contains the collection worker. Optional runtime input is accepted
 only for Windows amd64 and is copied with its licenses/manifest and revalidated.
 New `release.json` schema 2 requires `jmcomicRuntime: null` or the exact summary
@@ -171,6 +229,9 @@ readable.
 | Download interrupted at stop | No partial publication or blind replay; original recovery rules remain |
 | Runtime member/hash/architecture/lock/license mismatch | Reject assembly/verification/package activation |
 | Native managed requested for Docker | Reject configuration; no implicit Windows worker launch |
+| Enabled JMComic missing private files in Windows x64 managed mode | Background fixed-material preparation; media remains ready, actual capability unavailable until final probe/activation |
+| One batch plugin fails while the other succeeds | Keep separate failure, continue and activate successful result once; no status cross-contamination |
+| Cancel/final probe failure with old current | Preserve old current bytes and available generation; remove only candidate |
 
 ## 5. Good / Base / Bad Cases
 
@@ -197,6 +258,19 @@ readable.
   hash, member inventory, versions, PE, links/aliases and licensing rejection.
   Release self-tests plus a real archive validation, including basic/development
   metadata and optional runtime contents.
+- `verify_jmcomic_bootstrap.py` with a real packaged desktop/worker: read-only
+  program, Chinese/space profile, foreign cwd, polluted Python environment,
+  false/disabled/external/custom-interpreter zero-install, failed download and
+  recheck, cancellation after actual downloaded bytes, strict final probe,
+  authenticated actual capability, image/AES/CA checks and DLL release. Offline
+  restart must preserve all SHA/mtime/current bytes. `--with-uav` additionally
+  starts both from empty state and asserts one activation plus per-kind state.
+- Shared-engine behavior tests must prove independent plan caches, exact UAV
+  compatibility, strict source/ZIP/closure/native-path limits, final probe and
+  cancellation rollback with old current, and cleanup barriers. Desktop tests
+  cover ordinary partial failure both directions, no attempted-loop retry,
+  queued-user-command priority and stale progress ownership. Execute then remove
+  only newly generated unit-test sources; retain reusable integration harness.
 - Original desktop, JMComic base/advanced, collection/core/release and affected
   optional adapter regressions. Run Go vet/test/build, Vue typecheck/build and
   Linux amd64/arm64 cross-builds. Remove newly generated temporary unit-test
@@ -212,3 +286,10 @@ preselected port, and kill every `python.exe` before overwriting the runtime.
 Correct: validate the trusted private manifest, use inherited bounded control
 pipes plus authenticated root challenge, reserve the real loopback listener,
 own the process tree before resume, and wait for owned handles to release.
+
+Wrong: duplicate the safety engine for comics or let each plugin restart the
+worker as soon as its own download completes, cancelling the other installer.
+
+Correct: share only the safety engine, bind independent exact inventories and
+loaders, retain per-kind results in one preparation batch and activate once after
+its cleanup barrier. A final-path probe must precede selection publication.

@@ -8,8 +8,8 @@
 | --- | --- | --- |
 | Windows 原生媒体 | 视频、图片、漫画、小说、音乐 | 完整发行 ZIP 内的 `栖库.exe`、内嵌网页与配套 `tools`，用户数据位于本机独立目录 |
 | Windows 原生 BT | 种子搜索、文件选择、下载与入库 | 连接已安装的 Windows qBittorrent 和 Jackett／Prowlarr；用 profile 下的 `bt.json` 保存连接配置，见 [Windows BT 说明](bt-windows.md) |
-| Windows 原生 JMComic | 漫画搜索、选章和批量下载 | 含 `nas-collection-worker.exe` 与私有 Python 清单的完整漫画包，由桌面托管；不需要全局 Python，见 [Windows 漫画说明](jmcomic-windows.md) |
-| Windows 原生 UAV | Jable、MissAV、Hanime1、黄果、SupJav 视频搜索下载 | 含独立 UAV 运行时、固定下载器及媒体工具的完整包，复用同一托管 worker，见 [Windows 视频说明](uav-windows.md) |
+| Windows 原生 JMComic | 漫画搜索、选章和批量下载 | 匹配的桌面与 worker；x64 托管启用后自动准备缺失私有依赖，首次离线使用选完整漫画包；见 [Windows 漫画说明](jmcomic-windows.md) |
+| Windows 原生 UAV | Jable、MissAV、Hanime1、黄果、SupJav 视频搜索下载 | 含托管 worker 的新版 Windows x64 包；启用后自动准备缺失依赖，也可使用离线完整包，见 [Windows 视频说明](uav-windows.md) |
 | Windows Docker 完整模式 | 媒体与网页初始化托管 BT 引擎 | 已运行的 Docker Desktop Linux/amd64 容器环境、固定镜像清单；数据和下载位于 Linux 命名卷 |
 | Linux 原生 | 无桌面 NAS 或服务器 | 对应 amd64/arm64 归档，`./start.sh` 或 `./nas` |
 | Linux Compose | 延续现有部署 | 原 `compose.yaml` 与可选 `compose.engines.yaml`，现有路径和 UID/GID 约定保留 |
@@ -87,8 +87,10 @@ GUI 子系统的 EXE 不保证 PowerShell 显示标准输出；诊断结果同�
 ```dotenv
 # 使用随包 worker，由栖库管理启动和退出。
 NAS_DESKTOP_COLLECTION_MODE=managed
-# 启用视频插件；需要完整的 UAV 运行时和配套工具。
+# 启用视频插件；Windows x64 托管模式缺少依赖时自动联网准备。
 NAS_COLLECTION_WORKER_UAV_ENABLED=true
+# 需要漫画获取时开启；仅安装漫画自己的私有 Python 与锁定依赖。
+# NAS_COLLECTION_WORKER_JMCOMIC_ENABLED=true
 ```
 
 **优先顺序：明确命令行参数 > 进程环境变量 > 程序同级 `.env` > 已保存配置 > 默认值。** Windows 配置键名不区分大小写。环境变量即使已设置为空也会屏蔽文件中的同名值，之后按该参数原有空值规则处理；例如应用参数可回到默认值，而只接受 `true/false` 的插件开关会报配置无效。要让文件中的值生效，应移除冲突的进程环境变量再重新启动。程序不会设置用户级或系统级环境变量。
@@ -99,7 +101,7 @@ NAS_COLLECTION_WORKER_UAV_ENABLED=true
 
 格式支持空行、`#` 注释、`KEY=value`、可选 `export ` 和单/双引号；引号内保留原文，包括 Windows 反斜杠。未引号值的空白后 `#` 为行内注释，值含 `#` 时建议加引号。重复键最后一项生效；不支持多行值，不展开 `$VAR`、`${VAR}`、`%VAR%`，不执行命令。路径仍遵循对应参数原规则；为避免工作目录影响，目录和解释器建议使用绝对路径。
 
-开关只选择插件，不会下载安装 Python、UAV、yt-dlp 或 FFmpeg。依赖与诊断见 [Windows 视频说明](uav-windows.md)。`.env` 可能含私人连接信息，应限制目录访问；升级时与 `qiku-data` 一起单独保留和备份，避免用示例覆盖现有文件。
+Windows x64 原生托管模式开启漫画或 UAV 且未指定该插件自定义 Python 时，会优先使用有效随包或已初始化的依赖，缺失时后台联网准备各自锁定版本的材料；状态显示准备阶段及当前物料字节进度。漫画仅准备自己的 Python 与漫画依赖，UAV 另需视频依赖、yt-dlp 与 FFmpeg。两插件按顺序准备，普通失败彼此隔离，本轮完成后至多进行一次自动有序重启以载入成功结果，播放或下载中的连接可能中断。关闭对应插件、停用获取或使用外接服务均不安装。依赖与诊断见 [Windows 漫画说明](jmcomic-windows.md) 和 [Windows 视频说明](uav-windows.md)。`.env` 可能含私人连接信息，应限制目录访问；升级时与 `qiku-data` 一起单独保留和备份，避免用示例覆盖现有文件。
 
 ## Docker 完整模式
 

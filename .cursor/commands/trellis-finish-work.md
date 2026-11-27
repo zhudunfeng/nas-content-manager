@@ -1,32 +1,38 @@
 # Finish Work
 
-Wrap up the current session.
+Wrap up the current session and preserve project-useful knowledge before archiving.
 
 ## Step 1: Quality Gate
 
-`trellis-check` should have already run in Phase 3. If not, trigger it now and do not proceed until lint, type-check, tests, and spec compliance pass.
+`trellis-check` should have already run in Phase 3. For implementation changes, complete the applicable lint, type-check, tests and spec checks. For documentation-only changes, verify factual evidence, source links, task coverage and consistency; do not claim product tests were run.
 
-## Step 2: Remind User to Commit
+## Step 2: Capture the Archive Retrospective (required)
 
-If there are uncommitted changes:
+Follow [Archive retrospective guide](../../.trellis/spec/guides/archive-retrospective-guide.md) before every archive, including direct archive requests and bulk cleanup.
 
-> "Please review the changes and commit when ready."
+- Read the PRD, research/decisions and real verification records. Record actual delivery, reusable decisions and reasons, pitfalls/boundaries, validation evidence and limitations, unfinished work/next steps, and source/spec paths.
+- Write `<task>/summary.md`. A batch may use `archive/YYYY-MM/ARCHIVE-SUMMARY.md` if it covers every affected task with useful conclusions, evidence and remaining work.
+- Apply `trellis-update-spec` to promote durable contracts into existing specs; link them instead of maintaining duplicate rules. If there is no new reusable lesson, record that judgment and the existing rule.
+- Preserve the pre-archive state. Separate implemented behavior, historical local verification, target acceptance and planning. `task.py archive` automatically writes `completed`; it is not proof that a feature or an acceptance gate passed.
+- Keep evidence paths valid after moving tasks and link consolidated lessons from the spec guide index. Exclude secrets and private fixture values.
 
-Do NOT run `git commit` — the human commits after testing.
+## Step 3: Remind User to Commit
 
-## Step 3: Record Session (after commit)
+If there are uncommitted changes, remind the user to review and commit when ready. Do NOT run `git commit` — the human commits after testing.
 
-Archive finished tasks (judge by work status, not the `status` field):
+## Step 4: Archive and Record the Session
 
-```bash
-python ./.trellis/scripts/task.py archive <task-name>
+Normally archive after the user's commit. If the user explicitly requests archiving first, complete that request after the retrospective, preserving unverified and unfinished work in the summary.
+
+```text
+python -B scripts/project_env.py -- python -B .trellis/scripts/task.py archive <task-name> --no-commit
+python -B scripts/project_env.py -- python -B .trellis/scripts/task.py list
 ```
 
-Append a session entry (auto-handles journal rotation, line count, index update):
+Use `--no-commit` to prevent Trellis from committing unrelated staged work. Verify task materials, summary links, expected archive count and the current-task pointer; leave unrelated active tasks untouched.
 
-```bash
-python ./.trellis/scripts/add_session.py \
-  --title "Session Title" \
-  --commit "hash1,hash2" \
-  --summary "Brief summary"
+Record the session with actual commit hashes when available, or leave the default uncommitted marker rather than inventing one:
+
+```text
+python -B scripts/project_env.py -- python -B .trellis/scripts/add_session.py --title "Session Title" --commit "hash1,hash2" --summary "Useful lessons, evidence, limitations and archive summary path" --no-commit
 ```

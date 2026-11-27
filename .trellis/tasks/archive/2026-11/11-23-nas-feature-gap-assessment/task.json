@@ -1,0 +1,28 @@
+{
+  "id": "nas-feature-gap-assessment",
+  "name": "nas-feature-gap-assessment",
+  "title": "评估 NAS 内容管理系统功能缺口与迭代优先级",
+  "description": "基于 CodeGraph 与源码完成现有能力、功能缺口、迭代优先级及实机验收边界评估，仅交付文档。",
+  "status": "completed",
+  "dev_type": "docs",
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-23",
+  "completedAt": "2026-11-27",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    ".trellis/tasks/11-23-nas-feature-gap-assessment/assessment.md"
+  ],
+  "notes": "评估与独立文档复核完成；P1/P2/P3仅为后续建议，未实施业务功能。保留评估资料待用户审阅，恢复原组件部署review任务上下文。",
+  "meta": {}
+}

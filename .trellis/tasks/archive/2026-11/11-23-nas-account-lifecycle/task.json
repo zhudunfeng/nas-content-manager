@@ -1,0 +1,69 @@
+{
+  "id": "nas-account-lifecycle",
+  "name": "nas-account-lifecycle",
+  "title": "S02 完善管理员改密会话与离线恢复",
+  "description": "S02.1/2/3本机实施与独立复核完成；最终同产物账号157（83+74）、core52及主线baseline account157通过；真实Linux/NAS锁、终端与权限门禁待验。",
+  "status": "completed",
+  "dev_type": "fullstack",
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-23",
+  "completedAt": "2026-11-27",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "11-23-nas-evolution-plan",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "step": "S02",
+    "recommended_order": 2,
+    "milestone": "M1",
+    "relative_size": "M",
+    "depends_on": [
+      "11-23-nas-validation-baseline"
+    ],
+    "dependency_semantics": "depends_on为整项完成依赖；可提前实施的切片见slice_dependencies，不意味着必须等所有前置完成才开始",
+    "slice_dependencies": {
+      "core": [
+        "S01"
+      ],
+      "event_integration": [
+        "S04事件基础；由S04联调，不阻塞主体"
+      ]
+    },
+    "readiness": "local_complete_target_pending",
+    "release_evidence": "local_and_target_recorded_separately",
+    "active_slice": "S02.3",
+    "active_phase": "3.3",
+    "completed_local_slices": [
+      "S02.1",
+      "S02.2",
+      "S02.3"
+    ],
+    "quality_review": ".trellis/tasks/11-23-nas-account-lifecycle/research/quality-review-s02-3.md",
+    "quality_reviews": {
+      "S02.1": ".trellis/tasks/11-23-nas-account-lifecycle/research/quality-review.md",
+      "S02.2": ".trellis/tasks/11-23-nas-account-lifecycle/research/quality-review-s02-2.md",
+      "S02.3": ".trellis/tasks/11-23-nas-account-lifecycle/research/quality-review-s02-3.md"
+    },
+    "final_local_evidence": {
+      "artifact": ".runtime/bin/s02-3-review-http-final/nas.exe",
+      "sha256": "8bc6a1a144d86bd0a65e38bafc9f1388b21bf2545c9a29168d92ebdf0dbf135a",
+      "account_assertions": 157,
+      "online_assertions": 83,
+      "offline_assertions": 74,
+      "core_assertions": 52,
+      "baseline_manifest": ".runtime/verify/s02-3-baseline-account-review-http-final/run-manifest.json",
+      "target_nas": false,
+      "linux_actual": false
+    }
+  }
+}

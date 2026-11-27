@@ -27,11 +27,11 @@ docker compose -f compose.yaml -f compose.collection.yaml up -d --build
 
 高级搜索、选章、进度和页面复用需要一起更新主应用网页与 worker；真实 Python 桥接嵌入在 worker 中。锁定的 Python 依赖版本仍是 `2.7.12`，无需为本次增量升级上游版本。仅看到旧 worker 的插件可用状态，不能据此判断它已经支持新增协议。
 
-插件属于可选执行端功能；仅启动主应用时，已有媒体管理和本地只读登记仍可使用。Windows Docker 完整模式需要打包包含新版 worker 的固定镜像清单，原生开发包不会自动下载或安装 Python 依赖。
+插件属于可选执行端功能；仅启动主应用时，已有媒体管理和本地只读登记仍可使用。Windows Docker 完整模式需要打包包含新版 worker 的固定镜像清单。新版 Windows x64 原生桌面托管模式明确开启漫画且未指定自定义 Python 时，会自动联网准备缺失的固定私有依赖；独立 worker、Linux 和 Docker 不适用此桌面策略。
 
 ## 原生执行端
 
-Windows 桌面完整漫画包可使用随包私有 Python 和托管 worker，无需手工安装全局 Python；启用、停用、检查与升级步骤见 [Windows 原生漫画](jmcomic-windows.md)。以下手工方式继续用于开发者、管理员和外接执行端。
+Windows x64 桌面托管 worker 可使用随包或自动初始化的私有 Python，无需手工安装全局 Python；启用、停用、检查与升级步骤见 [Windows 原生漫画](jmcomic-windows.md)。以下手工方式继续用于开发者、管理员和外接执行端。
 
 先按照[原生执行端说明](collection.md#原生windows对接)配置专用数据根、令牌与主应用只读映射，再为 worker 配置以下参数：
 

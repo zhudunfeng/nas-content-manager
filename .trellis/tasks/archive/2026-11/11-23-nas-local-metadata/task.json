@@ -1,0 +1,47 @@
+{
+  "id": "nas-local-metadata",
+  "name": "nas-local-metadata",
+  "title": "S06 支持本地元数据与人工纠错",
+  "description": "S06：依据父路线按小PR交付，具体范围、切片与验收见prd.md；当前仅规划，尚未实施。",
+  "status": "completed",
+  "dev_type": "fullstack",
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "zdf",
+  "assignee": "zdf",
+  "createdAt": "2026-11-23",
+  "completedAt": "2026-11-27",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "step": "S06",
+    "recommended_order": 6,
+    "milestone": "M2",
+    "relative_size": "L",
+    "depends_on": [
+      "11-23-nas-backup-recovery",
+      "11-23-nas-work-catalog"
+    ],
+    "dependency_semantics": "depends_on为整项完成依赖；可提前实施的切片见slice_dependencies，不意味着必须等所有前置完成才开始",
+    "slice_dependencies": {
+      "read_merge": [
+        "S05"
+      ],
+      "user_asset_upload": [
+        "S03资产备份恢复",
+        "S05"
+      ]
+    },
+    "readiness": "planned_not_implemented",
+    "release_evidence": "local_and_target_recorded_separately"
+  }
+}

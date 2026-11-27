@@ -1,0 +1,2521 @@
+{
+  "schemaVersion": 1,
+  "runtimeManifestSha256": "a5d9d9bb0b28a5a5fc5c2ae546e0044951645bb94fdd5033e7186719e1905452",
+  "payloadSha256": "9780a136c7ed608f5f0d39d91d075047bbf49b6e8f263b7895f14d50a5d570b4",
+  "artifacts": [
+    {
+      "name": "python",
+      "url": "https://www.python.org/ftp/python/3.14.4/python-3.14.4-embed-amd64.zip",
+      "sha256": "cda80a9b1e75c0f1b4f9872ca1b417f0d19bce32facc811aea9180e70fad5fb9",
+      "size": 12034740,
+      "format": "zip",
+      "files": [
+        {
+          "source": "python.exe",
+          "destination": "runtimes/jmcomic/python.exe"
+        },
+        {
+          "source": "pythonw.exe",
+          "destination": "runtimes/jmcomic/pythonw.exe"
+        },
+        {
+          "source": "python314.dll",
+          "destination": "runtimes/jmcomic/python314.dll"
+        },
+        {
+          "source": "python3.dll",
+          "destination": "runtimes/jmcomic/python3.dll"
+        },
+        {
+          "source": "vcruntime140.dll",
+          "destination": "runtimes/jmcomic/vcruntime140.dll"
+        },
+        {
+          "source": "vcruntime140_1.dll",
+          "destination": "runtimes/jmcomic/vcruntime140_1.dll"
+        },
+        {
+          "source": "LICENSE.txt",
+          "destination": "runtimes/jmcomic/LICENSE.txt"
+        },
+        {
+          "source": "pyexpat.pyd",
+          "destination": "runtimes/jmcomic/pyexpat.pyd"
+        },
+        {
+          "source": "select.pyd",
+          "destination": "runtimes/jmcomic/select.pyd"
+        },
+        {
+          "source": "unicodedata.pyd",
+          "destination": "runtimes/jmcomic/unicodedata.pyd"
+        },
+        {
+          "source": "winsound.pyd",
+          "destination": "runtimes/jmcomic/winsound.pyd"
+        },
+        {
+          "source": "_asyncio.pyd",
+          "destination": "runtimes/jmcomic/_asyncio.pyd"
+        },
+        {
+          "source": "_bz2.pyd",
+          "destination": "runtimes/jmcomic/_bz2.pyd"
+        },
+        {
+          "source": "_ctypes.pyd",
+          "destination": "runtimes/jmcomic/_ctypes.pyd"
+        },
+        {
+          "source": "_decimal.pyd",
+          "destination": "runtimes/jmcomic/_decimal.pyd"
+        },
+        {
+          "source": "_elementtree.pyd",
+          "destination": "runtimes/jmcomic/_elementtree.pyd"
+        },
+        {
+          "source": "_hashlib.pyd",
+          "destination": "runtimes/jmcomic/_hashlib.pyd"
+        },
+        {
+          "source": "_lzma.pyd",
+          "destination": "runtimes/jmcomic/_lzma.pyd"
+        },
+        {
+          "source": "_multiprocessing.pyd",
+          "destination": "runtimes/jmcomic/_multiprocessing.pyd"
+        },
+        {
+          "source": "_overlapped.pyd",
+          "destination": "runtimes/jmcomic/_overlapped.pyd"
+        },
+        {
+          "source": "_queue.pyd",
+          "destination": "runtimes/jmcomic/_queue.pyd"
+        },
+        {
+          "source": "_remote_debugging.pyd",
+          "destination": "runtimes/jmcomic/_remote_debugging.pyd"
+        },
+        {
+          "source": "_socket.pyd",
+          "destination": "runtimes/jmcomic/_socket.pyd"
+        },
+        {
+          "source": "_sqlite3.pyd",
+          "destination": "runtimes/jmcomic/_sqlite3.pyd"
+        },
+        {
+          "source": "_ssl.pyd",
+          "destination": "runtimes/jmcomic/_ssl.pyd"
+        },
+        {
+          "source": "_uuid.pyd",
+          "destination": "runtimes/jmcomic/_uuid.pyd"
+        },
+        {
+          "source": "_wmi.pyd",
+          "destination": "runtimes/jmcomic/_wmi.pyd"
+        },
+        {
+          "source": "_zoneinfo.pyd",
+          "destination": "runtimes/jmcomic/_zoneinfo.pyd"
+        },
+        {
+          "source": "_zstd.pyd",
+          "destination": "runtimes/jmcomic/_zstd.pyd"
+        },
+        {
+          "source": "libcrypto-3.dll",
+          "destination": "runtimes/jmcomic/libcrypto-3.dll"
+        },
+        {
+          "source": "libffi-8.dll",
+          "destination": "runtimes/jmcomic/libffi-8.dll"
+        },
+        {
+          "source": "libssl-3.dll",
+          "destination": "runtimes/jmcomic/libssl-3.dll"
+        },
+        {
+          "source": "sqlite3.dll",
+          "destination": "runtimes/jmcomic/sqlite3.dll"
+        },
+        {
+          "source": "python314.zip",
+          "destination": "runtimes/jmcomic/python314.zip"
+        },
+        {
+          "source": "python.cat",
+          "destination": "runtimes/jmcomic/python.cat"
+        }
+      ]
+    },
+    {
+      "name": "jmcomic",
+      "url": "https://files.pythonhosted.org/packages/3a/c0/835dc8137eda3875c9388ad8d827cc7a47519420fe0135cad9598ddf59f9/jmcomic-2.7.12-py3-none-any.whl",
+      "sha256": "127af57c476b22dead1c706ff897ce64b46de71295f7a43680f7c294f1a77bae",
+      "size": 147558,
+      "format": "zip",
+      "files": [
+        {
+          "source": "jmcomic/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/__init__.py"
+        },
+        {
+          "source": "jmcomic/__main__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/__main__.py"
+        },
+        {
+          "source": "jmcomic/api.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/api.py"
+        },
+        {
+          "source": "jmcomic/cli.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/cli.py"
+        },
+        {
+          "source": "jmcomic/common.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/common.py"
+        },
+        {
+          "source": "jmcomic/jm_async_client.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_async_client.py"
+        },
+        {
+          "source": "jmcomic/jm_async_downloader.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_async_downloader.py"
+        },
+        {
+          "source": "jmcomic/jm_client_impl.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_client_impl.py"
+        },
+        {
+          "source": "jmcomic/jm_client_interface.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_client_interface.py"
+        },
+        {
+          "source": "jmcomic/jm_config.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_config.py"
+        },
+        {
+          "source": "jmcomic/jm_downloader.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_downloader.py"
+        },
+        {
+          "source": "jmcomic/jm_entity.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_entity.py"
+        },
+        {
+          "source": "jmcomic/jm_exception.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_exception.py"
+        },
+        {
+          "source": "jmcomic/jm_feature.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_feature.py"
+        },
+        {
+          "source": "jmcomic/jm_option.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_option.py"
+        },
+        {
+          "source": "jmcomic/jm_plugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_plugin.py"
+        },
+        {
+          "source": "jmcomic/jm_runtime.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_runtime.py"
+        },
+        {
+          "source": "jmcomic/jm_task_context.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_task_context.py"
+        },
+        {
+          "source": "jmcomic/jm_toolkit.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic/jm_toolkit.py"
+        },
+        {
+          "source": "jmcomic-2.7.12.dist-info/licenses/LICENSE",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic-2.7.12.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "jmcomic-2.7.12.dist-info/METADATA",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic-2.7.12.dist-info/METADATA"
+        },
+        {
+          "source": "jmcomic-2.7.12.dist-info/WHEEL",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic-2.7.12.dist-info/WHEEL"
+        },
+        {
+          "source": "jmcomic-2.7.12.dist-info/entry_points.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic-2.7.12.dist-info/entry_points.txt"
+        },
+        {
+          "source": "jmcomic-2.7.12.dist-info/top_level.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic-2.7.12.dist-info/top_level.txt"
+        },
+        {
+          "source": "jmcomic-2.7.12.dist-info/RECORD",
+          "destination": "runtimes/jmcomic/Lib/site-packages/jmcomic-2.7.12.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "curl-cffi",
+      "url": "https://files.pythonhosted.org/packages/a1/9f/e860ed1a3fc55c06ea2a148613d07342dc6c6ec2844a2f0ee864eb1b19ce/curl_cffi-0.17.0-cp310-abi3-win_amd64.whl",
+      "sha256": "4c3993c7df155d622869b82a56adb018440587fd3faffeaf8d01cc016d2e1357",
+      "size": 2108164,
+      "format": "zip",
+      "files": [
+        {
+          "source": "curl_cffi/aio.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/aio.py"
+        },
+        {
+          "source": "curl_cffi/const.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/const.py"
+        },
+        {
+          "source": "curl_cffi/curl.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/curl.py"
+        },
+        {
+          "source": "curl_cffi/fingerprints.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/fingerprints.py"
+        },
+        {
+          "source": "curl_cffi/py.typed",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/py.typed"
+        },
+        {
+          "source": "curl_cffi/utils.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/utils.py"
+        },
+        {
+          "source": "curl_cffi/_asyncio_selector.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/_asyncio_selector.py"
+        },
+        {
+          "source": "curl_cffi/_wrapper.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/_wrapper.pyd"
+        },
+        {
+          "source": "curl_cffi/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/__init__.py"
+        },
+        {
+          "source": "curl_cffi/__main__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/__main__.py"
+        },
+        {
+          "source": "curl_cffi/__version__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/__version__.py"
+        },
+        {
+          "source": "curl_cffi/cli/doctor.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/cli/doctor.py"
+        },
+        {
+          "source": "curl_cffi/cli/output.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/cli/output.py"
+        },
+        {
+          "source": "curl_cffi/cli/parse.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/cli/parse.py"
+        },
+        {
+          "source": "curl_cffi/cli/pro.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/cli/pro.py"
+        },
+        {
+          "source": "curl_cffi/cli/request.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/cli/request.py"
+        },
+        {
+          "source": "curl_cffi/cli/run.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/cli/run.py"
+        },
+        {
+          "source": "curl_cffi/cli/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/cli/__init__.py"
+        },
+        {
+          "source": "curl_cffi/requests/cache.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/cache.py"
+        },
+        {
+          "source": "curl_cffi/requests/cookies.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/cookies.py"
+        },
+        {
+          "source": "curl_cffi/requests/errors.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/errors.py"
+        },
+        {
+          "source": "curl_cffi/requests/exceptions.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/exceptions.py"
+        },
+        {
+          "source": "curl_cffi/requests/headers.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/headers.py"
+        },
+        {
+          "source": "curl_cffi/requests/impersonate.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/impersonate.py"
+        },
+        {
+          "source": "curl_cffi/requests/models.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/models.py"
+        },
+        {
+          "source": "curl_cffi/requests/session.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/session.py"
+        },
+        {
+          "source": "curl_cffi/requests/streams.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/streams.py"
+        },
+        {
+          "source": "curl_cffi/requests/utils.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/utils.py"
+        },
+        {
+          "source": "curl_cffi/requests/websockets.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/websockets.py"
+        },
+        {
+          "source": "curl_cffi/requests/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi/requests/__init__.py"
+        },
+        {
+          "source": "curl_cffi.libs/libcurl-impersonate-ae864b926b0a86bfa3b18a664407a1ab.dll",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi.libs/libcurl-impersonate-ae864b926b0a86bfa3b18a664407a1ab.dll"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/DELVEWHEEL",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi-0.17.0.dist-info/DELVEWHEEL"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/entry_points.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi-0.17.0.dist-info/entry_points.txt"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/METADATA",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi-0.17.0.dist-info/METADATA"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/RECORD",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi-0.17.0.dist-info/RECORD"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/top_level.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi-0.17.0.dist-info/top_level.txt"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/WHEEL",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi-0.17.0.dist-info/WHEEL"
+        },
+        {
+          "source": "curl_cffi-0.17.0.dist-info/licenses/LICENSE",
+          "destination": "runtimes/jmcomic/Lib/site-packages/curl_cffi-0.17.0.dist-info/licenses/LICENSE"
+        }
+      ]
+    },
+    {
+      "name": "pillow",
+      "url": "https://files.pythonhosted.org/packages/50/e2/7ad17747517e4c813dca78257d6bb593466f8231baf1384bc98d92745edb/pillow-13.0.0-cp314-cp314-win_amd64.whl",
+      "sha256": "f7cbb7a64e7ec664775195e4f81923bc8a93d9451b963f844e59118f63147a7a",
+      "size": 7281830,
+      "format": "zip",
+      "files": [
+        {
+          "source": "PIL/AvifImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/AvifImagePlugin.py"
+        },
+        {
+          "source": "PIL/BdfFontFile.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/BdfFontFile.py"
+        },
+        {
+          "source": "PIL/BlpImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/BlpImagePlugin.py"
+        },
+        {
+          "source": "PIL/BmpImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/BmpImagePlugin.py"
+        },
+        {
+          "source": "PIL/BufrStubImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/BufrStubImagePlugin.py"
+        },
+        {
+          "source": "PIL/ContainerIO.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ContainerIO.py"
+        },
+        {
+          "source": "PIL/CurImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/CurImagePlugin.py"
+        },
+        {
+          "source": "PIL/DcxImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/DcxImagePlugin.py"
+        },
+        {
+          "source": "PIL/DdsImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/DdsImagePlugin.py"
+        },
+        {
+          "source": "PIL/EpsImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/EpsImagePlugin.py"
+        },
+        {
+          "source": "PIL/ExifTags.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ExifTags.py"
+        },
+        {
+          "source": "PIL/FitsImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/FitsImagePlugin.py"
+        },
+        {
+          "source": "PIL/FliImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/FliImagePlugin.py"
+        },
+        {
+          "source": "PIL/FontFile.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/FontFile.py"
+        },
+        {
+          "source": "PIL/FpxImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/FpxImagePlugin.py"
+        },
+        {
+          "source": "PIL/FtexImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/FtexImagePlugin.py"
+        },
+        {
+          "source": "PIL/GbrImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/GbrImagePlugin.py"
+        },
+        {
+          "source": "PIL/GdImageFile.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/GdImageFile.py"
+        },
+        {
+          "source": "PIL/GifImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/GifImagePlugin.py"
+        },
+        {
+          "source": "PIL/GimpGradientFile.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/GimpGradientFile.py"
+        },
+        {
+          "source": "PIL/GimpPaletteFile.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/GimpPaletteFile.py"
+        },
+        {
+          "source": "PIL/GribStubImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/GribStubImagePlugin.py"
+        },
+        {
+          "source": "PIL/Hdf5StubImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/Hdf5StubImagePlugin.py"
+        },
+        {
+          "source": "PIL/IcnsImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/IcnsImagePlugin.py"
+        },
+        {
+          "source": "PIL/IcoImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/IcoImagePlugin.py"
+        },
+        {
+          "source": "PIL/ImImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImImagePlugin.py"
+        },
+        {
+          "source": "PIL/Image.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/Image.py"
+        },
+        {
+          "source": "PIL/ImageChops.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageChops.py"
+        },
+        {
+          "source": "PIL/ImageCms.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageCms.py"
+        },
+        {
+          "source": "PIL/ImageColor.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageColor.py"
+        },
+        {
+          "source": "PIL/ImageDraw.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageDraw.py"
+        },
+        {
+          "source": "PIL/ImageDraw2.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageDraw2.py"
+        },
+        {
+          "source": "PIL/ImageEnhance.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageEnhance.py"
+        },
+        {
+          "source": "PIL/ImageFile.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageFile.py"
+        },
+        {
+          "source": "PIL/ImageFilter.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageFilter.py"
+        },
+        {
+          "source": "PIL/ImageFont.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageFont.py"
+        },
+        {
+          "source": "PIL/ImageGrab.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageGrab.py"
+        },
+        {
+          "source": "PIL/ImageMath.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageMath.py"
+        },
+        {
+          "source": "PIL/ImageMode.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageMode.py"
+        },
+        {
+          "source": "PIL/ImageMorph.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageMorph.py"
+        },
+        {
+          "source": "PIL/ImageOps.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageOps.py"
+        },
+        {
+          "source": "PIL/ImagePalette.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImagePalette.py"
+        },
+        {
+          "source": "PIL/ImagePath.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImagePath.py"
+        },
+        {
+          "source": "PIL/ImageQt.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageQt.py"
+        },
+        {
+          "source": "PIL/ImageSequence.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageSequence.py"
+        },
+        {
+          "source": "PIL/ImageShow.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageShow.py"
+        },
+        {
+          "source": "PIL/ImageStat.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageStat.py"
+        },
+        {
+          "source": "PIL/ImageText.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageText.py"
+        },
+        {
+          "source": "PIL/ImageTk.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageTk.py"
+        },
+        {
+          "source": "PIL/ImageTransform.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageTransform.py"
+        },
+        {
+          "source": "PIL/ImageWin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImageWin.py"
+        },
+        {
+          "source": "PIL/ImtImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/ImtImagePlugin.py"
+        },
+        {
+          "source": "PIL/IptcImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/IptcImagePlugin.py"
+        },
+        {
+          "source": "PIL/Jpeg2KImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/Jpeg2KImagePlugin.py"
+        },
+        {
+          "source": "PIL/JpegImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/JpegImagePlugin.py"
+        },
+        {
+          "source": "PIL/JpegPresets.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/JpegPresets.py"
+        },
+        {
+          "source": "PIL/McIdasImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/McIdasImagePlugin.py"
+        },
+        {
+          "source": "PIL/MicImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/MicImagePlugin.py"
+        },
+        {
+          "source": "PIL/MpegImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/MpegImagePlugin.py"
+        },
+        {
+          "source": "PIL/MpoImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/MpoImagePlugin.py"
+        },
+        {
+          "source": "PIL/MspImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/MspImagePlugin.py"
+        },
+        {
+          "source": "PIL/PSDraw.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PSDraw.py"
+        },
+        {
+          "source": "PIL/PaletteFile.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PaletteFile.py"
+        },
+        {
+          "source": "PIL/PalmImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PalmImagePlugin.py"
+        },
+        {
+          "source": "PIL/PcdImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PcdImagePlugin.py"
+        },
+        {
+          "source": "PIL/PcfFontFile.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PcfFontFile.py"
+        },
+        {
+          "source": "PIL/PcxImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PcxImagePlugin.py"
+        },
+        {
+          "source": "PIL/PdfImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PdfImagePlugin.py"
+        },
+        {
+          "source": "PIL/PdfParser.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PdfParser.py"
+        },
+        {
+          "source": "PIL/PixarImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PixarImagePlugin.py"
+        },
+        {
+          "source": "PIL/PngImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PngImagePlugin.py"
+        },
+        {
+          "source": "PIL/PpmImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PpmImagePlugin.py"
+        },
+        {
+          "source": "PIL/PsdImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/PsdImagePlugin.py"
+        },
+        {
+          "source": "PIL/QoiImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/QoiImagePlugin.py"
+        },
+        {
+          "source": "PIL/SgiImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/SgiImagePlugin.py"
+        },
+        {
+          "source": "PIL/SpiderImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/SpiderImagePlugin.py"
+        },
+        {
+          "source": "PIL/SunImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/SunImagePlugin.py"
+        },
+        {
+          "source": "PIL/TarIO.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/TarIO.py"
+        },
+        {
+          "source": "PIL/TgaImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/TgaImagePlugin.py"
+        },
+        {
+          "source": "PIL/TiffImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/TiffImagePlugin.py"
+        },
+        {
+          "source": "PIL/TiffTags.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/TiffTags.py"
+        },
+        {
+          "source": "PIL/WalImageFile.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/WalImageFile.py"
+        },
+        {
+          "source": "PIL/WebPImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/WebPImagePlugin.py"
+        },
+        {
+          "source": "PIL/WmfImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/WmfImagePlugin.py"
+        },
+        {
+          "source": "PIL/XVThumbImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/XVThumbImagePlugin.py"
+        },
+        {
+          "source": "PIL/XbmImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/XbmImagePlugin.py"
+        },
+        {
+          "source": "PIL/XpmImagePlugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/XpmImagePlugin.py"
+        },
+        {
+          "source": "PIL/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/__init__.py"
+        },
+        {
+          "source": "PIL/__main__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/__main__.py"
+        },
+        {
+          "source": "PIL/_avif.cp314-win_amd64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_avif.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "PIL/_avif.pyi",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_avif.pyi"
+        },
+        {
+          "source": "PIL/_binary.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_binary.py"
+        },
+        {
+          "source": "PIL/_deprecate.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_deprecate.py"
+        },
+        {
+          "source": "PIL/_imaging.cp314-win_amd64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imaging.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "PIL/_imaging.pyi",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imaging.pyi"
+        },
+        {
+          "source": "PIL/_imagingcms.cp314-win_amd64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imagingcms.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "PIL/_imagingcms.pyi",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imagingcms.pyi"
+        },
+        {
+          "source": "PIL/_imagingft.cp314-win_amd64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imagingft.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "PIL/_imagingft.pyi",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imagingft.pyi"
+        },
+        {
+          "source": "PIL/_imagingmath.cp314-win_amd64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imagingmath.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "PIL/_imagingmath.pyi",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imagingmath.pyi"
+        },
+        {
+          "source": "PIL/_imagingmorph.cp314-win_amd64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imagingmorph.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "PIL/_imagingmorph.pyi",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imagingmorph.pyi"
+        },
+        {
+          "source": "PIL/_imagingtk.cp314-win_amd64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imagingtk.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "PIL/_imagingtk.pyi",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_imagingtk.pyi"
+        },
+        {
+          "source": "PIL/_tkinter_finder.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_tkinter_finder.py"
+        },
+        {
+          "source": "PIL/_typing.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_typing.py"
+        },
+        {
+          "source": "PIL/_util.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_util.py"
+        },
+        {
+          "source": "PIL/_version.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_version.py"
+        },
+        {
+          "source": "PIL/_webp.cp314-win_amd64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_webp.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "PIL/_webp.pyi",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/_webp.pyi"
+        },
+        {
+          "source": "PIL/features.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/features.py"
+        },
+        {
+          "source": "PIL/py.typed",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/py.typed"
+        },
+        {
+          "source": "PIL/report.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/PIL/report.py"
+        },
+        {
+          "source": "pillow-13.0.0.dist-info/licenses/LICENSE",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pillow-13.0.0.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "pillow-13.0.0.dist-info/METADATA",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pillow-13.0.0.dist-info/METADATA"
+        },
+        {
+          "source": "pillow-13.0.0.dist-info/WHEEL",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pillow-13.0.0.dist-info/WHEEL"
+        },
+        {
+          "source": "pillow-13.0.0.dist-info/top_level.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pillow-13.0.0.dist-info/top_level.txt"
+        },
+        {
+          "source": "pillow-13.0.0.dist-info/RECORD",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pillow-13.0.0.dist-info/RECORD"
+        },
+        {
+          "source": "pillow-13.0.0.dist-info/sboms/pillow-13.0.0.cdx.json",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pillow-13.0.0.dist-info/sboms/pillow-13.0.0.cdx.json"
+        }
+      ]
+    },
+    {
+      "name": "pycryptodome",
+      "url": "https://files.pythonhosted.org/packages/f3/10/f375e028f5e3b10b4858010ffa391e66c7b61a410284bdc3e0f351edefc7/pycryptodome-4.6.0-cp39-abi3-win_amd64.whl",
+      "sha256": "0500c66f8cc33db5450f24aedd10a6e430e4d83c377dbd8ca0e845ae27b4312f",
+      "size": 1898936,
+      "format": "zip",
+      "files": [
+        {
+          "source": "Crypto/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/__init__.py"
+        },
+        {
+          "source": "Crypto/py.typed",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/py.typed"
+        },
+        {
+          "source": "Crypto/Cipher/AEGIS.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/AEGIS.py"
+        },
+        {
+          "source": "Crypto/Cipher/AES.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/AES.py"
+        },
+        {
+          "source": "Crypto/Cipher/ARC2.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/ARC2.py"
+        },
+        {
+          "source": "Crypto/Cipher/ARC4.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/ARC4.py"
+        },
+        {
+          "source": "Crypto/Cipher/Blowfish.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/Blowfish.py"
+        },
+        {
+          "source": "Crypto/Cipher/CAST.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/CAST.py"
+        },
+        {
+          "source": "Crypto/Cipher/ChaCha20.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/ChaCha20.py"
+        },
+        {
+          "source": "Crypto/Cipher/ChaCha20_Poly1305.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/ChaCha20_Poly1305.py"
+        },
+        {
+          "source": "Crypto/Cipher/DES.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/DES.py"
+        },
+        {
+          "source": "Crypto/Cipher/DES3.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/DES3.py"
+        },
+        {
+          "source": "Crypto/Cipher/PKCS1_OAEP.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/PKCS1_OAEP.py"
+        },
+        {
+          "source": "Crypto/Cipher/PKCS1_v1_5.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/PKCS1_v1_5.py"
+        },
+        {
+          "source": "Crypto/Cipher/Salsa20.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/Salsa20.py"
+        },
+        {
+          "source": "Crypto/Cipher/_ARC4.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_ARC4.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_EKSBlowfish.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_EKSBlowfish.py"
+        },
+        {
+          "source": "Crypto/Cipher/_Salsa20.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_Salsa20.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_Salsa20_avx2_bmi2.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_Salsa20_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/__init__.py"
+        },
+        {
+          "source": "Crypto/Cipher/_chacha20.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_chacha20.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_chacha20_avx2_bmi2.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_chacha20_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_cbc.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_cbc.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_ccm.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_ccm.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_cfb.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_cfb.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_ctr.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_ctr.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_eax.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_eax.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_ecb.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_ecb.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_gcm.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_gcm.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_gcm_siv.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_gcm_siv.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_kw.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_kw.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_kwp.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_kwp.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_ocb.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_ocb.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_ofb.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_ofb.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_openpgp.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_openpgp.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_siv.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_siv.py"
+        },
+        {
+          "source": "Crypto/Cipher/_mode_xts.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_mode_xts.py"
+        },
+        {
+          "source": "Crypto/Cipher/_pkcs1_decode.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_pkcs1_decode.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_pkcs1_oaep_decode.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_pkcs1_oaep_decode.py"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_aegis.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_aegis.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_aegis_aesni.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_aegis_aesni.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_aes.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_aes.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_aesni.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_aesni.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_arc2.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_arc2.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_blowfish.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_blowfish.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_cast.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_cast.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_cbc.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_cbc.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_cfb.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_cfb.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_ctr.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_ctr.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_des.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_des.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_des3.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_des3.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_ecb.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_ecb.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_eksblowfish.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_eksblowfish.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_ocb.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_ocb.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_ofb.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_ofb.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_raw_xts.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_raw_xts.pyd"
+        },
+        {
+          "source": "Crypto/Cipher/_state_machine.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/_state_machine.py"
+        },
+        {
+          "source": "Crypto/Cipher/oaep.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Cipher/oaep.py"
+        },
+        {
+          "source": "Crypto/Hash/BLAKE2b.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/BLAKE2b.py"
+        },
+        {
+          "source": "Crypto/Hash/BLAKE2s.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/BLAKE2s.py"
+        },
+        {
+          "source": "Crypto/Hash/CMAC.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/CMAC.py"
+        },
+        {
+          "source": "Crypto/Hash/HMAC.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/HMAC.py"
+        },
+        {
+          "source": "Crypto/Hash/KMAC128.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/KMAC128.py"
+        },
+        {
+          "source": "Crypto/Hash/KMAC256.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/KMAC256.py"
+        },
+        {
+          "source": "Crypto/Hash/KangarooTwelve.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/KangarooTwelve.py"
+        },
+        {
+          "source": "Crypto/Hash/MD2.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/MD2.py"
+        },
+        {
+          "source": "Crypto/Hash/MD4.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/MD4.py"
+        },
+        {
+          "source": "Crypto/Hash/MD5.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/MD5.py"
+        },
+        {
+          "source": "Crypto/Hash/Poly1305.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/Poly1305.py"
+        },
+        {
+          "source": "Crypto/Hash/RIPEMD.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/RIPEMD.py"
+        },
+        {
+          "source": "Crypto/Hash/RIPEMD160.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/RIPEMD160.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHA.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA1.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHA1.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA224.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHA224.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA256.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHA256.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA384.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHA384.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA3_224.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHA3_224.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA3_256.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHA3_256.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA3_384.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHA3_384.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA3_512.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHA3_512.py"
+        },
+        {
+          "source": "Crypto/Hash/SHA512.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHA512.py"
+        },
+        {
+          "source": "Crypto/Hash/SHAKE128.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHAKE128.py"
+        },
+        {
+          "source": "Crypto/Hash/SHAKE256.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/SHAKE256.py"
+        },
+        {
+          "source": "Crypto/Hash/TupleHash128.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/TupleHash128.py"
+        },
+        {
+          "source": "Crypto/Hash/TupleHash256.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/TupleHash256.py"
+        },
+        {
+          "source": "Crypto/Hash/TurboSHAKE128.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/TurboSHAKE128.py"
+        },
+        {
+          "source": "Crypto/Hash/TurboSHAKE256.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/TurboSHAKE256.py"
+        },
+        {
+          "source": "Crypto/Hash/_BLAKE2b.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_BLAKE2b.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_BLAKE2s.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_BLAKE2s.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_MD2.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_MD2.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_MD4.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_MD4.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_MD5.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_MD5.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_RIPEMD160.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_RIPEMD160.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA1.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_SHA1.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA224.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_SHA224.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA224_shani.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_SHA224_shani.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA256.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_SHA256.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA256_shani.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_SHA256_shani.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA384.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_SHA384.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_SHA512.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_SHA512.pyd"
+        },
+        {
+          "source": "Crypto/Hash/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/__init__.py"
+        },
+        {
+          "source": "Crypto/Hash/_ghash_clmul.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_ghash_clmul.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_ghash_portable.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_ghash_portable.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_k12.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_k12.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_k12_avx2_bmi2.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_k12_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_keccak.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_keccak.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_keccak_avx2_bmi2.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_keccak_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/Hash/_poly1305.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/_poly1305.pyd"
+        },
+        {
+          "source": "Crypto/Hash/cSHAKE128.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/cSHAKE128.py"
+        },
+        {
+          "source": "Crypto/Hash/cSHAKE256.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/cSHAKE256.py"
+        },
+        {
+          "source": "Crypto/Hash/keccak.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Hash/keccak.py"
+        },
+        {
+          "source": "Crypto/IO/PEM.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/IO/PEM.py"
+        },
+        {
+          "source": "Crypto/IO/PKCS8.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/IO/PKCS8.py"
+        },
+        {
+          "source": "Crypto/IO/_PBES.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/IO/_PBES.py"
+        },
+        {
+          "source": "Crypto/IO/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/IO/__init__.py"
+        },
+        {
+          "source": "Crypto/Math/Numbers.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Math/Numbers.py"
+        },
+        {
+          "source": "Crypto/Math/Primality.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Math/Primality.py"
+        },
+        {
+          "source": "Crypto/Math/_IntegerBase.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Math/_IntegerBase.py"
+        },
+        {
+          "source": "Crypto/Math/_IntegerNat.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Math/_IntegerNat.py"
+        },
+        {
+          "source": "Crypto/Math/_IntegerNative.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Math/_IntegerNative.py"
+        },
+        {
+          "source": "Crypto/Math/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Math/__init__.py"
+        },
+        {
+          "source": "Crypto/Math/_nat.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Math/_nat.pyd"
+        },
+        {
+          "source": "Crypto/Math/_nat_bmi2_adx.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Math/_nat_bmi2_adx.pyd"
+        },
+        {
+          "source": "Crypto/Protocol/DH.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Protocol/DH.py"
+        },
+        {
+          "source": "Crypto/Protocol/HPKE.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Protocol/HPKE.py"
+        },
+        {
+          "source": "Crypto/Protocol/KDF.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Protocol/KDF.py"
+        },
+        {
+          "source": "Crypto/Protocol/SecretSharing.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Protocol/SecretSharing.py"
+        },
+        {
+          "source": "Crypto/Protocol/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Protocol/__init__.py"
+        },
+        {
+          "source": "Crypto/Protocol/_scrypt.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Protocol/_scrypt.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/DSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/DSA.py"
+        },
+        {
+          "source": "Crypto/PublicKey/ECC.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/ECC.py"
+        },
+        {
+          "source": "Crypto/PublicKey/ElGamal.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/ElGamal.py"
+        },
+        {
+          "source": "Crypto/PublicKey/Hybrid.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/Hybrid.py"
+        },
+        {
+          "source": "Crypto/PublicKey/MLDSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/MLDSA.py"
+        },
+        {
+          "source": "Crypto/PublicKey/MLKEM.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/MLKEM.py"
+        },
+        {
+          "source": "Crypto/PublicKey/RSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/RSA.py"
+        },
+        {
+          "source": "Crypto/PublicKey/SLHDSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/SLHDSA.py"
+        },
+        {
+          "source": "Crypto/PublicKey/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/__init__.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_curve.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_curve.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_curve25519.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_curve25519.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_ec_lib.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_ec_lib.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_ec_nat.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_ec_nat.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_ec_nat_bmi2_adx.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_ec_nat_bmi2_adx.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_ed25519.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_ed25519.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_edwards.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_edwards.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_fips205.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_fips205.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_mldsa.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_mldsa.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_mldsa_avx2_bmi2.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_mldsa_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_mlkem.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_mlkem.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_mlkem_avx2_bmi2.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_mlkem_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_montgomery.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_montgomery.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_nist_ecc.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_nist_ecc.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_openssh.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_openssh.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_point.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_point.py"
+        },
+        {
+          "source": "Crypto/PublicKey/_slhdsa.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_slhdsa.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_slhdsa_avx2_bmi2.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_slhdsa_avx2_bmi2.pyd"
+        },
+        {
+          "source": "Crypto/PublicKey/_slhdsa_shani.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/PublicKey/_slhdsa_shani.pyd"
+        },
+        {
+          "source": "Crypto/Random/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Random/__init__.py"
+        },
+        {
+          "source": "Crypto/Random/random.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Random/random.py"
+        },
+        {
+          "source": "Crypto/SelfTest/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/__main__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/__main__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/loader.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/loader.py"
+        },
+        {
+          "source": "Crypto/SelfTest/plugin.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/plugin.py"
+        },
+        {
+          "source": "Crypto/SelfTest/st_common.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/st_common.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/common.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/common.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_AEGIS.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_AEGIS.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_AES.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_AES.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_ARC2.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_ARC2.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_ARC4.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_ARC4.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_Blowfish.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_Blowfish.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_CAST.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_CAST.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_CBC.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_CBC.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_CCM.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_CCM.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_CFB.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_CFB.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_CTR.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_CTR.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_ChaCha20.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_ChaCha20.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_ChaCha20_Poly1305.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_ChaCha20_Poly1305.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_DES.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_DES.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_DES3.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_DES3.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_EAX.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_EAX.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_GCM.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_GCM.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_GCM_SIV.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_GCM_SIV.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_KW.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_KW.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_OCB.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_OCB.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_OFB.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_OFB.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_OpenPGP.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_OpenPGP.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_SIV.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_SIV.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_Salsa20.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_Salsa20.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_XTS.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_XTS.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_message_too_long.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_message_too_long.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_pkcs1_15.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_pkcs1_15.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_pkcs1_oaep.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_pkcs1_oaep.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Cipher/test_shared_objects.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Cipher/test_shared_objects.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/common.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/common.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_BLAKE2.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_BLAKE2.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_CMAC.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_CMAC.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_HMAC.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_HMAC.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_KMAC.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_KMAC.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_KangarooTwelve.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_KangarooTwelve.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_MD2.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_MD2.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_MD4.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_MD4.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_MD5.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_MD5.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_Poly1305.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_Poly1305.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_RIPEMD160.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_RIPEMD160.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA1.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA1.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA224.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA224.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA256.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA256.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA384.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA384.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA3_224.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA3_224.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA3_256.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA3_256.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA3_384.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA3_384.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA3_512.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA3_512.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHA512.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_SHA512.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_SHAKE.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_SHAKE.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_TupleHash.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_TupleHash.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_TurboSHAKE.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_TurboSHAKE.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_cSHAKE.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_cSHAKE.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_keccak.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_keccak.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_oneshot_digest.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_oneshot_digest.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Hash/test_shared_objects.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Hash/test_shared_objects.py"
+        },
+        {
+          "source": "Crypto/SelfTest/IO/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/IO/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/IO/test_PBES.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/IO/test_PBES.py"
+        },
+        {
+          "source": "Crypto/SelfTest/IO/test_PEM.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/IO/test_PEM.py"
+        },
+        {
+          "source": "Crypto/SelfTest/IO/test_PKCS8.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/IO/test_PKCS8.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Math/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Math/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Math/test_Numbers.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Math/test_Numbers.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Math/test_Primality.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Math/test_Primality.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Math/test_nat.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Math/test_nat.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Protocol/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/test_HPKE.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Protocol/test_HPKE.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/test_KDF.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Protocol/test_KDF.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/test_SecretSharing.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Protocol/test_SecretSharing.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/test_ecdh.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Protocol/test_ecdh.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Protocol/test_rfc1751.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Protocol/test_rfc1751.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_DSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_DSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_Curve25519.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_Curve25519.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_Curve448.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_Curve448.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_Ed25519.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_Ed25519.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_Ed448.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_Ed448.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_NIST.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_NIST.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ECC_secp256k1.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ECC_secp256k1.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_ElGamal.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_ElGamal.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_Hybrid.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_Hybrid.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_MLDSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_MLDSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_MLKEM.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_MLKEM.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_RSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_RSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_SLHDSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_SLHDSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_Curve25519.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_Curve25519.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_Curve448.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_Curve448.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_DSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_DSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_ECC.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_ECC.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_MLDSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_MLDSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_MLKEM.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_MLKEM.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_RSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_RSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_SLHDSA.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_SLHDSA.py"
+        },
+        {
+          "source": "Crypto/SelfTest/PublicKey/test_import_passphrase.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/PublicKey/test_import_passphrase.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Random/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Random/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Random/test_random.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Random/test_random.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Signature/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_dss.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Signature/test_dss.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_eddsa.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Signature/test_eddsa.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_mldsa.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Signature/test_mldsa.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_pkcs1_15.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Signature/test_pkcs1_15.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_pss.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Signature/test_pss.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Signature/test_slhdsa.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Signature/test_slhdsa.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Util/__init__.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_Counter.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Util/test_Counter.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_Padding.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Util/test_Padding.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_asn1.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Util/test_asn1.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_cpu_features.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Util/test_cpu_features.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_number.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Util/test_number.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_raw_api.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Util/test_raw_api.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_rfc1751.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Util/test_rfc1751.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_strxor.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Util/test_strxor.py"
+        },
+        {
+          "source": "Crypto/SelfTest/Util/test_threads.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/SelfTest/Util/test_threads.py"
+        },
+        {
+          "source": "Crypto/Signature/DSS.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Signature/DSS.py"
+        },
+        {
+          "source": "Crypto/Signature/PKCS1_PSS.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Signature/PKCS1_PSS.py"
+        },
+        {
+          "source": "Crypto/Signature/PKCS1_v1_5.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Signature/PKCS1_v1_5.py"
+        },
+        {
+          "source": "Crypto/Signature/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Signature/__init__.py"
+        },
+        {
+          "source": "Crypto/Signature/eddsa.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Signature/eddsa.py"
+        },
+        {
+          "source": "Crypto/Signature/mldsa.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Signature/mldsa.py"
+        },
+        {
+          "source": "Crypto/Signature/pkcs1_15.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Signature/pkcs1_15.py"
+        },
+        {
+          "source": "Crypto/Signature/pss.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Signature/pss.py"
+        },
+        {
+          "source": "Crypto/Signature/slhdsa.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Signature/slhdsa.py"
+        },
+        {
+          "source": "Crypto/Util/Counter.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/Counter.py"
+        },
+        {
+          "source": "Crypto/Util/Padding.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/Padding.py"
+        },
+        {
+          "source": "Crypto/Util/RFC1751.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/RFC1751.py"
+        },
+        {
+          "source": "Crypto/Util/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/__init__.py"
+        },
+        {
+          "source": "Crypto/Util/_base64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/_base64.pyd"
+        },
+        {
+          "source": "Crypto/Util/_bytes.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/_bytes.py"
+        },
+        {
+          "source": "Crypto/Util/_cpu_features.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/_cpu_features.py"
+        },
+        {
+          "source": "Crypto/Util/_cpuid_c.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/_cpuid_c.pyd"
+        },
+        {
+          "source": "Crypto/Util/_file_system.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/_file_system.py"
+        },
+        {
+          "source": "Crypto/Util/_raw_api.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/_raw_api.py"
+        },
+        {
+          "source": "Crypto/Util/_strxor.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/_strxor.pyd"
+        },
+        {
+          "source": "Crypto/Util/_threads.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/_threads.py"
+        },
+        {
+          "source": "Crypto/Util/_typing.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/_typing.py"
+        },
+        {
+          "source": "Crypto/Util/asn1.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/asn1.py"
+        },
+        {
+          "source": "Crypto/Util/number.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/number.py"
+        },
+        {
+          "source": "Crypto/Util/strxor.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/Crypto/Util/strxor.py"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/licenses/LICENSE.rst",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycryptodome-4.6.0.dist-info/licenses/LICENSE.rst"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/licenses/src/mldsa-native/LICENSE",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycryptodome-4.6.0.dist-info/licenses/src/mldsa-native/LICENSE"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/licenses/src/mlkem-native/LICENSE",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycryptodome-4.6.0.dist-info/licenses/src/mlkem-native/LICENSE"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/METADATA",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycryptodome-4.6.0.dist-info/METADATA"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/WHEEL",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycryptodome-4.6.0.dist-info/WHEEL"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/top_level.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycryptodome-4.6.0.dist-info/top_level.txt"
+        },
+        {
+          "source": "pycryptodome-4.6.0.dist-info/RECORD",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycryptodome-4.6.0.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "pyyaml",
+      "url": "https://files.pythonhosted.org/packages/b4/b5/e5cf6ca786f8a5b9bd91e01fe8f2113300bc5628fcfdd3ca02d271970824/pyyaml-6.0.4-cp314-cp314-win_amd64.whl",
+      "sha256": "1d2f08c122727c86f8303bb1dd45159ca1de1f2d68798e671ec46974e321008e",
+      "size": 157525,
+      "format": "zip",
+      "files": [
+        {
+          "source": "_yaml/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/_yaml/__init__.py"
+        },
+        {
+          "source": "pyyaml-6.0.4.dist-info/licenses/LICENSE",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pyyaml-6.0.4.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "yaml/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/__init__.py"
+        },
+        {
+          "source": "yaml/_yaml.cp314-win_amd64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/_yaml.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "yaml/composer.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/composer.py"
+        },
+        {
+          "source": "yaml/constructor.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/constructor.py"
+        },
+        {
+          "source": "yaml/cyaml.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/cyaml.py"
+        },
+        {
+          "source": "yaml/dumper.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/dumper.py"
+        },
+        {
+          "source": "yaml/emitter.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/emitter.py"
+        },
+        {
+          "source": "yaml/error.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/error.py"
+        },
+        {
+          "source": "yaml/events.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/events.py"
+        },
+        {
+          "source": "yaml/loader.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/loader.py"
+        },
+        {
+          "source": "yaml/nodes.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/nodes.py"
+        },
+        {
+          "source": "yaml/parser.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/parser.py"
+        },
+        {
+          "source": "yaml/reader.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/reader.py"
+        },
+        {
+          "source": "yaml/representer.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/representer.py"
+        },
+        {
+          "source": "yaml/resolver.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/resolver.py"
+        },
+        {
+          "source": "yaml/scanner.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/scanner.py"
+        },
+        {
+          "source": "yaml/serializer.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/serializer.py"
+        },
+        {
+          "source": "yaml/tokens.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/yaml/tokens.py"
+        },
+        {
+          "source": "pyyaml-6.0.4.dist-info/METADATA",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pyyaml-6.0.4.dist-info/METADATA"
+        },
+        {
+          "source": "pyyaml-6.0.4.dist-info/WHEEL",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pyyaml-6.0.4.dist-info/WHEEL"
+        },
+        {
+          "source": "pyyaml-6.0.4.dist-info/top_level.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pyyaml-6.0.4.dist-info/top_level.txt"
+        },
+        {
+          "source": "pyyaml-6.0.4.dist-info/RECORD",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pyyaml-6.0.4.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "cffi",
+      "url": "https://files.pythonhosted.org/packages/a7/06/1c3e01e3ba14c39f6d10bfbac52753b7e22259e38088e5cfe1d704918690/cffi-2.1.1-cp314-cp314-win_amd64.whl",
+      "sha256": "3222ba5d678f80a030e6afbcc33dc1ae5cb45facabb61cee2c7016b8432fde48",
+      "size": 187949,
+      "format": "zip",
+      "files": [
+        {
+          "source": "_cffi_backend.cp314-win_amd64.pyd",
+          "destination": "runtimes/jmcomic/Lib/site-packages/_cffi_backend.cp314-win_amd64.pyd"
+        },
+        {
+          "source": "cffi/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/__init__.py"
+        },
+        {
+          "source": "cffi/_cffi_errors.h",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/_cffi_errors.h"
+        },
+        {
+          "source": "cffi/_cffi_gen_src.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/_cffi_gen_src.py"
+        },
+        {
+          "source": "cffi/_cffi_include.h",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/_cffi_include.h"
+        },
+        {
+          "source": "cffi/_embedding.h",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/_embedding.h"
+        },
+        {
+          "source": "cffi/_imp_emulation.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/_imp_emulation.py"
+        },
+        {
+          "source": "cffi/_shimmed_dist_utils.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/_shimmed_dist_utils.py"
+        },
+        {
+          "source": "cffi/api.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/api.py"
+        },
+        {
+          "source": "cffi/backend_ctypes.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/backend_ctypes.py"
+        },
+        {
+          "source": "cffi/cffi_opcode.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/cffi_opcode.py"
+        },
+        {
+          "source": "cffi/commontypes.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/commontypes.py"
+        },
+        {
+          "source": "cffi/cparser.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/cparser.py"
+        },
+        {
+          "source": "cffi/error.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/error.py"
+        },
+        {
+          "source": "cffi/ffiplatform.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/ffiplatform.py"
+        },
+        {
+          "source": "cffi/gen_src.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/gen_src.py"
+        },
+        {
+          "source": "cffi/lock.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/lock.py"
+        },
+        {
+          "source": "cffi/model.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/model.py"
+        },
+        {
+          "source": "cffi/parse_c_type.h",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/parse_c_type.h"
+        },
+        {
+          "source": "cffi/pkgconfig.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/pkgconfig.py"
+        },
+        {
+          "source": "cffi/recompiler.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/recompiler.py"
+        },
+        {
+          "source": "cffi/setuptools_ext.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/setuptools_ext.py"
+        },
+        {
+          "source": "cffi/vengine_cpy.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/vengine_cpy.py"
+        },
+        {
+          "source": "cffi/vengine_gen.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/vengine_gen.py"
+        },
+        {
+          "source": "cffi/verifier.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi/verifier.py"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/licenses/LICENSE",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi-2.1.1.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/METADATA",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi-2.1.1.dist-info/METADATA"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/WHEEL",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi-2.1.1.dist-info/WHEEL"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/entry_points.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi-2.1.1.dist-info/entry_points.txt"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/top_level.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi-2.1.1.dist-info/top_level.txt"
+        },
+        {
+          "source": "cffi-2.1.1.dist-info/RECORD",
+          "destination": "runtimes/jmcomic/Lib/site-packages/cffi-2.1.1.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "certifi",
+      "url": "https://files.pythonhosted.org/packages/6d/39/5eec3296860b94ac20bb8ed807725b88f6adfab3f343df592afd975f5f86/certifi-2026.11.20-py3-none-any.whl",
+      "sha256": "7422df25243767b9877031a2248cb14d09ddac9beee846f4cef3d5c9191d488f",
+      "size": 127913,
+      "format": "zip",
+      "files": [
+        {
+          "source": "certifi/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi/__init__.py"
+        },
+        {
+          "source": "certifi/__main__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi/__main__.py"
+        },
+        {
+          "source": "certifi/cacert.pem",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi/cacert.pem"
+        },
+        {
+          "source": "certifi/core.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi/core.py"
+        },
+        {
+          "source": "certifi/py.typed",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi/py.typed"
+        },
+        {
+          "source": "certifi/tests/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi/tests/__init__.py"
+        },
+        {
+          "source": "certifi/tests/test_certify.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi/tests/test_certify.py"
+        },
+        {
+          "source": "certifi-2026.11.20.dist-info/licenses/LICENSE",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi-2026.11.20.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "certifi-2026.11.20.dist-info/METADATA",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi-2026.11.20.dist-info/METADATA"
+        },
+        {
+          "source": "certifi-2026.11.20.dist-info/WHEEL",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi-2026.11.20.dist-info/WHEEL"
+        },
+        {
+          "source": "certifi-2026.11.20.dist-info/top_level.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi-2026.11.20.dist-info/top_level.txt"
+        },
+        {
+          "source": "certifi-2026.11.20.dist-info/RECORD",
+          "destination": "runtimes/jmcomic/Lib/site-packages/certifi-2026.11.20.dist-info/RECORD"
+        }
+      ]
+    },
+    {
+      "name": "pycparser",
+      "url": "https://files.pythonhosted.org/packages/b6/ae/315bbeee126a769cbde43cf4908acb4b40408d8bf8bbf334dd7368d8dadf/pycparser-3.12-py3-none-any.whl",
+      "sha256": "a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e",
+      "size": 62600,
+      "format": "zip",
+      "files": [
+        {
+          "source": "pycparser/__init__.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser/__init__.py"
+        },
+        {
+          "source": "pycparser/_ast_gen.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser/_ast_gen.py"
+        },
+        {
+          "source": "pycparser/_c_ast.cfg",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser/_c_ast.cfg"
+        },
+        {
+          "source": "pycparser/ast_transforms.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser/ast_transforms.py"
+        },
+        {
+          "source": "pycparser/c_ast.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser/c_ast.py"
+        },
+        {
+          "source": "pycparser/c_generator.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser/c_generator.py"
+        },
+        {
+          "source": "pycparser/c_lexer.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser/c_lexer.py"
+        },
+        {
+          "source": "pycparser/c_parser.py",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser/c_parser.py"
+        },
+        {
+          "source": "pycparser-3.12.dist-info/licenses/LICENSE",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser-3.12.dist-info/licenses/LICENSE"
+        },
+        {
+          "source": "pycparser-3.12.dist-info/METADATA",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser-3.12.dist-info/METADATA"
+        },
+        {
+          "source": "pycparser-3.12.dist-info/WHEEL",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser-3.12.dist-info/WHEEL"
+        },
+        {
+          "source": "pycparser-3.12.dist-info/top_level.txt",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser-3.12.dist-info/top_level.txt"
+        },
+        {
+          "source": "pycparser-3.12.dist-info/RECORD",
+          "destination": "runtimes/jmcomic/Lib/site-packages/pycparser-3.12.dist-info/RECORD"
+        }
+      ]
+    }
+  ],
+  "tools": []
+}

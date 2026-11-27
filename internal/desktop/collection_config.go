@@ -59,6 +59,10 @@ func defaultCollectionModeWithLookup(mode string, lookup func(string) string) st
 			worker, workerErr := os.Stat(filepath.Join(dir, "nas-collection-worker.exe"))
 			if workerErr == nil && worker.Mode().IsRegular() {
 				for _, plugin := range collectionPlugins {
+					// 仅新 profile 使用明确的插件开关推导托管模式，旧配置仍保留原选择。
+					if lookup(plugin.prefix+"_ENABLED") == "true" {
+						return "managed"
+					}
 					manifest, manifestErr := os.Stat(filepath.Join(dir, plugin.manifest))
 					if manifestErr == nil && manifest.Mode().IsRegular() {
 						return "managed"

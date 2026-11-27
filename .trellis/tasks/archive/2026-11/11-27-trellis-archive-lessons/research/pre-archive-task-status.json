@@ -1,0 +1,434 @@
+{
+  "sourceCommit": "68bbd0e3eced0e5e062ad7a45941d99dd39ae1dc",
+  "scope": "2026-11-27 前一轮批量归档的 50 个任务，不含原有 password-visibility 归档",
+  "counts": {
+    "in_progress": 6,
+    "review": 23,
+    "completed": 11,
+    "planning": 10
+  },
+  "tasks": [
+    {
+      "directory": "00-bootstrap-guidelines",
+      "statusBeforeArchive": "in_progress",
+      "title": "Bootstrap Guidelines",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/00-bootstrap-guidelines/task.json"
+    },
+    {
+      "directory": "11-17-bt-download",
+      "statusBeforeArchive": "review",
+      "title": "实现 BT 种子下载与媒体入库",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-17-bt-download/task.json"
+    },
+    {
+      "directory": "11-17-music-support",
+      "statusBeforeArchive": "review",
+      "title": "增加音乐内容管理与播放",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-17-music-support/task.json"
+    },
+    {
+      "directory": "11-17-nas-content-plan",
+      "statusBeforeArchive": "review",
+      "title": "NAS 内容管理系统首版实现",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-17-nas-content-plan/task.json"
+    },
+    {
+      "directory": "11-18-bt-engine-bootstrap",
+      "statusBeforeArchive": "review",
+      "title": "实现 BT 搜索与下载引擎一键初始化",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-18-bt-engine-bootstrap/task.json"
+    },
+    {
+      "directory": "11-18-password-policy",
+      "statusBeforeArchive": "review",
+      "title": "调整管理员密码复杂度规则",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-18-password-policy/task.json"
+    },
+    {
+      "directory": "11-18-project-local-runtime",
+      "statusBeforeArchive": "review",
+      "title": "项目内构建缓存与临时目录隔离",
+      "parent": "11-18-session-temp-cleanup",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-18-project-local-runtime/task.json"
+    },
+    {
+      "directory": "11-18-session-temp-cleanup",
+      "statusBeforeArchive": "review",
+      "title": "固定会话临时文件清理脚本",
+      "parent": null,
+      "children": [
+        "11-18-project-local-runtime"
+      ],
+      "evidence": "HEAD:.trellis/tasks/11-18-session-temp-cleanup/task.json"
+    },
+    {
+      "directory": "11-18-torrent-search",
+      "statusBeforeArchive": "review",
+      "title": "规划并实现 BT 搜种",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-18-torrent-search/task.json"
+    },
+    {
+      "directory": "11-18-windows-complete-exit",
+      "statusBeforeArchive": "review",
+      "title": "修复Windows本地退出与文件释放",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-18-windows-complete-exit/task.json"
+    },
+    {
+      "directory": "11-18-windows-one-click",
+      "statusBeforeArchive": "review",
+      "title": "实现Linux/Windows双平台兼容与Windows一键启动",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-18-windows-one-click/task.json"
+    },
+    {
+      "directory": "11-19-collection-core",
+      "statusBeforeArchive": "completed",
+      "title": "资源收集：契约、统一任务与执行端基础",
+      "parent": "11-19-resource-collection-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-19-collection-core/task.json"
+    },
+    {
+      "directory": "11-19-collection-file-import",
+      "statusBeforeArchive": "in_progress",
+      "title": "资源收集：本地远程文件与音乐导入",
+      "parent": "11-19-resource-collection-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-19-collection-file-import/task.json"
+    },
+    {
+      "directory": "11-19-collection-release",
+      "statusBeforeArchive": "in_progress",
+      "title": "资源收集：界面、平台部署与整体验收",
+      "parent": "11-19-resource-collection-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-19-collection-release/task.json"
+    },
+    {
+      "directory": "11-19-collection-rss-bt",
+      "statusBeforeArchive": "completed",
+      "title": "资源收集：RSS 订阅与 BT 桥接",
+      "parent": "11-19-resource-collection-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-19-collection-rss-bt/task.json"
+    },
+    {
+      "directory": "11-19-collection-web",
+      "statusBeforeArchive": "completed",
+      "title": "资源收集：网页视频与音频获取",
+      "parent": "11-19-resource-collection-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-19-collection-web/task.json"
+    },
+    {
+      "directory": "11-19-plugin-market-fnos-plan",
+      "statusBeforeArchive": "planning",
+      "title": "插件系统、可配置市场与飞牛应用兼容改造计划",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-19-plugin-market-fnos-plan/task.json"
+    },
+    {
+      "directory": "11-19-resource-collection-plan",
+      "statusBeforeArchive": "in_progress",
+      "title": "NAS 资源收集功能规划",
+      "parent": null,
+      "children": [
+        "11-19-collection-core",
+        "11-19-collection-rss-bt",
+        "11-19-collection-web",
+        "11-19-collection-file-import",
+        "11-19-collection-release",
+        "11-20-collection-external-api"
+      ],
+      "evidence": "HEAD:.trellis/tasks/11-19-resource-collection-plan/task.json"
+    },
+    {
+      "directory": "11-19-windows-desktop-icon",
+      "statusBeforeArchive": "review",
+      "title": "Windows desktop 应用与托盘图标",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-19-windows-desktop-icon/task.json"
+    },
+    {
+      "directory": "11-20-collection-component-install",
+      "statusBeforeArchive": "review",
+      "title": "外部资源组件平台部署与安装",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-20-collection-component-install/task.json"
+    },
+    {
+      "directory": "11-20-collection-external-api",
+      "statusBeforeArchive": "review",
+      "title": "资源收集：外部自动化深度API控制",
+      "parent": "11-19-resource-collection-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-20-collection-external-api/task.json"
+    },
+    {
+      "directory": "11-20-cross-platform-manual",
+      "statusBeforeArchive": "completed",
+      "title": "跨平台构建改为手动触发",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-20-cross-platform-manual/task.json"
+    },
+    {
+      "directory": "11-20-powershell-dev-encoding",
+      "statusBeforeArchive": "completed",
+      "title": "修复 Windows PowerShell 开发脚本编码解析错误",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-20-powershell-dev-encoding/task.json"
+    },
+    {
+      "directory": "11-20-powershell-npm-arguments",
+      "statusBeforeArchive": "completed",
+      "title": "修复 Windows 前端启动参数被 npm PowerShell 入口吞掉",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-20-powershell-npm-arguments/task.json"
+    },
+    {
+      "directory": "11-20-vite-proxy-origin",
+      "statusBeforeArchive": "completed",
+      "title": "修复 Vite 开发代理导致同源写请求被拒绝",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-20-vite-proxy-origin/task.json"
+    },
+    {
+      "directory": "11-23-nas-account-lifecycle",
+      "statusBeforeArchive": "completed",
+      "title": "S02 完善管理员改密会话与离线恢复",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-account-lifecycle/task.json"
+    },
+    {
+      "directory": "11-23-nas-backup-recovery",
+      "statusBeforeArchive": "in_progress",
+      "title": "S03 实现计划备份与离线恢复检查",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-backup-recovery/task.json"
+    },
+    {
+      "directory": "11-23-nas-component-maintenance",
+      "statusBeforeArchive": "planning",
+      "title": "S12 完善组件维护与受控升级流程",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-component-maintenance/task.json"
+    },
+    {
+      "directory": "11-23-nas-events-notifications",
+      "statusBeforeArchive": "planning",
+      "title": "S04 建立持久事件与可选通知",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-events-notifications/task.json"
+    },
+    {
+      "directory": "11-23-nas-evolution-plan",
+      "statusBeforeArchive": "in_progress",
+      "title": "制定 NAS 内容管理系统分阶段实施计划",
+      "parent": null,
+      "children": [
+        "11-23-nas-validation-baseline",
+        "11-23-nas-account-lifecycle",
+        "11-23-nas-backup-recovery",
+        "11-23-nas-events-notifications",
+        "11-23-nas-work-catalog",
+        "11-23-nas-local-metadata",
+        "11-23-nas-subtitles-diagnostics",
+        "11-23-nas-library-management",
+        "11-23-nas-external-auto-import",
+        "11-23-nas-storage-maintenance",
+        "11-23-nas-rule-guidance",
+        "11-23-nas-component-maintenance"
+      ],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-evolution-plan/task.json"
+    },
+    {
+      "directory": "11-23-nas-external-auto-import",
+      "statusBeforeArchive": "planning",
+      "title": "S09 打通外部完成目录自动入库",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-external-auto-import/task.json"
+    },
+    {
+      "directory": "11-23-nas-feature-gap-assessment",
+      "statusBeforeArchive": "completed",
+      "title": "评估 NAS 内容管理系统功能缺口与迭代优先级",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-feature-gap-assessment/task.json"
+    },
+    {
+      "directory": "11-23-nas-library-management",
+      "statusBeforeArchive": "planning",
+      "title": "S08 完善筛选批量管理与文件重关联",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-library-management/task.json"
+    },
+    {
+      "directory": "11-23-nas-local-metadata",
+      "statusBeforeArchive": "planning",
+      "title": "S06 支持本地元数据与人工纠错",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-local-metadata/task.json"
+    },
+    {
+      "directory": "11-23-nas-rule-guidance",
+      "statusBeforeArchive": "planning",
+      "title": "S11 提供规则模板命中解释与缺集视图",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-rule-guidance/task.json"
+    },
+    {
+      "directory": "11-23-nas-storage-maintenance",
+      "statusBeforeArchive": "planning",
+      "title": "S10 增加容量概览与安全归档清理",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-storage-maintenance/task.json"
+    },
+    {
+      "directory": "11-23-nas-subtitles-diagnostics",
+      "statusBeforeArchive": "planning",
+      "title": "S07 增加外挂字幕与播放诊断",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-subtitles-diagnostics/task.json"
+    },
+    {
+      "directory": "11-23-nas-validation-baseline",
+      "statusBeforeArchive": "completed",
+      "title": "S01 建立回归基线与目标 NAS 验收档案",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-validation-baseline/task.json"
+    },
+    {
+      "directory": "11-23-nas-work-catalog",
+      "statusBeforeArchive": "planning",
+      "title": "S05 建立作品剧集与文件关联模型",
+      "parent": "11-23-nas-evolution-plan",
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-23-nas-work-catalog/task.json"
+    },
+    {
+      "directory": "11-25-jmcomic-advanced",
+      "statusBeforeArchive": "review",
+      "title": "扩展 JMComic 高级搜索与下载能力",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-25-jmcomic-advanced/task.json"
+    },
+    {
+      "directory": "11-25-jmcomic-plugin",
+      "statusBeforeArchive": "review",
+      "title": "整合 JMComic 漫画搜索下载插件",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-25-jmcomic-plugin/task.json"
+    },
+    {
+      "directory": "11-25-uav-downloader-plugin",
+      "statusBeforeArchive": "review",
+      "title": "集成 UAV-Downloader 视频搜索下载插件",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-25-uav-downloader-plugin/task.json"
+    },
+    {
+      "directory": "11-26-bt-windows-native",
+      "statusBeforeArchive": "review",
+      "title": "BT 种子搜索与下载兼容 Windows 原生运行",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-26-bt-windows-native/task.json"
+    },
+    {
+      "directory": "11-26-jmcomic-windows-native",
+      "statusBeforeArchive": "review",
+      "title": "Windows 原生 JMComic 运行与分发兼容方案",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-26-jmcomic-windows-native/task.json"
+    },
+    {
+      "directory": "11-26-runtime-slim",
+      "statusBeforeArchive": "completed",
+      "title": "清理 .runtime 历史缓存与临时产物",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-26-runtime-slim/task.json"
+    },
+    {
+      "directory": "11-26-uav-windows-native",
+      "statusBeforeArchive": "review",
+      "title": "UAV／SupJav Windows 原生运行与分发",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-26-uav-windows-native/task.json"
+    },
+    {
+      "directory": "11-26-windows-dotenv",
+      "statusBeforeArchive": "review",
+      "title": "Windows 桌面支持程序同级 .env 配置",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-26-windows-dotenv/task.json"
+    },
+    {
+      "directory": "11-26-windows-portable-profile",
+      "statusBeforeArchive": "review",
+      "title": "Windows 桌面默认用户数据目录迁至程序同级",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-26-windows-portable-profile/task.json"
+    },
+    {
+      "directory": "11-27-windows-uav-fake-ip-repair",
+      "statusBeforeArchive": "review",
+      "title": "修复 Windows UAV 与 Clash Fake-IP 冲突",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-27-windows-uav-fake-ip-repair/task.json"
+    },
+    {
+      "directory": "11-27-windows-uav-local-repair",
+      "statusBeforeArchive": "review",
+      "title": "修复本机 Windows UAV 运行材料缺失",
+      "parent": null,
+      "children": [],
+      "evidence": "HEAD:.trellis/tasks/11-27-windows-uav-local-repair/task.json"
+    }
+  ]
+}

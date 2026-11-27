@@ -46,7 +46,7 @@ Every task has its own directory under `.trellis/tasks/{MM-DD-name}/` holding `p
 python3 ./.trellis/scripts/task.py create "<title>" [--slug <name>] [--parent <dir>]
 python3 ./.trellis/scripts/task.py start <name>          # set as current (writes .current-task, triggers after_start hooks)
 python3 ./.trellis/scripts/task.py finish                # clear current task (triggers after_finish hooks)
-python3 ./.trellis/scripts/task.py archive <name>        # move to archive/{year-month}/
+python -B scripts/project_env.py -- python -B .trellis/scripts/task.py archive <name> --no-commit  # summarize first, then archive without an automatic commit
 python3 ./.trellis/scripts/task.py list [--mine] [--status <s>]
 python3 ./.trellis/scripts/task.py list-archive
 
@@ -70,6 +70,8 @@ python3 ./.trellis/scripts/task.py create-pr [name] [--dry-run]
 ```
 
 > Run `python3 ./.trellis/scripts/task.py --help` to see the authoritative, up-to-date list.
+
+**Before every archive**: write the project-useful retrospective described in the [Archive retrospective guide](./spec/guides/archive-retrospective-guide.md). This applies to explicit archive requests and bulk cleanup as well as normal completion. Preserve actual implementation/acceptance evidence and unresolved work before the CLI changes lifecycle metadata; its `completed` status is not proof of delivery. A batch summary must account for every archived task and link the reusable lessons to their sources and relevant specs.
 
 **Current-task mechanism**: `task.py start` writes the task path into `.trellis/.current-task`. Hook-capable platforms auto-inject this at session start, so the AI knows what you're working on without being told.
 
@@ -360,9 +362,11 @@ Load the `trellis-update-spec` skill and review whether this task produced new k
 
 Update the docs under `.trellis/spec/` accordingly. Even if the conclusion is "nothing to update", walk through the judgment.
 
+Before archiving, also persist a task `summary.md`, or a batch `ARCHIVE-SUMMARY.md` mapping every affected task. Cover actual delivery, reusable decisions, pitfalls and boundaries, validation evidence, unfinished work/next steps, and source/spec paths. Follow the [Archive retrospective guide](./spec/guides/archive-retrospective-guide.md); do not turn planning notes or the archive CLI's automatic `completed` field into acceptance claims. Promote durable contracts into the relevant existing spec rather than duplicating them in a guide.
+
 #### 3.4 Wrap-up reminder
 
-After the above, remind the user they can run `/finish-work` to wrap up (archive the task, record the session).
+After the above, remind the user they can run `/finish-work` to wrap up (capture the retrospective, archive the task, record the session). For an explicit archive request, complete the retrospective and archive within that request; use `--no-commit` and leave Git commits to the user.
 
 ---
 
@@ -397,5 +401,5 @@ Check conversation history + git status to determine current step; do NOT skip t
 [/workflow-state:in_progress]
 
 [workflow-state:completed]
-User commits changes; then run task.py archive.
+Preserve actual implementation/acceptance evidence and unfinished work in summary.md (or a batch ARCHIVE-SUMMARY.md), and update relevant specs before archiving. User commits changes; then run task.py archive with --no-commit. An explicit user request may archive before commit, but never skips the retrospective or authorizes an automatic Git commit.
 [/workflow-state:completed]

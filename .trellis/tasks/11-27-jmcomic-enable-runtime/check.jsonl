@@ -1,0 +1,5 @@
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "Finish work checklist"}
+{"file": ".agents/skills/trellis-check/SKILL.md", "reason": "Code quality check spec"}
+{"file": ".trellis/spec/backend/jmcomic-windows-contract.md", "reason": "漫画及组合验收"}
+{"file": ".trellis/spec/backend/uav-windows-contract.md", "reason": "UAV行为兼容与安全边界"}
+{"file": ".trellis/spec/backend/cross-platform-contract.md", "reason": "退出与重启资源释放"}

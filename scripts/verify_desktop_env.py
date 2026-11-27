@@ -35,6 +35,8 @@ def main() -> int:
     assert os.name == "nt", "此验证必须运行于真实 Windows"
     # 保留 runner 的缓存/临时目录，只清理会影响业务配置的父环境。
     environment = {key: value for key, value in os.environ.items() if not key.upper().startswith(("NAS_", "ENGINE_", "QBT_", "JACKETT_"))}
+    # 本脚本只验证本地配置负例；阻断子进程物料下载，在线初始化由独立脚本验收。
+    environment.update(HTTPS_PROXY="http://127.0.0.1:1", HTTP_PROXY="http://127.0.0.1:1", NO_PROXY="")
     if args.web_dir:
         environment["NAS_WEB_DIR"] = str(args.web_dir.resolve(strict=True))
     checks: list[str] = []
