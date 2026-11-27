@@ -1,0 +1,37 @@
+[
+  {
+    "path": ".env",
+    "size": 2789,
+    "sha256": "948ab1fa16a218d178e7eeeccb46ce8a1a2575d694b645b403c2cdaf384c9928"
+  },
+  {
+    "path": "栖库.exe",
+    "size": 15932416,
+    "sha256": "4ff016a9efc06c6ae98a78a5a09197245131f6d6331fdba98fef4ed6c34f0dd8"
+  },
+  {
+    "path": "nas.exe",
+    "size": 15581696,
+    "sha256": "c12738db08370dcf91f368f686d9fc4e705b4516cb1c793620c39551c5369f45"
+  },
+  {
+    "path": "nas-collection-worker.exe",
+    "size": 8721408,
+    "sha256": "8b52626164c18caecda53f1e424d00fe5d3b443a182b8fd227475e3054d4a849"
+  },
+  {
+    "path": "release.json",
+    "size": 203,
+    "sha256": "f967927fb8cc9e473e53dc815db9c99b0fd835f64f552bd95b58432f9e0796f8"
+  },
+  {
+    "path": "checksums.sha256",
+    "size": 1969,
+    "sha256": "a81815b8adbd167bdedee0adfec5688182bb0c968cd684cb9d53e8d13d0b415c"
+  },
+  {
+    "path": "qiku-data\\profiles\\native\\desktop.json",
+    "size": 382,
+    "sha256": "8119004103413936967050b07eb724d457e6e522277ca9c24aeeeff8d5d62ccc"
+  }
+]

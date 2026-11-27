@@ -1,0 +1,19 @@
+{
+  "result": "passed",
+  "scope": "仅当前本机使用，不是正式发行包",
+  "target": "E:\\test\\qiku-0.1.0-windows-amd64-development",
+  "fileCount": 795,
+  "totalBytes": 291220702,
+  "receiptPath": ".runtime\\verify\\windows-uav-local-repair\\stage-receipt.json",
+  "receiptSha256": "30e413057750f840dd5bc1ee182c7fb187385f3d31f6b817a92def398e30de10",
+  "uavVersion": "3.8.4",
+  "pythonVersion": "3.14.4",
+  "tools": {
+    "ytDlp": "2026.10.26",
+    "ffmpeg": "ffmpeg version N-122527-g4561fc5e48-20260122 Copyright (c) 2000-2026 the FFmpeg developers",
+    "ffprobe": "ffprobe version N-122527-g4561fc5e48-20260122 Copyright (c) 2007-2026 the FFmpeg developers",
+    "localVideoDuration": 1.0,
+    "emptyPath": true
+  },
+  "originalReleaseMetadataPreserved": true
+}

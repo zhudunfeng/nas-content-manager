@@ -1,0 +1,53 @@
+{
+  "onlyDnsFilterChanged": true,
+  "persistentScriptExact": true,
+  "nodePreflight": {
+    "passed": true,
+    "cases": 9,
+    "currentConfigOnlyAppend": true,
+    "idempotent": true
+  },
+  "core": {
+    "versionStatus": 200,
+    "version": "v1.19.15",
+    "configsStatus": 200,
+    "tunEnabled": true,
+    "runtimeFilterCount": 3,
+    "domainsPresent": {
+      "+.jable.tv": true,
+      "+.huangguoai.com": true,
+      "+.fs1.app": true
+    }
+  },
+  "protectedFileCount": 7,
+  "preservedDatabaseTables": [
+    "users",
+    "sessions",
+    "libraries",
+    "items",
+    "collection_sources",
+    "collection_tasks"
+  ],
+  "desktop": {
+    "state": "ready",
+    "mode": "native",
+    "url": "http://127.0.0.1:8090",
+    "collectionMode": "managed",
+    "collectionState": "ready",
+    "collectionMessage": "本机视频依赖已就绪；站点连接在实际请求时验证；漫画：漫画插件私有运行时清单、架构、版本或文件完整性校验失败，请重新安装匹配的完整包",
+    "collectionCapabilities": [
+      {
+        "kind": "jmcomic",
+        "available": false,
+        "reason": "漫画插件私有运行时清单、架构、版本或文件完整性校验失败，请重新安装匹配的完整包",
+        "version": ""
+      },
+      {
+        "kind": "uav",
+        "available": true,
+        "reason": "",
+        "version": "3.8.4"
+      }
+    ]
+  }
+}

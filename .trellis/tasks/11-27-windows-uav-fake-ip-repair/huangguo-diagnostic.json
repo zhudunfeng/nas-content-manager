@@ -1,0 +1,80 @@
+{
+  "success": false,
+  "errorType": "ValueError",
+  "category": "未归类错误，原文不输出",
+  "frames": [
+    {
+      "file": "diagnose_huangguo.py",
+      "line": 30
+    },
+    {
+      "file": "uav_bridge.py",
+      "line": 233
+    },
+    {
+      "file": "huangguo.py",
+      "line": 682
+    },
+    {
+      "file": "huangguo.py",
+      "line": 695
+    }
+  ],
+  "seconds": 4.64,
+  "responses": [
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    },
+    {
+      "host": "huangguoai.com",
+      "status": 200
+    }
+  ],
+  "sourceAnalysis": {
+    "category": "整页分集展开超过现有100集上限",
+    "source": "huangguo.py:695",
+    "bridgeLimit": 100,
+    "sameQueryNotMarkedPassed": true
+  }
+}

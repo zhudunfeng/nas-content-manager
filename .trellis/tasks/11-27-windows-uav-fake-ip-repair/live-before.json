@@ -1,0 +1,30 @@
+{
+  "dns": [
+    {
+      "host": "jable.tv",
+      "addresses": [
+        "198.18.1.3"
+      ],
+      "allGlobal": false
+    },
+    {
+      "host": "huangguoai.com",
+      "addresses": [
+        "198.18.1.5"
+      ],
+      "allGlobal": false
+    }
+  ],
+  "search": [
+    {
+      "site": "jable",
+      "status": 502,
+      "seconds": 1.56
+    },
+    {
+      "site": "huangguo",
+      "status": 502,
+      "seconds": 1.46
+    }
+  ]
+}

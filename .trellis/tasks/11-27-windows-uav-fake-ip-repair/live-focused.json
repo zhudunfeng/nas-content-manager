@@ -1,0 +1,19 @@
+{
+  "dns": [
+    {
+      "host": "huangguoai.com",
+      "addresses": [
+        "108.160.166.148"
+      ],
+      "allGlobal": true
+    }
+  ],
+  "search": [
+    {
+      "site": "huangguo",
+      "status": 200,
+      "count": 40,
+      "seconds": 5.86
+    }
+  ]
+}

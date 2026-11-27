@@ -1,0 +1,62 @@
+{
+  "result": "passed",
+  "launchedProcessId": null,
+  "desktop": {
+    "state": "ready",
+    "mode": "native",
+    "url": "http://127.0.0.1:8090",
+    "collectionMode": "managed",
+    "collectionState": "ready",
+    "collectionMessage": "本机视频依赖已就绪；站点连接在实际请求时验证；漫画：漫画插件私有运行时清单、架构、版本或文件完整性校验失败，请重新安装匹配的完整包",
+    "collectionCapabilities": [
+      {
+        "kind": "jmcomic",
+        "available": false,
+        "reason": "漫画插件私有运行时清单、架构、版本或文件完整性校验失败，请重新安装匹配的完整包",
+        "version": ""
+      },
+      {
+        "kind": "uav",
+        "available": true,
+        "reason": "",
+        "version": "3.8.4"
+      }
+    ]
+  },
+  "protectedFiles": [
+    ".env",
+    "栖库.exe",
+    "nas.exe",
+    "nas-collection-worker.exe",
+    "release.json",
+    "checksums.sha256",
+    "qiku-data\\profiles\\native\\desktop.json"
+  ],
+  "database": {
+    "users": {
+      "count": 1,
+      "contentSha256": "84911291745ce115c2401f76f7fb41273ea0b402cbd8853bdf62d8daf014e0fb"
+    },
+    "sessions": {
+      "count": 1,
+      "contentSha256": "1090529a29446fb0e314a5e40e9ac21e9401cbb830cdb68f5e0eccf2868cafe8"
+    },
+    "libraries": {
+      "count": 0,
+      "contentSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "items": {
+      "count": 0,
+      "contentSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "collection_sources": {
+      "count": 2,
+      "contentSha256": "80db0122062830aa83bc273f6d31e75eb26b9754e8985506ce83e92eefc8c392"
+    },
+    "collection_tasks": {
+      "count": 0,
+      "contentSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "siteRequestsPerformed": false
+}

@@ -1,0 +1,12 @@
+{
+  "filesVerified": 795,
+  "uavVersion": "3.8.4",
+  "pythonVersion": "3.14.4",
+  "tools": {
+    "ytDlp": "2026.10.26",
+    "ffmpeg": "ffmpeg version N-122527-g4561fc5e48-20260122 Copyright (c) 2000-2026 the FFmpeg developers",
+    "ffprobe": "ffprobe version N-122527-g4561fc5e48-20260122 Copyright (c) 2007-2026 the FFmpeg developers",
+    "localVideoDuration": 1.0,
+    "emptyPath": true
+  }
+}
